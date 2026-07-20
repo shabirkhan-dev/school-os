@@ -10,7 +10,7 @@ pre-commit:
     format:
       run: bun run format
     lint:
-      run: bun run lint:fix
+      run: TURBO_FORCE=true bun run lint:fix && bunx turbo run lint
     typecheck:
       run: bun run typecheck
     architecture:
