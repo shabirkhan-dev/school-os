@@ -1,0 +1,165 @@
+---
+title: Product Vision
+description: Trust engine positioning, personas, modules, and phased roadmap from the portfolio spec.
+---
+
+School OS is the **trust engine for schools** — mobile-first, WhatsApp-native, and built for
+affordable private schools that want admissions growth, less chaos, and real-time parent peace of
+mind.
+
+This page summarizes the [portfolio detailed spec](https://github.com/shabirkhan-dev/school-os) and
+aligns it with what this monorepo implements today. For engineering depth, see
+[Product System Design](/docs/product-system-design) and
+[Production Roadmap](/docs/production-roadmap).
+
+## What it is — and is not
+
+| School OS **is** | School OS **is not** |
+| --- | --- |
+| A trust and communication engine | A full accounting ERP |
+| Mobile-first with WhatsApp as the primary parent channel | Email-first enterprise software |
+| Starting with Smart Attendance as the hook | A generic dashboard template |
+| AI-assisted with human approval on high-impact actions | Autonomous AI that changes grades or sends sensitive messages alone |
+| Modular monolith ready for white-label / acquisition | A throwaway prototype |
+
+## Core philosophy
+
+1. **Trust first, ERP second** — every feature should strengthen school–parent trust.
+2. **Mobile-first** — teachers and parents live on phones; optimize for thumb reach and offline-tolerant scans.
+3. **Apple-level polish** — no training manuals; flows should feel inevitable.
+4. **Privacy by default** — consent records, guardian-scoped access, audit logs, short GPS retention.
+5. **Built for the exit** — clean modules, tenant isolation, documented APIs.
+
+## Personas
+
+| Persona | Device | Job to be done |
+| --- | --- | --- |
+| School owner / principal | Laptop + phone | Visibility into trust, admissions, revenue, risk |
+| Teacher | Phone | Mark attendance fast, communicate without sharing personal numbers |
+| Parent / guardian | WhatsApp + app | Know child is safe; homework, fees, messages in one place |
+| Student | Phone | Schedule, homework, feedback |
+| Gate guard / bus conductor | Phone scanner | Reliable arrival, departure, and route events |
+
+## The killer demo
+
+```text
+Teacher scans student QR at the gate.
+→ Parent WhatsApp: "Rohan arrived safely at 8:17 AM."
+→ Principal dashboard: 247 in · 3 absent · 1 late
+```
+
+Ship this loop before expanding scope.
+
+## Feature modules
+
+### 1. Smart Attendance — the hook
+
+- QR check-in (rotating signed tokens)
+- Optional face recognition (off by default; consent + legal review required)
+- Multi-channel alerts: WhatsApp, SMS, email, push
+- Departure and absentee auto-notify after grace window
+- Late arrival tracking and reports
+- Bus attendance + GPS (Phase 3+)
+
+### 2. Communication hub
+
+- School-wide and class-scoped announcements
+- Secure teacher–parent chat (no personal numbers exposed)
+- Documents, permission slips, digital signatures
+- Event calendar with reminders
+- Class photo gallery (private to class)
+- Emergency broadcast with step-up auth
+
+### 3. Academics
+
+- Timetable with substitution handling
+- Homework assigner with parent visibility
+- AI homework generator (teacher-facing only)
+- Exams, grades, report cards
+- Progress tracking and syllabus tracker
+
+### 4. Finance and administration
+
+- Fee plans, invoices, Razorpay / Stripe checkout
+- Due reminders on WhatsApp
+- Receipts, simple expense ledger, basic payroll
+- Admission inquiry CRM
+
+### 5. Parent app — the emotional product
+
+- Daily activity feed (attendance, homework, events)
+- Fee status and one-tap pay
+- Performance dashboard
+- Bus map + ETA (later)
+- Leave applications
+
+### 6. AI features — unfair advantage
+
+All AI outputs go through policy checks; high-risk actions require human approval.
+
+- Report card comment drafts
+- Early warning (attendance, grades, fees — with reason codes)
+- Homework / quiz generator for teachers
+- Parent FAQ chatbot (tenant-scoped RAG)
+- Test proctoring (future, optional)
+
+### 7. Dashboards by role
+
+| Role | Primary widgets |
+| --- | --- |
+| Principal | Live attendance, revenue snapshot, AI early warnings |
+| Teacher | Timetable, attendance shortcut, homework queue |
+| Parent | Child feed, fees, messages, bus (later) |
+| Student | Schedule, homework, marks |
+
+## WhatsApp and compliance (2026 best practices)
+
+Research and regional regulations (e.g. India DPDPA, COPPA/FERPA awareness) imply:
+
+- Use **WhatsApp Business Cloud API** via an approved BSP — not personal WhatsApp Web.
+- **Explicit opt-in** from guardians; store consent source, time, and purpose.
+- Route **all minor communication through guardians** unless legal review clears otherwise.
+- Prefer **utility templates** for transactional alerts (arrival, absence, fee due).
+- Respect **quiet hours**; let schools configure exception-only vs. digest modes to limit fatigue.
+- Provide **opt-out** for non-critical categories while keeping safety alerts.
+- Log deliveries for audit; never log message bodies containing sensitive child data in plain text.
+
+## Build phases
+
+| Phase | Timeline (spec) | Focus |
+| --- | --- | --- |
+| 0 — Foundation | Weeks 1–4 | Monorepo, schema, auth, design system |
+| 1 — Smart Attendance MVP | Months 1–3 | QR, scan UI, WhatsApp pipeline, principal + parent views |
+| 2 — Communication & academics | Months 4–8 | Announcements, chat, homework, timetable, report cards |
+| 3 — Finance & AI | Months 9–12 | Fees, payments, AI comments, early warning, bus, CRM |
+| 4 — Polish & scale | Year 2 | UX audit, white-label, performance, acquisition prep |
+
+Engineering phases in [Production Roadmap](/docs/production-roadmap) map to this product plan —
+backend spine first (NestJS, Drizzle, tenant-safe modules), then attendance vertical slice.
+
+## Repo vs. spec — source of truth
+
+| Area | Portfolio spec | This monorepo |
+| --- | --- | --- |
+| Backend API | FastAPI or Hono | **NestJS** (`apps/nest-api`) |
+| Web | Next.js admin | **Next.js** (`apps/web`) |
+| Mobile | React Native | **Expo** (`apps/mobile`) |
+| Database | PostgreSQL | **PostgreSQL** (Neon in production) |
+| AI | OpenAI / Ollama | **FastAPI** proxied by Nest (`apps/ai-api`) |
+| Payments | Stripe / Razorpay | Providers wired in billing module |
+| Attendance / WhatsApp | Core MVP | **Planned** — follow production roadmap Phase 7+ |
+
+## Monetization (SaaS)
+
+| Tier | Price / month | Scope |
+| --- | --- | --- |
+| Pilot | $0 | ~100 students, attendance + alerts |
+| Standard | $50–$100 | ~500 students, + communication + homework |
+| Premium | $200–$500 | Unlimited, all modules + AI |
+| Enterprise | Custom | Chains, white-label, SLA |
+
+## Exit strategy
+
+Built for acquisition by EdTech platforms, legacy publishers, school chains, or education lenders
+who need **real-time attendance and performance signals**. Target outcome depends on traction;
+architecture prioritizes clean modules and tenant isolation over premature microservices.
