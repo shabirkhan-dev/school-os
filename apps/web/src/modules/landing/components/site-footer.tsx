@@ -60,14 +60,14 @@ export function SiteFooter() {
 							{SITE.name}
 						</span>
 						<p className="mt-3 max-w-xs text-muted-foreground text-sm leading-6">
-							Production-ready monorepo starter for web, mobile, API, docs, and Rust.
+							{SITE.description}
 						</p>
 						<span className="mt-5 inline-flex w-fit items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-muted-foreground text-xs">
 							<span className="relative flex size-2">
 								<span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500/70" />
 								<span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
 							</span>
-							Workspace ready
+							Phase 1 in progress
 						</span>
 
 						<div className="mt-8">

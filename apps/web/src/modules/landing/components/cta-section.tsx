@@ -28,20 +28,20 @@ export function CtaSection() {
 			<div className="relative mx-auto flex w-full max-w-3xl flex-col items-center text-center">
 				<FadeIn>
 					<span className="inline-flex items-center rounded-full border border-border bg-card/70 px-3 py-1 font-medium text-muted-foreground text-xs backdrop-blur">
-						Up in minutes
+						For developers too
 					</span>
 				</FadeIn>
 
 				<FadeIn delay={0.08}>
 					<h2 className="mt-5 max-w-2xl text-balance font-serif text-4xl text-foreground leading-[1.05] sm:text-5xl">
-						Clone the starter. Run the workspace.
+						Clone the repo. Build Phase 1.
 					</h2>
 				</FadeIn>
 
 				<FadeIn delay={0.12}>
 					<p className="mt-5 max-w-xl text-pretty text-muted-foreground text-sm leading-7 sm:text-base">
-						Install once with Bun — Turbo brings up web, mobile, Nest, docs, and Rust without a
-						weekend of glue work.
+						School OS is an open monorepo — Next.js, Expo, NestJS, and docs included. Follow the
+						production roadmap to ship Smart Attendance on a spine that scales to finance and AI.
 					</p>
 				</FadeIn>
 

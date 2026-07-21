@@ -55,14 +55,14 @@ function AboutHero() {
 				</FadeIn>
 				<FadeIn delay={0.06}>
 					<h1 className="mt-6 text-balance font-serif text-4xl text-foreground leading-[1.1] tracking-tight sm:text-5xl">
-						A monorepo starter built for school-scale products.
+						The trust engine for schools — built to ship.
 					</h1>
 				</FadeIn>
 				<FadeIn delay={0.12}>
 					<p className="mt-6 max-w-2xl text-pretty text-muted-foreground text-base leading-8 sm:text-lg">
-						We built School OS after wiring the same five apps together too many times. It&apos;s
-						the Bun + Turborepo workspace we wished we had — shared UI, hooks, CI, Docker, and docs
-						included from day one.
+						School OS gives affordable private schools a mobile-first way to prove student safety,
+						keep parents informed on WhatsApp, and grow admissions — on a production-grade open
+						monorepo teams can extend.
 					</p>
 				</FadeIn>
 			</div>
@@ -82,7 +82,7 @@ function AboutStats() {
 					</FadeIn>
 					<FadeIn delay={0.08}>
 						<h2 className="mt-5 text-balance font-serif text-3xl text-foreground leading-tight sm:text-4xl">
-							Apps in the starter. Minutes to first dev.
+							Built for schools that live on WhatsApp.
 						</h2>
 					</FadeIn>
 				</div>
@@ -167,8 +167,7 @@ function AboutTeam() {
 					</FadeIn>
 					<FadeIn delay={0.1}>
 						<p className="mt-4 text-pretty text-muted-foreground text-sm leading-7 sm:text-base">
-							Engineers who&apos;ve shipped polyglot monorepos — now packaging the starter so you
-							don&apos;t start from zero.
+							Product, platform, mobile, and AI — focused on trust-first school software.
 						</p>
 					</FadeIn>
 				</div>

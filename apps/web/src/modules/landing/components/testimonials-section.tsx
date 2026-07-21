@@ -17,12 +17,12 @@ export function TestimonialsSection() {
 			<div className="mx-auto mb-14 max-w-2xl text-center">
 				<FadeIn>
 					<span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-						Loved by builders
+						Trusted in pilots
 					</span>
 				</FadeIn>
 				<FadeIn delay={0.08}>
 					<h2 className="mt-5 text-balance font-serif text-3xl font-medium leading-tight tracking-tight sm:text-4xl">
-						Teams who ship products, not repo glue.
+						Schools, teachers, and parents feel the difference.
 					</h2>
 				</FadeIn>
 			</div>

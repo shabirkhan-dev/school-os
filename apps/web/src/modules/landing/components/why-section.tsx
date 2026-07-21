@@ -53,14 +53,15 @@ export function WhySection() {
 						</FadeIn>
 						<FadeIn delay={0.06}>
 							<h2 className="mt-5 text-balance font-serif text-3xl text-foreground leading-[1.12] sm:text-4xl lg:text-[2.75rem]">
-								Built for teams who ship school products.
+								Not another ERP. A trust engine.
 							</h2>
 						</FadeIn>
 					</div>
 					<FadeIn delay={0.1} className="max-w-sm lg:pb-1">
 						<p className="text-pretty text-muted-foreground text-sm leading-7 sm:text-base">
-							Every detail is tuned for monorepo speed — from the first bun install to a workspace
-							your whole team (and AI agents) can navigate.
+							Affordable private schools need admissions growth and parent peace of mind — not
+							another dashboard nobody opens. School OS starts where trust is won or lost: the
+							school gate.
 						</p>
 					</FadeIn>
 				</div>

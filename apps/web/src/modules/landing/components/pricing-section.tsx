@@ -19,8 +19,8 @@ type Billing = "monthly" | "yearly";
 
 const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
-function formatServices(services: number | "unlimited"): string {
-	return services === "unlimited" ? "Unlimited" : String(services);
+function formatStudents(students: number | "unlimited"): string {
+	return students === "unlimited" ? "Unlimited" : String(students);
 }
 
 function priceForTier(index: number, billing: Billing): number {
@@ -42,8 +42,8 @@ export function PricingSection() {
 	const period = billing === "monthly" ? "/ month" : "/ month, billed yearly";
 	const servicesLabel =
 		tier.services === "unlimited"
-			? "Unlimited workspaces included."
-			: `${tier.services} workspace${tier.services === 1 ? "" : "s"} included.`;
+			? `${tier.label} — unlimited students, multi-campus chains.`
+			: `${tier.label} — up to ${formatStudents(tier.services)} students.`;
 
 	return (
 		<section id="pricing" className="w-full px-4 pt-20 pb-8 sm:px-8">
@@ -55,13 +55,13 @@ export function PricingSection() {
 				</FadeIn>
 				<FadeIn delay={0.06}>
 					<h2 className="mt-5 text-balance font-serif text-4xl text-foreground leading-tight tracking-[-0.02em] sm:text-5xl">
-						Start free. Scale when your team grows.
+						Start free. Grow with your school.
 					</h2>
 				</FadeIn>
 				<FadeIn delay={0.1}>
 					<p className="mt-4 max-w-xl text-pretty text-muted-foreground leading-7">
-						School OS is free to clone and run. Slide for team and enterprise seats — no surprise
-						overages, cancel anytime.
+						Pilot attendance and alerts for free. Slide for student count as you add communication,
+						finance, and AI modules — no surprise overages.
 					</p>
 				</FadeIn>
 			</div>
@@ -308,7 +308,7 @@ function ServicesSlider({ index, onChange }: { index: number; onChange: (index: 
 				<div className="pointer-events-none absolute inset-x-2 inset-y-0">
 					{PRICING_TIERS.map((tier, step) => (
 						<span
-							key={formatServices(tier.services)}
+							key={formatStudents(tier.services)}
 							className="absolute top-1/2 size-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/25"
 							style={{ left: `${(step / max) * 100}%` }}
 						/>
@@ -322,7 +322,7 @@ function ServicesSlider({ index, onChange }: { index: number; onChange: (index: 
 					aria-valuemin={0}
 					aria-valuemax={max}
 					aria-valuenow={index}
-					aria-valuetext={`${formatServices(PRICING_TIERS[index]?.services ?? 5)} workspaces`}
+					aria-valuetext={`${formatStudents(PRICING_TIERS[index]?.services ?? 100)} students`}
 					onKeyDown={onKeyDown}
 					className="absolute top-1/2 h-5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-sm bg-foreground shadow-sm outline-none ring-foreground/30 focus-visible:ring-4"
 					initial={false}
@@ -335,8 +335,8 @@ function ServicesSlider({ index, onChange }: { index: number; onChange: (index: 
 				id={labelId}
 				className="mt-3 flex items-center justify-between font-semibold text-foreground text-xs uppercase tracking-wide"
 			>
-				<span>5 SERVICES</span>
-				<span>Unlimited SERVICES</span>
+				<span>100 students</span>
+				<span>Unlimited students</span>
 			</div>
 		</div>
 	);
