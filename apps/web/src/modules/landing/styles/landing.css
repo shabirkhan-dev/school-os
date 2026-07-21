@@ -1,44 +1,52 @@
 /*
- * School OS landing theme.
- * Scoped to [data-landing] so the marketing surface can carry its own
- * neutral shadcn-like palette + display fonts without leaking into the
- * rest of the School OS app. Dark is the default; the .dark class is
- * toggled on <html> by the AgentShell.
+ * School OS landing theme — institutional green, warm cream, editorial serif.
+ * Inspired by private-school networks (e.g. Aga Khan Schools / AKES): calm,
+ * trustworthy, and parent-first — not SaaS blue gradients.
+ * Scoped to [data-landing] so marketing tokens do not leak into the app shell.
  */
 
 [data-landing] {
 	--font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system,
 		"Segoe UI", sans-serif;
-	--font-serif: var(--font-fraunces), ui-serif, Georgia, "Times New Roman", serif;
+	--font-serif: var(--font-playfair), ui-serif, Georgia, "Times New Roman", serif;
 	--font-mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", Consolas,
 		monospace;
 	--font-geist-mono: var(--font-mono);
 
-	/* Light palette — clean white School OS marketing surface */
-	--background: #ffffff;
-	--foreground: #09090b;
+	/* Light — warm cream paper + deep navy ink */
+	--background: #faf8f4;
+	--foreground: #1c2838;
 	--card: #ffffff;
-	--card-foreground: #09090b;
+	--card-foreground: #1c2838;
 	--popover: #ffffff;
-	--popover-foreground: #09090b;
-	--primary: #2563eb;
-	--primary-foreground: #ffffff;
-	--secondary: #f4f4f5;
-	--secondary-foreground: #18181b;
-	--muted: #f4f4f5;
-	--muted-foreground: #71717a;
-	--accent: #2563eb;
-	--accent-foreground: #ffffff;
-	--destructive: #e5484d;
-	--border: rgba(9, 9, 15, 0.1);
-	--input: rgba(9, 9, 15, 0.12);
-	--ring: #2563eb;
+	--popover-foreground: #1c2838;
+	--primary: #0a6847;
+	--primary-foreground: #f6fdf9;
+	--secondary: #f0ede6;
+	--secondary-foreground: #243044;
+	--muted: #f0ede6;
+	--muted-foreground: #5c6778;
+	--accent: #0a6847;
+	--accent-foreground: #f6fdf9;
+	--destructive: #c0392b;
+	--border: rgba(28, 40, 56, 0.12);
+	--input: rgba(28, 40, 56, 0.14);
+	--ring: #0a6847;
 
-	--atlas-blue: #2563eb;
-	--atlas-blue-deep: #1d4ed8;
-	--atlas-teal: #10b981;
-	--atlas-sky: #3b82f6;
-	--atlas-amber: #f59e0b;
+	--school-green: #0a6847;
+	--school-green-deep: #085a3c;
+	--school-green-soft: #2d9b6f;
+	--school-gold: #b8922a;
+	--school-cream: #faf8f4;
+	--school-navy: #1c2838;
+	--school-whatsapp: #25a56a;
+
+	/* Legacy aliases used in a few components */
+	--atlas-blue: var(--school-green);
+	--atlas-blue-deep: var(--school-green-deep);
+	--atlas-teal: var(--school-green-soft);
+	--atlas-sky: var(--school-green-soft);
+	--atlas-amber: var(--school-gold);
 
 	font-family: var(--font-sans);
 	background-color: var(--background);
@@ -58,68 +66,71 @@
 
 .dark [data-landing],
 [data-landing].dark {
-	/*
-	 * Meridian-like charcoal — soft dark gray, not pure black / app #141414.
-	 * Cards sit one step above so rims and frosted panels read clearly.
-	 */
-	--background: #1a1a1e;
-	--foreground: #fafafa;
-	--card: #222228;
-	--card-foreground: #fafafa;
-	--popover: #222228;
-	--popover-foreground: #fafafa;
-	--primary: #3b82f6;
-	--primary-foreground: #ffffff;
-	--secondary: #2a2a32;
-	--secondary-foreground: #fafafa;
-	--muted: #2a2a32;
-	--muted-foreground: #a1a1aa;
-	--accent: #3b82f6;
-	--accent-foreground: #ffffff;
-	--destructive: #f2555a;
+	--background: #121916;
+	--foreground: #f4f7f5;
+	--card: #1a221e;
+	--card-foreground: #f4f7f5;
+	--popover: #1a221e;
+	--popover-foreground: #f4f7f5;
+	--primary: #3cb882;
+	--primary-foreground: #0a1812;
+	--secondary: #222c28;
+	--secondary-foreground: #f4f7f5;
+	--muted: #222c28;
+	--muted-foreground: #9aa8a0;
+	--accent: #3cb882;
+	--accent-foreground: #0a1812;
+	--destructive: #f07070;
 	--border: rgba(255, 255, 255, 0.1);
-	--input: rgba(255, 255, 255, 0.14);
-	--ring: #3b82f6;
+	--input: rgba(255, 255, 255, 0.12);
+	--ring: #3cb882;
+
+	--school-green: #3cb882;
+	--school-green-deep: #2d9b6f;
+	--school-green-soft: #5fd4a0;
+	--school-gold: #d4b04a;
+	--school-cream: #121916;
+	--school-navy: #f4f7f5;
+	--school-whatsapp: #3ecf8e;
+
+	--atlas-blue: var(--school-green);
+	--atlas-blue-deep: var(--school-green-deep);
 	color-scheme: dark;
 }
 
-/*
- * Sync html + body tokens with the landing surface so overscroll, safe-area,
- * and any root-level bg-background never flash app #141414 against the page.
- */
 html.dark:has([data-landing]) {
-	--background: #1a1a1e;
-	--foreground: #fafafa;
-	--card: #222228;
-	--card-foreground: #fafafa;
-	--popover: #222228;
-	--popover-foreground: #fafafa;
-	--secondary: #2a2a32;
-	--secondary-foreground: #fafafa;
-	--muted: #2a2a32;
-	--muted-foreground: #a1a1aa;
+	--background: #121916;
+	--foreground: #f4f7f5;
+	--card: #1a221e;
+	--card-foreground: #f4f7f5;
+	--popover: #1a221e;
+	--popover-foreground: #f4f7f5;
+	--secondary: #222c28;
+	--secondary-foreground: #f4f7f5;
+	--muted: #222c28;
+	--muted-foreground: #9aa8a0;
 	--border: rgba(255, 255, 255, 0.1);
-	--input: rgba(255, 255, 255, 0.14);
-	background-color: #1a1a1e;
+	--input: rgba(255, 255, 255, 0.12);
+	background-color: #121916;
 	color-scheme: dark;
 }
 
 html.dark:has([data-landing]) body {
-	background-color: #1a1a1e;
+	background-color: #121916;
 }
 
 html:has([data-landing]):not(.dark) {
-	--background: #ffffff;
-	--foreground: #09090b;
-	background-color: #ffffff;
+	--background: #faf8f4;
+	--foreground: #1c2838;
+	background-color: #faf8f4;
 }
 
 html:has([data-landing]):not(.dark) body {
-	background-color: #ffffff;
+	background-color: #faf8f4;
 }
 
 [data-landing] ::selection {
-	background: color-mix(in srgb, var(--atlas-blue) 30%, transparent);
+	background: color-mix(in srgb, var(--school-green) 28%, transparent);
 	color: var(--foreground);
 }
 

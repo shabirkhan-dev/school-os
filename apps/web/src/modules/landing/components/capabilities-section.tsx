@@ -217,19 +217,19 @@ function OutputVisual() {
 			<div className="mt-2.5 font-mono text-[11px] leading-5">
 				<p className="text-white/45">{"{"}</p>
 				<p className="pl-3">
-					<span className="text-sky-300">&quot;eventType&quot;</span>
+					<span className="text-emerald-300">&quot;eventType&quot;</span>
 					<span className="text-white/45">: </span>
 					<span className="text-emerald-300">&quot;attendance.arrival_scanned.v1&quot;</span>
 					<span className="text-white/45">,</span>
 				</p>
 				<p className="pl-3">
-					<span className="text-sky-300">&quot;studentId&quot;</span>
+					<span className="text-emerald-300">&quot;studentId&quot;</span>
 					<span className="text-white/45">: </span>
 					<span className="text-emerald-300">&quot;stu_rohan&quot;</span>
 					<span className="text-white/45">,</span>
 				</p>
 				<p className="pl-3">
-					<span className="text-sky-300">&quot;markedAt&quot;</span>
+					<span className="text-emerald-300">&quot;markedAt&quot;</span>
 					<span className="text-white/45">: </span>
 					<span className="text-emerald-300">&quot;08:17:04&quot;</span>
 				</p>

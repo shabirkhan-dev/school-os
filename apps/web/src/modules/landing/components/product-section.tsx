@@ -134,7 +134,7 @@ function TimelineRow({ event, index }: { event: IncidentEvent; index: number }) 
 			<div className="min-w-0 flex-1 pt-0.5">
 				<div className="flex items-center gap-2">
 					<span
-						className={`size-1.5 shrink-0 rounded-full ${isOk ? "bg-emerald-400" : "bg-sky-400"}`}
+						className={`size-1.5 shrink-0 rounded-full ${isOk ? "bg-emerald-400" : "bg-teal-400"}`}
 					/>
 					<span className="truncate font-medium text-white text-xs">{event.title}</span>
 				</div>

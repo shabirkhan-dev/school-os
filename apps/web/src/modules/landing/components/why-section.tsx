@@ -156,7 +156,7 @@ function RoutePreview() {
 					viewport={viewport}
 					transition={springSoft}
 				>
-					<span className="grid size-7 place-items-center rounded-full bg-[#2a2a32] text-sky-300">
+					<span className="grid size-7 place-items-center rounded-full bg-[#2a2a32] text-emerald-300">
 						<HugeiconsIcon icon={Activity01Icon} className="size-3.5" aria-hidden={true} />
 					</span>
 					<span className="pr-1 font-medium text-white">p99 420ms</span>
@@ -334,7 +334,7 @@ function AnimatedMoney({ value }: { value: number }) {
 function ReadyPreview() {
 	const reduce = useReducedMotion();
 	const rows = [
-		{ name: "checkout-api", value: 9180, Icon: HexagonIcon, tone: "text-sky-300" },
+		{ name: "checkout-api", value: 9180, Icon: HexagonIcon, tone: "text-emerald-300" },
 		{ name: "payments-worker", value: 6420, Icon: TriangleIcon, tone: "text-violet-300" },
 		{ name: "edge-gateway", value: 2840, Icon: HierarchyIcon, tone: "text-amber-300" },
 	] as const;

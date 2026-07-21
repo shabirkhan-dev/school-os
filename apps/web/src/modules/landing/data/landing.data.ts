@@ -15,7 +15,13 @@ export const SITE = {
 	name: "School OS",
 	title: "School OS — the trust engine for schools",
 	description:
-		"Mobile-first school management starting with Smart Attendance and instant WhatsApp parent alerts — not another ERP.",
+		"Mobile-first school management for networks like Aga Khan Schools — Smart Attendance and instant WhatsApp parent alerts, not another ERP.",
+} as const;
+
+export const TRUST_BAR = {
+	headline: "Designed for institutional school networks",
+	detail:
+		"School OS is being shaped with Aga Khan Schools (AKES) in mind — parent-first communication, audit-ready records, and calm editorial UX that matches how serious schools present themselves.",
 } as const;
 
 export type NavLink = {
@@ -134,6 +140,52 @@ export type ChatMessage = {
 	text: string;
 };
 
+export const DEMO_STUDENT = {
+	name: "Rohan Sharma",
+	shortName: "Rohan",
+	class: "7B",
+	section: "Secondary",
+	studentId: "stu_rohan",
+	avatarSeed: "RohanStudent",
+	campus: "AKES Campus",
+	gate: "Gate A",
+	time: "8:17 AM",
+} as const;
+
+export type WalkthroughPhaseId = "scan" | "identify" | "mark" | "queue" | "notify" | "dashboard";
+
+export type WalkthroughPhase = {
+	id: WalkthroughPhaseId;
+	label: string;
+	durationMs: number;
+};
+
+/** Timings for the hero attendance walkthrough loop */
+export const WALKTHROUGH_PHASES: WalkthroughPhase[] = [
+	{ id: "scan", label: "Scan QR", durationMs: 2600 },
+	{ id: "identify", label: "Identify student", durationMs: 2000 },
+	{ id: "mark", label: "Mark present", durationMs: 1800 },
+	{ id: "queue", label: "Queue alert", durationMs: 1600 },
+	{ id: "notify", label: "WhatsApp parent", durationMs: 2400 },
+	{ id: "dashboard", label: "Dashboard live", durationMs: 2800 },
+];
+
+/** WhatsApp messages revealed during the walkthrough (in order) */
+export const WALKTHROUGH_WHATSAPP: ChatMessage[] = [
+	{
+		role: "agent",
+		text: "✓ Rohan Sharma (7B) arrived safely at AKES Campus · Gate A · 8:17 AM",
+	},
+	{
+		role: "user",
+		text: "Thank you — peace of mind before my first meeting.",
+	},
+	{
+		role: "agent",
+		text: "Maths homework due tomorrow. Q2 fee reminder goes out Friday.",
+	},
+];
+
 export const AGENT_MESSAGES: ChatMessage[] = [
 	{
 		role: "user",
@@ -239,7 +291,7 @@ export const CAPABILITY_CARDS: CapabilityCard[] = [
 			"Signed QR tokens, gate scans, absentee auto-notify, and departure alerts. The mundane register becomes a real-time trust signal.",
 		span: 4,
 		kind: "reasoning",
-		palette: "blue",
+		palette: "teal",
 	},
 	{
 		title: "Reach parents where they are",
@@ -247,7 +299,7 @@ export const CAPABILITY_CARDS: CapabilityCard[] = [
 			"Official WhatsApp Business API, SMS fallback, email, and in-app push — routed by urgency, consent, and quiet hours.",
 		span: 2,
 		kind: "tools",
-		palette: "blue",
+		palette: "lime",
 	},
 	{
 		title: "One app, every role",
@@ -271,7 +323,7 @@ export const CAPABILITY_CARDS: CapabilityCard[] = [
 			"Draft report comments, flag early risk, suggest homework — always with policy checks and approval on high-impact actions.",
 		span: 2,
 		kind: "approval",
-		palette: "blue",
+		palette: "lime",
 	},
 ];
 
@@ -404,7 +456,7 @@ export const TESTIMONIALS_ROW_ONE: Testimonial[] = [
 		quote:
 			"Parents stopped calling the office by 10 AM. The WhatsApp arrival alert sold the whole school in one demo.",
 		name: "Maya Chen",
-		role: "Principal, Greenfield Academy",
+		role: "Principal, North Campus",
 		seed: "Maya",
 	},
 	{
@@ -496,7 +548,7 @@ export const WHY_CARDS: WhyCard[] = [
 		title: "Parents feel it in seconds",
 		description:
 			"Scan at the gate → WhatsApp alert → live dashboard. The emotional loop that drives admissions and retention.",
-		palette: "blue",
+		palette: "teal",
 		kind: "route",
 	},
 	{
