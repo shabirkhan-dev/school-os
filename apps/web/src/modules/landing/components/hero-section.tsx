@@ -11,11 +11,11 @@ import { MeshCanvas } from "./mesh-canvas";
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 const STEP_DOT: Record<string, string> = {
-	anomaly: "bg-emerald-500",
-	investigating: "bg-sky-500",
-	root: "bg-teal-500",
-	fix: "bg-amber-500",
-	notify: "bg-rose-500",
+	scan: "bg-emerald-500",
+	record: "bg-sky-500",
+	queue: "bg-teal-500",
+	notify: "bg-amber-500",
+	dashboard: "bg-rose-500",
 };
 
 export function HeroSection() {
@@ -42,7 +42,7 @@ export function HeroSection() {
 								/>
 							))}
 						</span>
-						Built for teams shipping school products
+						Built for private schools that need parent trust
 					</motion.span>
 
 					<motion.h1
@@ -51,9 +51,9 @@ export function HeroSection() {
 						transition={{ duration: 0.8, delay: 0.08, ease: EASE }}
 						className="mt-6 text-balance font-semibold text-3xl leading-[1.1] tracking-tight sm:text-5xl"
 					>
-						<span className="text-foreground">Ship a school-scale monorepo</span>
+						<span className="text-foreground">Peace of mind for parents.</span>
 						<br />
-						<span className="text-foreground/40">without starting from zero</span>
+						<span className="text-foreground/40">Proof for schools.</span>
 					</motion.h1>
 
 					<motion.p
@@ -62,8 +62,8 @@ export function HeroSection() {
 						transition={{ duration: 0.8, delay: 0.16, ease: EASE }}
 						className="mx-auto mt-5 max-w-xl text-pretty text-base text-muted-foreground leading-7"
 					>
-						Bun + Turborepo starter with Next.js, Expo, NestJS, docs, and Rust — shared UI, hooks,
-						CI, and Docker included.
+						Mobile-first school management starting with Smart Attendance — scan a QR at the gate,
+						alert parents on WhatsApp in seconds, and update the principal dashboard live.
 					</motion.p>
 
 					<motion.div
@@ -74,10 +74,10 @@ export function HeroSection() {
 					>
 						<motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }}>
 							<Link
-								href="#deploy"
+								href="#product"
 								className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary px-6 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto"
 							>
-								Get started
+								See the demo
 							</Link>
 						</motion.div>
 						<motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }}>
@@ -122,13 +122,13 @@ function WorkflowCard() {
 						<HugeiconsIcon icon={File01Icon} className="size-4" aria-hidden={true} />
 					</span>
 					<div>
-						<p className="font-semibold text-neutral-900 text-sm">Workspace bootstrap</p>
-						<p className="text-[11px] text-neutral-500">school-os · just now</p>
+						<p className="font-semibold text-neutral-900 text-sm">Morning attendance</p>
+						<p className="text-[11px] text-neutral-500">Greenfield Academy · Gate A</p>
 					</div>
 				</div>
 
 				<p className="mt-4 font-medium text-[10px] text-neutral-400 uppercase tracking-wider">
-					Setup progress
+					Live flow
 				</p>
 
 				<div className="mt-2 flex flex-col">
@@ -170,7 +170,7 @@ function WorkflowCard() {
 					<span className="grid size-5 place-items-center rounded-full bg-emerald-500 text-white">
 						<HugeiconsIcon icon={Tick02Icon} className="size-3" aria-hidden={true} />
 					</span>
-					<span className="font-medium text-emerald-700 text-xs">Incident resolved</span>
+					<span className="font-medium text-emerald-700 text-xs">Parent alert sent</span>
 					<span className="ml-auto text-[10px] text-emerald-600/70">09:42</span>
 				</motion.div>
 			</div>
@@ -191,10 +191,10 @@ function AgentChatCard() {
 						<HugeiconsIcon icon={Robot01Icon} className="size-4" aria-hidden={true} />
 					</span>
 					<div>
-						<p className="font-semibold text-neutral-900 text-sm">Dev loop</p>
+						<p className="font-semibold text-neutral-900 text-sm">Parent · WhatsApp</p>
 						<p className="flex items-center gap-1.5 text-[11px] text-neutral-500">
 							<span className="size-1.5 rounded-full bg-emerald-500" />
-							Monorepo starter · ready
+							Online · opted in
 						</p>
 					</div>
 				</div>

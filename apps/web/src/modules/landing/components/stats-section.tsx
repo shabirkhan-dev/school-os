@@ -18,7 +18,7 @@ export function StatsSection() {
 					</FadeIn>
 					<FadeIn delay={0.08}>
 						<h2 className="mt-5 text-balance font-serif text-3xl font-medium leading-tight tracking-tight sm:text-4xl">
-							Apps in the starter. Minutes to first dev.
+							Built for schools that live on WhatsApp.
 						</h2>
 					</FadeIn>
 				</div>

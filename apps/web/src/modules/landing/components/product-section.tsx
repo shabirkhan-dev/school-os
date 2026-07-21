@@ -31,21 +31,21 @@ export function ProductSection() {
 				<div>
 					<FadeIn>
 						<span className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 font-medium text-muted-foreground text-xs">
-							See the workflow
+							The killer demo
 						</span>
 					</FadeIn>
 
 					<FadeIn delay={0.08}>
 						<h2 className="mt-6 text-balance font-serif text-3xl text-foreground leading-tight sm:text-4xl">
-							From clone to running workspace — every step is wired in.
+							Scan once. Parents know. Principals see it live.
 						</h2>
 					</FadeIn>
 
 					<FadeIn delay={0.14}>
 						<p className="mt-5 text-pretty text-muted-foreground leading-8">
-							School OS ships a complete Turborepo loop: install once, run shared tasks, enforce
-							architecture boundaries, and stand up web, mobile, API, docs, and Rust without
-							cobbling five repos together.
+							Smart Attendance turns a mundane register into a trust signal — signed QR tokens,
+							multi-channel alerts, absentee auto-notify, and a dashboard that updates during
+							morning rush.
 						</p>
 					</FadeIn>
 
@@ -95,10 +95,10 @@ function IncidentTimelineCard() {
 	return (
 		<div className="relative rounded-2xl border border-white/10 bg-neutral-950/85 p-4 shadow-2xl backdrop-blur-md sm:p-5">
 			<div className="flex items-center justify-between border-white/10 border-b pb-3">
-				<span className="font-medium font-mono text-white text-xs">school-os · turborepo</span>
+				<span className="font-medium font-mono text-white text-xs">attendance · live</span>
 				<span className="flex items-center gap-1.5 text-[10px] text-white/60">
 					<span className="size-1.5 rounded-full bg-emerald-400" />
-					resolving
+					08:17 AM
 				</span>
 			</div>
 

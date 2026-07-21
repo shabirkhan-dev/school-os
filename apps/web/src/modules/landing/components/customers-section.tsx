@@ -13,7 +13,7 @@ export function CustomersSection() {
 			<div className="mx-auto w-full max-w-6xl">
 				<FadeIn>
 					<p className="text-center text-sm text-muted-foreground">
-						Built with the stack you already know
+						Production stack behind the trust engine
 					</p>
 				</FadeIn>
 

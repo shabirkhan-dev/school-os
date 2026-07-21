@@ -9,9 +9,9 @@ import { cn } from "../lib/utils";
 import { FadeIn } from "./fade-in";
 import { MeshCanvas } from "./mesh-canvas";
 
-const MEMORY_CHIPS = ["apps/web + mobile", "packages/ui + logger", "Docker + Dev Container"];
+const MEMORY_CHIPS = ["Teacher scan app", "Parent WhatsApp + feed", "Principal dashboard"];
 
-const CONNECTED_TOOLS = ["next", "expo", "nestjs"] as const;
+const CONNECTED_TOOLS = ["whatsapp", "sms", "push"] as const;
 
 export function CapabilitiesSection() {
 	return (
@@ -25,13 +25,13 @@ export function CapabilitiesSection() {
 					</FadeIn>
 					<FadeIn delay={0.08}>
 						<h2 className="mt-5 text-balance font-serif text-3xl text-foreground leading-[1.1] sm:text-4xl">
-							Everything your workspace needs, wired up out of the box.
+							Everything a school needs — phased, not bloated.
 						</h2>
 					</FadeIn>
 					<FadeIn delay={0.12}>
 						<p className="mt-4 max-w-xl text-pretty text-muted-foreground text-sm leading-7">
-							Shared UI, Nest spine, Expo mobile, docs, CI, and Docker — ship a school product
-							without stitching five repos yourself.
+							Start with attendance and alerts. Add communication, academics, finance, and
+							AI-assisted tools on the same production spine — NestJS, Postgres, Expo, and WhatsApp.
 						</p>
 					</FadeIn>
 				</div>
@@ -112,7 +112,7 @@ function ReasoningVisual() {
 		<div className="absolute inset-0 flex items-center justify-center p-6">
 			<div className="flex w-full max-w-sm flex-col gap-2.5">
 				<div className="max-w-[88%] self-end rounded-2xl rounded-br-sm bg-white px-3.5 py-2 font-medium text-neutral-900 text-xs shadow-lg">
-					Find recent AI papers and email me a summary.
+					Student scanned at Gate A — queue parent alert.
 				</div>
 
 				<div className="self-start rounded-2xl rounded-bl-sm border border-white/20 bg-white/15 p-3 shadow-[0_20px_40px_-28px_rgba(0,0,0,0.5)] backdrop-blur-md">
@@ -147,7 +147,7 @@ function ReasoningVisual() {
 				</div>
 
 				<div className="max-w-[92%] self-start rounded-2xl rounded-bl-sm border border-white/20 bg-white/15 px-3.5 py-2 text-white text-xs shadow-[0_20px_40px_-28px_rgba(0,0,0,0.5)] backdrop-blur-md">
-					Sent 5 papers to your inbox — summary included.
+					WhatsApp delivered · dashboard updated · 247 present.
 				</div>
 			</div>
 		</div>
@@ -162,7 +162,7 @@ function ToolsVisual() {
 				<span className="size-2.5 rounded-full bg-white/15" />
 				<span className="size-2.5 rounded-full bg-white/15" />
 			</div>
-			<p className="text-white/45">$ turbo run add</p>
+			<p className="text-white/45">$ notify dispatch</p>
 			<div className="mt-2 flex flex-col gap-1.5">
 				{CONNECTED_TOOLS.map((tool, index) => (
 					<motion.div
@@ -217,21 +217,21 @@ function OutputVisual() {
 			<div className="mt-2.5 font-mono text-[11px] leading-5">
 				<p className="text-white/45">{"{"}</p>
 				<p className="pl-3">
-					<span className="text-sky-300">&quot;intent&quot;</span>
+					<span className="text-sky-300">&quot;eventType&quot;</span>
 					<span className="text-white/45">: </span>
-					<span className="text-emerald-300">&quot;summarize&quot;</span>
+					<span className="text-emerald-300">&quot;attendance.arrival_scanned.v1&quot;</span>
 					<span className="text-white/45">,</span>
 				</p>
 				<p className="pl-3">
-					<span className="text-sky-300">&quot;sources&quot;</span>
+					<span className="text-sky-300">&quot;studentId&quot;</span>
 					<span className="text-white/45">: </span>
-					<span className="text-emerald-300">5</span>
+					<span className="text-emerald-300">&quot;stu_rohan&quot;</span>
 					<span className="text-white/45">,</span>
 				</p>
 				<p className="pl-3">
-					<span className="text-sky-300">&quot;confidence&quot;</span>
+					<span className="text-sky-300">&quot;markedAt&quot;</span>
 					<span className="text-white/45">: </span>
-					<span className="text-emerald-300">0.94</span>
+					<span className="text-emerald-300">&quot;08:17:04&quot;</span>
 				</p>
 				<p className="text-white/45">{"}"}</p>
 			</div>
@@ -246,7 +246,7 @@ function ApprovalVisual() {
 				<HugeiconsIcon icon={Alert02Icon} className="size-3 text-amber-300" aria-hidden={true} />
 				<span className="font-medium">Approval needed</span>
 			</div>
-			<p className="mt-2 font-mono text-white text-xs">deploy → production?</p>
+			<p className="mt-2 font-mono text-white text-xs">Send AI-drafted report comment?</p>
 			<div className="mt-3 flex gap-2">
 				<button
 					type="button"
