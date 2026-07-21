@@ -105,28 +105,68 @@ html.dark:has([data-landing]) {
 	--card-foreground: #f4f7f5;
 	--popover: #1a221e;
 	--popover-foreground: #f4f7f5;
+	--primary: #3cb882;
+	--primary-foreground: #0a1812;
 	--secondary: #222c28;
 	--secondary-foreground: #f4f7f5;
 	--muted: #222c28;
 	--muted-foreground: #9aa8a0;
+	--accent: #3cb882;
+	--accent-foreground: #0a1812;
+	--destructive: #f07070;
 	--border: rgba(255, 255, 255, 0.1);
 	--input: rgba(255, 255, 255, 0.12);
+	--ring: #3cb882;
+
+	--school-green: #3cb882;
+	--school-green-deep: #2d9b6f;
+	--school-green-soft: #5fd4a0;
+	--school-gold: #d4b04a;
+	--school-cream: #121916;
+	--school-navy: #f4f7f5;
+	--school-whatsapp: #3ecf8e;
+
+	--atlas-blue: var(--school-green);
+	--atlas-blue-deep: var(--school-green-deep);
+
 	background-color: #121916;
 	color-scheme: dark;
 }
 
-html.dark:has([data-landing]) body {
-	background-color: #121916;
+html.dark:has([data-landing]) body,
+html:has([data-landing]):not(.dark) body {
+	background-color: var(--background);
 }
 
 html:has([data-landing]):not(.dark) {
 	--background: #faf8f4;
 	--foreground: #1c2838;
-	background-color: #faf8f4;
-}
+	--card: #ffffff;
+	--card-foreground: #1c2838;
+	--popover: #ffffff;
+	--popover-foreground: #1c2838;
+	--primary: #0a6847;
+	--primary-foreground: #f6fdf9;
+	--secondary: #f0ede6;
+	--secondary-foreground: #243044;
+	--muted: #f0ede6;
+	--muted-foreground: #5c6778;
+	--accent: #0a6847;
+	--accent-foreground: #f6fdf9;
+	--border: rgba(28, 40, 56, 0.12);
+	--input: rgba(28, 40, 56, 0.14);
+	--ring: #0a6847;
 
-html:has([data-landing]):not(.dark) body {
+	--school-green: #0a6847;
+	--school-green-deep: #085a3c;
+	--school-green-soft: #2d9b6f;
+	--school-gold: #b8922a;
+	--school-cream: #faf8f4;
+	--school-navy: #1c2838;
+	--school-whatsapp: #25a56a;
+
 	background-color: #faf8f4;
+	color-scheme: light;
 }
 
 [data-landing] ::selection {

@@ -2,8 +2,14 @@
 
 import { Alert02Icon, BracesIcon, SparklesIcon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { motion } from "motion/react";
-import { AGENT_TOOL_CALLS, CAPABILITY_CARDS, type CapabilityCard } from "../data/landing.data";
+import { motion, useReducedMotion } from "motion/react";
+import { useCallback, useEffect, useState } from "react";
+import {
+	AGENT_TOOL_CALLS,
+	CAPABILITY_CARDS,
+	type CapabilityCard,
+	DEMO_STUDENT,
+} from "../data/landing.data";
 import { ATLAS_EASE, hoverLift, hoverTap, springSnappy } from "../lib/motion";
 import { cn } from "../lib/utils";
 import { FadeIn } from "./fade-in";
@@ -69,9 +75,11 @@ function CapabilityTile({ card }: { card: CapabilityCard }) {
 			<div
 				className={cn(
 					"relative overflow-hidden rounded-2xl",
-					tall ? "h-[24rem]" : "flex h-[13rem] items-center justify-center p-5",
-					card.kind === "tools" && "p-5",
-					card.kind === "memory" && "flex items-center p-5",
+					tall
+						? "h-[20rem] sm:h-[24rem]"
+						: "flex h-[11rem] items-center justify-center p-4 sm:h-[13rem] sm:p-5",
+					card.kind === "tools" && "p-4 sm:p-5",
+					card.kind === "memory" && "flex items-center p-4 sm:p-5",
 				)}
 			>
 				<div className="absolute inset-0 size-full overflow-hidden">
@@ -108,11 +116,28 @@ function CapabilityVisual({ card }: { card: CapabilityCard }) {
 }
 
 function ReasoningVisual() {
+	const reduceMotion = useReducedMotion();
+	const [tick, setTick] = useState(0);
+
+	const advance = useCallback(() => {
+		setTick((prev) => prev + 1);
+	}, []);
+
+	useEffect(() => {
+		if (reduceMotion) {
+			return;
+		}
+		const timer = window.setInterval(advance, 2200);
+		return () => window.clearInterval(timer);
+	}, [advance, reduceMotion]);
+
+	const doneCount = (tick % (AGENT_TOOL_CALLS.length + 1)) + 1;
+
 	return (
-		<div className="absolute inset-0 flex items-center justify-center p-6">
+		<div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6">
 			<div className="flex w-full max-w-sm flex-col gap-2.5">
-				<div className="max-w-[88%] self-end rounded-2xl rounded-br-sm bg-white px-3.5 py-2 font-medium text-neutral-900 text-xs shadow-lg">
-					Student scanned at Gate A — queue parent alert.
+				<div className="max-w-[92%] self-end rounded-2xl rounded-br-sm bg-white px-3.5 py-2 font-medium text-neutral-900 text-[11px] shadow-lg sm:text-xs">
+					{DEMO_STUDENT.shortName} scanned at {DEMO_STUDENT.gate} — queue parent alert.
 				</div>
 
 				<div className="self-start rounded-2xl rounded-bl-sm border border-white/20 bg-white/15 p-3 shadow-[0_20px_40px_-28px_rgba(0,0,0,0.5)] backdrop-blur-md">
@@ -122,33 +147,40 @@ function ReasoningVisual() {
 						</span>
 						<span className="font-medium">Working</span>
 						<span className="flex gap-1">
-							<span className="size-1 rounded-full bg-white/50" />
+							<span className="size-1 rounded-full bg-white/50 atlas-live-dot" />
 							<span className="size-1 rounded-full bg-white/50" />
 							<span className="size-1 rounded-full bg-white/50" />
 						</span>
 					</div>
 					<div className="flex flex-col gap-1.5">
-						{AGENT_TOOL_CALLS.map((call, index) => (
-							<motion.div
-								key={call.name}
-								initial={{ opacity: 0, y: 6 }}
-								whileInView={{ opacity: 1, y: 0 }}
-								viewport={{ once: true }}
-								transition={{ duration: 0.35, delay: index * 0.1, ease: ATLAS_EASE }}
-								className="flex items-center gap-2 text-white text-xs"
-							>
-								<span className="flex-1 font-mono text-[11px]">{call.name}</span>
-								<span className="grid size-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-neutral-900">
-									<HugeiconsIcon icon={Tick02Icon} className="size-2.5" aria-hidden={true} />
-								</span>
-							</motion.div>
-						))}
+						{AGENT_TOOL_CALLS.map((call, index) => {
+							const isDone = index < doneCount;
+							return (
+								<motion.div
+									key={call.name}
+									animate={{ opacity: isDone ? 1 : 0.45 }}
+									className="flex items-center gap-2 text-white text-xs"
+								>
+									<span className="flex-1 font-mono text-[10px] sm:text-[11px]">{call.name}</span>
+									{isDone ? (
+										<span className="grid size-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-neutral-900">
+											<HugeiconsIcon icon={Tick02Icon} className="size-2.5" aria-hidden={true} />
+										</span>
+									) : (
+										<span className="size-4 shrink-0 rounded-full border border-white/30" />
+									)}
+								</motion.div>
+							);
+						})}
 					</div>
 				</div>
 
-				<div className="max-w-[92%] self-start rounded-2xl rounded-bl-sm border border-white/20 bg-white/15 px-3.5 py-2 text-white text-xs shadow-[0_20px_40px_-28px_rgba(0,0,0,0.5)] backdrop-blur-md">
+				<motion.div
+					animate={{ opacity: doneCount > AGENT_TOOL_CALLS.length ? 1 : 0.5 }}
+					className="max-w-[92%] self-start rounded-2xl rounded-bl-sm border border-white/20 bg-white/15 px-3.5 py-2 text-[11px] text-white shadow-[0_20px_40px_-28px_rgba(0,0,0,0.5)] backdrop-blur-md sm:text-xs"
+				>
 					WhatsApp delivered · dashboard updated · 247 present.
-				</div>
+				</motion.div>
 			</div>
 		</div>
 	);
@@ -225,7 +257,7 @@ function OutputVisual() {
 				<p className="pl-3">
 					<span className="text-emerald-300">&quot;studentId&quot;</span>
 					<span className="text-white/45">: </span>
-					<span className="text-emerald-300">&quot;stu_rohan&quot;</span>
+					<span className="text-emerald-300">&quot;stu_hassan_raz&quot;</span>
 					<span className="text-white/45">,</span>
 				</p>
 				<p className="pl-3">

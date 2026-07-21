@@ -84,8 +84,8 @@ export function HeroSection() {
 
 				<FadeIn
 					delay={0.2}
-					className="relative mt-14 overflow-hidden rounded-3xl border border-border/70 p-4 sm:p-6"
-					y={40}
+					className="relative mt-14 min-h-[32rem] overflow-hidden rounded-3xl border border-border/70 p-4 sm:min-h-[34rem] sm:p-6"
+					y={0}
 				>
 					<div className="absolute inset-0 size-full overflow-hidden">
 						<MeshCanvas intensity={0.3} palette="teal" speed={0.22} />

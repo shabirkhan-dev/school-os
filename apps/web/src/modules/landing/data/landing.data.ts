@@ -19,9 +19,9 @@ export const SITE = {
 } as const;
 
 export const TRUST_BAR = {
-	headline: "Designed for institutional school networks",
+	headline: "Designed for Pakistani school networks",
 	detail:
-		"School OS is being shaped with Aga Khan Schools (AKES) in mind — parent-first communication, audit-ready records, and calm editorial UX that matches how serious schools present themselves.",
+		"School OS is being shaped with Aga Khan Schools (AKES) in mind — parent-first WhatsApp alerts, audit-ready records, and calm editorial UX for Karachi, Lahore, and Islamabad campuses.",
 } as const;
 
 export type NavLink = {
@@ -94,10 +94,10 @@ export type HeroAvatar = {
 };
 
 export const HERO_AVATARS: HeroAvatar[] = [
-	{ seed: "ParentPriya", alt: "Parent" },
-	{ seed: "TeacherMarcus", alt: "Teacher" },
-	{ seed: "PrincipalLena", alt: "Principal" },
-	{ seed: "GuardTheo", alt: "Gate guard" },
+	{ seed: "AminaKhan", alt: "Parent" },
+	{ seed: "BilalAhmed", alt: "Teacher" },
+	{ seed: "SanaMalik", alt: "Principal" },
+	{ seed: "RafayHussain", alt: "Gate guard" },
 ];
 
 export type WorkflowStep = {
@@ -111,7 +111,7 @@ export const WORKFLOW_STEPS: WorkflowStep[] = [
 	{
 		id: "scan",
 		label: "QR scanned at gate",
-		detail: "Rohan · Class 7B · Gate A",
+		detail: "Hassan Raza · Class 7-B · Gate A",
 	},
 	{
 		id: "record",
@@ -121,12 +121,12 @@ export const WORKFLOW_STEPS: WorkflowStep[] = [
 	{
 		id: "queue",
 		label: "Alert queued",
-		detail: "WhatsApp utility template · guardian opt-in",
+		detail: "WhatsApp utility template · Amina Khan opted in",
 	},
 	{
 		id: "notify",
 		label: "Parent notified",
-		detail: "“Rohan arrived safely at school.”",
+		detail: "“Hassan arrived safely at AKES Karachi.”",
 	},
 	{
 		id: "dashboard",
@@ -141,15 +141,22 @@ export type ChatMessage = {
 };
 
 export const DEMO_STUDENT = {
-	name: "Rohan Sharma",
-	shortName: "Rohan",
-	class: "7B",
+	name: "Hassan Raza",
+	shortName: "Hassan",
+	class: "7-B",
 	section: "Secondary",
-	studentId: "stu_rohan",
-	avatarSeed: "RohanStudent",
-	campus: "AKES Campus",
+	studentId: "stu_hassan_raz",
+	avatarSeed: "HassanRaza",
+	campus: "AKES Karachi",
 	gate: "Gate A",
 	time: "8:17 AM",
+} as const;
+
+export const DEMO_PARENT = {
+	name: "Amina Khan",
+	shortName: "Amina",
+	relation: "Mother",
+	seed: "AminaKhan",
 } as const;
 
 export type WalkthroughPhaseId = "scan" | "identify" | "mark" | "queue" | "notify" | "dashboard";
@@ -157,47 +164,48 @@ export type WalkthroughPhaseId = "scan" | "identify" | "mark" | "queue" | "notif
 export type WalkthroughPhase = {
 	id: WalkthroughPhaseId;
 	label: string;
+	shortLabel: string;
 	durationMs: number;
 };
 
 /** Timings for the hero attendance walkthrough loop */
 export const WALKTHROUGH_PHASES: WalkthroughPhase[] = [
-	{ id: "scan", label: "Scan QR", durationMs: 2600 },
-	{ id: "identify", label: "Identify student", durationMs: 2000 },
-	{ id: "mark", label: "Mark present", durationMs: 1800 },
-	{ id: "queue", label: "Queue alert", durationMs: 1600 },
-	{ id: "notify", label: "WhatsApp parent", durationMs: 2400 },
-	{ id: "dashboard", label: "Dashboard live", durationMs: 2800 },
+	{ id: "scan", label: "Scan QR", shortLabel: "Scan", durationMs: 2600 },
+	{ id: "identify", label: "Identify student", shortLabel: "Match", durationMs: 2000 },
+	{ id: "mark", label: "Mark present", shortLabel: "Mark", durationMs: 1800 },
+	{ id: "queue", label: "Queue alert", shortLabel: "Queue", durationMs: 1600 },
+	{ id: "notify", label: "WhatsApp parent", shortLabel: "Alert", durationMs: 2400 },
+	{ id: "dashboard", label: "Dashboard live", shortLabel: "Live", durationMs: 2800 },
 ];
 
 /** WhatsApp messages revealed during the walkthrough (in order) */
 export const WALKTHROUGH_WHATSAPP: ChatMessage[] = [
 	{
 		role: "agent",
-		text: "✓ Rohan Sharma (7B) arrived safely at AKES Campus · Gate A · 8:17 AM",
+		text: "✓ Hassan Raza (7-B) arrived safely at AKES Karachi · Gate A · 8:17 AM",
 	},
 	{
 		role: "user",
-		text: "Thank you — peace of mind before my first meeting.",
+		text: "Shukriya — I can focus on work knowing he reached safely.",
 	},
 	{
 		role: "agent",
-		text: "Maths homework due tomorrow. Q2 fee reminder goes out Friday.",
+		text: "Maths homework due kal. Q2 fee reminder jummah ko jayegi.",
 	},
 ];
 
 export const AGENT_MESSAGES: ChatMessage[] = [
 	{
 		role: "user",
-		text: "Did Rohan reach school today?",
+		text: "Aaj Hassan school pohanch gaya?",
 	},
 	{
 		role: "agent",
-		text: "Yes — marked present at 8:17 AM after a gate scan. You’re all set.",
+		text: "Ji — gate scan par 8:17 AM present mark hua. Aap set hain.",
 	},
 	{
 		role: "agent",
-		text: "Homework for maths is due tomorrow. Fee reminder for Q2 goes out Friday.",
+		text: "Maths homework kal due hai. Q2 fee reminder jummah ko bheji jayegi.",
 	},
 ];
 
@@ -233,7 +241,7 @@ export type IncidentEvent = {
 export const INCIDENT_TIMELINE: IncidentEvent[] = [
 	{
 		title: "Gate scan",
-		detail: "stu_rohan · arrival_scanned · 08:17:04",
+		detail: "stu_hassan_raz · arrival_scanned · 08:17:04",
 		tone: "info",
 		icon: "activity",
 	},
@@ -407,37 +415,37 @@ export type AboutTeamMember = {
 
 export const ABOUT_TEAM: AboutTeamMember[] = [
 	{
-		id: "priya",
-		name: "Priya Nair",
+		id: "sana",
+		name: "Dr. Sana Malik",
 		role: "Product & schools",
-		seed: "PriyaNair",
-		bio: "Former school admin. Obsessed with the ninety-second demo: scan, alert, dashboard.",
+		seed: "SanaMalik",
+		bio: "Former AKES admin. Obsessed with the ninety-second demo: scan, alert, dashboard.",
 		tone: "green",
 		profileHref: "#",
 	},
 	{
-		id: "marcus",
-		name: "Marcus Vale",
+		id: "bilal",
+		name: "Bilal Ahmed",
 		role: "Platform engineer",
-		seed: "MarcusVale",
+		seed: "BilalAhmed",
 		bio: "NestJS spine, outbox workers, WhatsApp pipelines — reliable side effects at school scale.",
 		tone: "teal",
 		profileHref: "#",
 	},
 	{
-		id: "lena",
-		name: "Lena Ortiz",
+		id: "zainab",
+		name: "Zainab Shah",
 		role: "Mobile & UX",
-		seed: "LenaOrtiz",
-		bio: "Expo apps that feel Apple-polished on mid-range Android — zero training required.",
+		seed: "ZainabShah",
+		bio: "Expo apps polished for mid-range Android in Karachi and Lahore — zero training required.",
 		tone: "blue",
 		profileHref: "#",
 	},
 	{
-		id: "theo",
-		name: "Theo Park",
+		id: "usman",
+		name: "Usman Farooq",
 		role: "AI & intelligence",
-		seed: "TheoPark",
+		seed: "UsmanFarooq",
 		bio: "Early warnings and draft comments with reason codes — AI that earns trust, not hype.",
 		tone: "amber",
 		profileHref: "#",
@@ -454,48 +462,48 @@ export type Testimonial = {
 export const TESTIMONIALS_ROW_ONE: Testimonial[] = [
 	{
 		quote:
-			"Parents stopped calling the office by 10 AM. The WhatsApp arrival alert sold the whole school in one demo.",
-		name: "Maya Chen",
-		role: "Principal, North Campus",
-		seed: "Maya",
+			"Parents stopped calling the office by 10 AM. The WhatsApp arrival alert sold the whole campus in one demo.",
+		name: "Dr. Sana Malik",
+		role: "Principal, AKES Karachi",
+		seed: "SanaMalik",
 	},
 	{
 		quote:
-			"Attendance used to take twelve minutes per class. Now I scan at the gate and parents know before first period.",
-		name: "Diego Santos",
-		role: "Class teacher",
-		seed: "Diego",
+			"Attendance used to take twelve minutes per class. Ab gate par scan karte hain aur parents ko pehle period se pehle pata chal jata hai.",
+		name: "Bilal Ahmed",
+		role: "Class teacher, Lahore",
+		seed: "BilalAhmed",
 	},
 	{
 		quote:
-			"I finally know my daughter reached school without calling anyone. That one message is worth the fee.",
-		name: "Priya Nair",
-		role: "Parent",
-		seed: "Priya",
+			"I finally know Hassan reached school without calling anyone. Woh ek message fee se zyada qeemti hai.",
+		name: "Amina Khan",
+		role: "Parent, Clifton Karachi",
+		seed: "AminaKhan",
 	},
 ];
 
 export const TESTIMONIALS_ROW_TWO: Testimonial[] = [
 	{
 		quote:
-			"The principal dashboard updates live during morning rush. Absentee follow-ups happen automatically.",
-		name: "Theo Park",
-		role: "School owner",
-		seed: "Theo",
+			"The principal dashboard updates live during subah ki rush. Absentee follow-ups ab khud hoti hain.",
+		name: "Zainab Shah",
+		role: "School owner, Islamabad",
+		seed: "ZainabShah",
 	},
 	{
 		quote:
-			"We piloted on one campus, then rolled out to four. Consent tracking and audit logs made compliance easy.",
-		name: "Lena Ortiz",
-		role: "Operations lead",
-		seed: "Lena",
+			"We piloted on one campus, phir char campuses par rollout. Consent tracking ne compliance easy kar di.",
+		name: "Rafay Hussain",
+		role: "Operations lead, Multan",
+		seed: "RafayHussain",
 	},
 	{
 		quote:
-			"It's not another ERP we won't use. It's the one thing parents demand and teachers actually finish.",
-		name: "Maya Chen",
-		role: "Admissions head",
-		seed: "MayaTwo",
+			"Yeh doosra ERP nahi jo koi kholta hi nahi. Woh ek cheez hai jo parents maangte hain aur teachers khatam karti hain.",
+		name: "Fatima Noor",
+		role: "Admissions head, Rawalpindi",
+		seed: "FatimaNoor",
 	},
 ];
 

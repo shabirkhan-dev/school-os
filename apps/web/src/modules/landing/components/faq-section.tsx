@@ -4,6 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { BouncyAccordion } from "@/components/motion/bouncy-accordion";
 import { FAQ_ITEMS } from "../data/landing.data";
 import { FadeIn } from "./fade-in";
+import { FaqConsentDemo } from "./faq-consent-demo";
 
 export function FaqSection() {
 	const items = FAQ_ITEMS.map((item) => ({
@@ -15,7 +16,7 @@ export function FaqSection() {
 
 	return (
 		<section id="faq" className="w-full px-4 py-20 sm:px-8 sm:py-28">
-			<div className="mx-auto w-full max-w-3xl">
+			<div className="mx-auto w-full max-w-6xl">
 				<div className="mb-10 text-center sm:mb-14">
 					<FadeIn>
 						<span className="inline-flex items-center rounded-full border border-border/60 bg-muted/40 px-3 py-1 font-medium text-foreground/80 text-xs">
@@ -35,20 +36,27 @@ export function FaqSection() {
 					</FadeIn>
 				</div>
 
-				<FadeIn delay={0.14} y={24}>
-					<BouncyAccordion
-						items={items}
-						defaultValue="erp"
-						classNames={{
-							item: "border border-border/60 bg-card/80 shadow-none",
-							trigger: "items-start py-4 hover:bg-muted/20",
-							title: "overflow-visible whitespace-normal text-clip leading-snug",
-							icon: "mt-0.5",
-							chevron: "mt-0.5",
-							description: "text-sm leading-6 sm:text-[15px]",
-						}}
-					/>
-				</FadeIn>
+				<div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-10 xl:grid-cols-[minmax(0,1fr)_24rem]">
+					<FadeIn delay={0.14} y={24}>
+						<BouncyAccordion
+							items={items}
+							defaultValue="erp"
+							classNames={{
+								item: "border border-border/60 bg-card/80 shadow-none",
+								trigger: "items-start py-4 hover:bg-muted/20",
+								title: "overflow-visible whitespace-normal text-clip leading-snug",
+								icon: "mt-0.5",
+								chevron: "mt-0.5",
+								description: "text-sm leading-6 sm:text-[15px]",
+							}}
+						/>
+					</FadeIn>
+
+					<FadeIn delay={0.18} y={24} className="lg:sticky lg:top-24">
+						<p className="mb-3 font-medium text-foreground text-sm">Compliance in practice</p>
+						<FaqConsentDemo />
+					</FadeIn>
+				</div>
 			</div>
 		</section>
 	);
