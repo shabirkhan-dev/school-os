@@ -9,6 +9,7 @@ type FadeInProps = {
 	children: ReactNode;
 	className?: string;
 	delay?: number;
+	/** Vertical slide in px — keep 0 to avoid perceived layout jump on scroll. */
 	y?: number;
 	blur?: number;
 	duration?: number;
@@ -19,9 +20,9 @@ export function FadeIn({
 	children,
 	className,
 	delay = 0,
-	y = 24,
-	blur = 8,
-	duration = 0.7,
+	y = 0,
+	blur = 0,
+	duration = 0.55,
 	once = true,
 }: FadeInProps) {
 	const reduceMotion = useReducedMotion();
@@ -30,12 +31,24 @@ export function FadeIn({
 		return <div className={className}>{children}</div>;
 	}
 
+	const initial: Record<string, string | number> = { opacity: 0 };
+	const animate: Record<string, string | number> = { opacity: 1 };
+
+	if (y !== 0) {
+		initial.y = y;
+		animate.y = 0;
+	}
+	if (blur > 0) {
+		initial.filter = `blur(${blur}px)`;
+		animate.filter = "blur(0px)";
+	}
+
 	return (
 		<motion.div
 			className={className}
-			initial={{ opacity: 0, y, filter: `blur(${blur}px)` }}
-			whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-			viewport={{ once, margin: "-80px" }}
+			initial={initial}
+			whileInView={animate}
+			viewport={{ once, margin: "-40px" }}
 			transition={{ duration, delay, ease: ATLAS_EASE }}
 		>
 			{children}
@@ -77,7 +90,7 @@ export function Stagger({
 			variants={container}
 			initial="hidden"
 			whileInView="show"
-			viewport={{ once, margin: "-80px" }}
+			viewport={{ once, margin: "-40px" }}
 		>
 			{children}
 		</motion.div>
@@ -90,16 +103,18 @@ type StaggerItemProps = {
 	y?: number;
 };
 
-export function StaggerItem({ children, className, y = 20 }: StaggerItemProps) {
+export function StaggerItem({ children, className, y = 0 }: StaggerItemProps) {
 	const reduceMotion = useReducedMotion();
 
 	const item: Variants = {
-		hidden: { opacity: 0, y, filter: "blur(6px)" },
+		hidden: {
+			opacity: 0,
+			...(y !== 0 ? { y } : {}),
+		},
 		show: {
 			opacity: 1,
 			y: 0,
-			filter: "blur(0px)",
-			transition: { duration: 0.6, ease: ATLAS_EASE },
+			transition: { duration: 0.5, ease: ATLAS_EASE },
 		},
 	};
 

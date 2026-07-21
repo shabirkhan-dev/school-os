@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { STATS, type Stat } from "../data/landing.data";
 import { ATLAS_EASE } from "../lib/motion";
 import { FadeIn } from "./fade-in";
+import { StatsCampusDemo } from "./stats-campus-demo";
 
 export function StatsSection() {
 	return (
@@ -28,6 +29,8 @@ export function StatsSection() {
 						<StatCell key={stat.label} stat={stat} index={index} />
 					))}
 				</div>
+
+				<StatsCampusDemo />
 			</div>
 		</section>
 	);
@@ -37,13 +40,12 @@ function StatCell({ stat, index }: { stat: Stat; index: number }) {
 	return (
 		<motion.div
 			className="flex flex-col items-center justify-center bg-card px-6 py-10 text-center"
-			initial={{ opacity: 0, y: 16 }}
-			whileInView={{ opacity: 1, y: 0 }}
+			initial={{ opacity: 0 }}
+			whileInView={{ opacity: 1 }}
 			viewport={{ once: true, margin: "-40px" }}
 			transition={{ duration: 0.5, delay: index * 0.06, ease: ATLAS_EASE }}
-			whileHover={{ scale: 1.02 }}
 		>
-			<span className="font-serif text-4xl font-medium tabular-nums tracking-tight text-foreground sm:text-5xl">
+			<span className="inline-block min-w-[4.5rem] font-serif text-4xl font-medium tabular-nums tracking-tight text-foreground sm:min-w-[5rem] sm:text-5xl">
 				{stat.display ? (
 					stat.display
 				) : (

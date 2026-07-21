@@ -22,11 +22,12 @@ import {
 	useTransform,
 } from "motion/react";
 import { useEffect, useRef } from "react";
-import { WHY_CARDS, type WhyCard } from "../data/landing.data";
+import { DEMO_PARENT, DEMO_STUDENT, WHY_CARDS, type WhyCard } from "../data/landing.data";
 import { ATLAS_EASE, springSnappy, springSoft } from "../lib/motion";
+import { useAtlasTheme } from "../lib/theme";
 import { cn } from "../lib/utils";
 import { FadeIn } from "./fade-in";
-import { MeshCanvas, WHY_RIM_COLORS } from "./mesh-canvas";
+import { MeshCanvas, WHY_RIM_COLORS, WHY_RIM_COLORS_DARK } from "./mesh-canvas";
 
 const RIM_KEY: Record<WhyCard["palette"], keyof typeof WHY_RIM_COLORS> = {
 	blue: "blue",
@@ -79,15 +80,17 @@ export function WhySection() {
 }
 
 function WhyCardItem({ card }: { card: WhyCard }) {
+	const { theme } = useAtlasTheme();
 	const rim = RIM_KEY[card.palette];
+	const rimColors = theme === "dark" ? WHY_RIM_COLORS_DARK : WHY_RIM_COLORS;
 
 	return (
 		<article className="flex h-full flex-col">
-			<div className="relative flex h-[22.5rem] w-full shrink-0 flex-col overflow-hidden rounded-[1.75rem] p-[10px] sm:h-[23.5rem]">
+			<div className="relative flex h-[20rem] w-full shrink-0 flex-col overflow-hidden rounded-[1.75rem] p-[10px] sm:h-[23.5rem]">
 				<div className="absolute inset-0 overflow-hidden">
 					<MeshCanvas
 						palette={card.palette}
-						colors={WHY_RIM_COLORS[rim]}
+						colors={rimColors[rim]}
 						intensity={0.38}
 						speed={0.14}
 					/>
@@ -108,7 +111,7 @@ function WhyCardItem({ card }: { card: WhyCard }) {
 	);
 }
 
-/** Matches Meridian route card: source pill → forked lines → dest pills → white value bar. */
+/** Gate scan → parent alert → live dashboard — the ninety-second trust loop. */
 function RoutePreview() {
 	const reduce = useReducedMotion();
 
@@ -116,11 +119,13 @@ function RoutePreview() {
 		<div className="flex h-full min-h-0 flex-col">
 			<div className="flex items-start justify-between gap-2">
 				<div>
-					<p className="font-medium text-[13px] text-white">Route preview</p>
-					<p className="mt-0.5 text-[11px] text-white/45">checkout-api across 2 signals</p>
+					<p className="font-medium text-[13px] text-white">Trust loop</p>
+					<p className="mt-0.5 text-[11px] text-white/45">
+						{DEMO_STUDENT.campus} · {DEMO_STUDENT.gate}
+					</p>
 				</div>
 				<span className="rounded-full bg-emerald-500/15 px-2.5 py-1 font-medium text-[10px] text-emerald-300">
-					Best path
+					&lt;5s
 				</span>
 			</div>
 
@@ -156,14 +161,14 @@ function RoutePreview() {
 					viewport={viewport}
 					transition={springSoft}
 				>
-					<span className="grid size-7 place-items-center rounded-full bg-[#2a2a32] text-sky-300">
+					<span className="grid size-7 place-items-center rounded-full bg-[#2a2a32] text-emerald-300">
 						<HugeiconsIcon icon={Activity01Icon} className="size-3.5" aria-hidden={true} />
 					</span>
-					<span className="pr-1 font-medium text-white">p99 420ms</span>
+					<span className="pr-1 font-medium text-white">{DEMO_STUDENT.time}</span>
 				</motion.div>
 
 				<div className="relative z-10 flex flex-col gap-6">
-					{([{ label: "Traces 62%" }, { label: "Logs 38%" }] as const).map((dest, i) => (
+					{([{ label: "WhatsApp sent" }, { label: "Dashboard +1" }] as const).map((dest, i) => (
 						<motion.div
 							key={dest.label}
 							className={cn(pill, "min-w-[7.25rem] justify-center")}
@@ -179,37 +184,40 @@ function RoutePreview() {
 			</div>
 
 			<motion.div
-				className="mt-4 flex items-center justify-end rounded-full bg-white px-4 py-2.5"
+				className="mt-4 flex items-center justify-between gap-2 rounded-full bg-white px-4 py-2.5"
 				initial={reduce ? false : { opacity: 0, y: 8 }}
 				whileInView={{ opacity: 1, y: 0 }}
 				viewport={viewport}
 				transition={{ ...springSnappy, delay: 0.5 }}
 			>
-				<span className="font-mono text-[12px] text-neutral-900 tabular-nums">
-					N+1 · deploy a3f9c2
+				<span className="truncate font-medium text-[11px] text-neutral-900">
+					{DEMO_STUDENT.name} · Class {DEMO_STUDENT.class}
+				</span>
+				<span className="shrink-0 font-mono text-[11px] text-emerald-700 tabular-nums">
+					present
 				</span>
 			</motion.div>
 		</div>
 	);
 }
 
-/** Matches Meridian keys: Device / Backup / Recovery around fingerprint hub. */
+/** Guardian consent, quiet hours, and audit — no alert ships unchecked. */
 function KeysPreview() {
 	const reduce = useReducedMotion();
 
 	const shares = [
 		{
-			label: "Scope",
+			label: "Opt-in",
 			className: "absolute top-2 left-2",
 			path: "M56 28 L112 88",
 		},
 		{
-			label: "Approve",
+			label: "Quiet hrs",
 			className: "absolute top-2 right-2",
 			path: "M184 28 L128 88",
 		},
 		{
-			label: "Revoke",
+			label: "Audit log",
 			className: "absolute bottom-3 left-1/2 -translate-x-1/2",
 			path: "M120 148 L120 112",
 		},
@@ -218,8 +226,8 @@ function KeysPreview() {
 	return (
 		<div className="flex h-full min-h-0 flex-col">
 			<div>
-				<p className="font-medium text-[13px] text-white">Approval architecture</p>
-				<p className="mt-0.5 text-[11px] text-white/45">Three gates. No silent write.</p>
+				<p className="font-medium text-[13px] text-white">Guardian safety gates</p>
+				<p className="mt-0.5 text-[11px] text-white/45">{DEMO_PARENT.name} · opted in · WhatsApp</p>
 			</div>
 
 			<div className="relative mt-2 flex min-h-0 flex-1 items-center justify-center">
@@ -285,27 +293,23 @@ function KeysPreview() {
 					/>
 				</span>
 				<div>
-					<p className="font-medium text-[12px] text-white">Nothing ships unchecked</p>
-					<p className="mt-0.5 text-[11px] text-white/45">A risky action cannot skip approval.</p>
+					<p className="font-medium text-[12px] text-white">No alert without consent</p>
+					<p className="mt-0.5 text-[11px] text-white/45">
+						Utility templates only · delivery logged.
+					</p>
 				</div>
 			</motion.div>
 		</div>
 	);
 }
 
-function AnimatedMoney({ value }: { value: number }) {
+function AnimatedCount({ value }: { value: number }) {
 	const reduce = useReducedMotion();
 	const ref = useRef<HTMLSpanElement>(null);
 	const inView = useInView(ref, { once: true, amount: 0.5 });
 	const motionValue = useMotionValue(0);
 	const spring = useSpring(motionValue, { stiffness: 80, damping: 24 });
-	const display = useTransform(spring, (latest) =>
-		latest.toLocaleString("en-US", {
-			style: "currency",
-			currency: "USD",
-			maximumFractionDigits: 0,
-		}),
-	);
+	const display = useTransform(spring, (latest) => Math.round(latest).toLocaleString("en-PK"));
 
 	useEffect(() => {
 		if (reduce) {
@@ -316,35 +320,32 @@ function AnimatedMoney({ value }: { value: number }) {
 	}, [inView, motionValue, reduce, value]);
 
 	if (reduce) {
-		return (
-			<span ref={ref}>
-				{value.toLocaleString("en-US", {
-					style: "currency",
-					currency: "USD",
-					maximumFractionDigits: 0,
-				})}
-			</span>
-		);
+		return <span ref={ref}>{value.toLocaleString("en-PK")}</span>;
 	}
 
 	return <motion.span ref={ref}>{display}</motion.span>;
 }
 
-/** Matches Meridian portfolio: big balance, asset rows with $ + checks, white CTA. */
+/** Phased modules on one NestJS + Postgres spine — attendance first. */
 function ReadyPreview() {
 	const reduce = useReducedMotion();
 	const rows = [
-		{ name: "checkout-api", value: 9180, Icon: HexagonIcon, tone: "text-sky-300" },
-		{ name: "payments-worker", value: 6420, Icon: TriangleIcon, tone: "text-violet-300" },
-		{ name: "edge-gateway", value: 2840, Icon: HierarchyIcon, tone: "text-amber-300" },
+		{
+			name: "Smart Attendance",
+			phase: "Phase 1 · live",
+			Icon: HexagonIcon,
+			tone: "text-emerald-300",
+		},
+		{ name: "Parent comms", phase: "Phase 2", Icon: TriangleIcon, tone: "text-violet-300" },
+		{ name: "Fee collection", phase: "Phase 3", Icon: HierarchyIcon, tone: "text-amber-300" },
 	] as const;
 
 	return (
 		<div className="flex h-full min-h-0 flex-col">
 			<div className="flex items-start justify-between gap-2">
 				<div>
-					<p className="font-medium text-[13px] text-white">Stack import</p>
-					<p className="mt-0.5 text-[11px] text-white/45">Reading service health</p>
+					<p className="font-medium text-[13px] text-white">Phase roadmap</p>
+					<p className="mt-0.5 text-[11px] text-white/45">One spine · module by module</p>
 				</div>
 				<motion.span
 					className="grid size-6 place-items-center rounded-full bg-teal-400 text-neutral-950"
@@ -363,9 +364,10 @@ function ReadyPreview() {
 			</div>
 
 			<div className="mt-4">
-				<p className="text-[11px] text-white/45">Combined coverage</p>
+				<p className="text-[11px] text-white/45">Students on pilot spine</p>
 				<p className="mt-1 font-medium text-[1.7rem] text-white tabular-nums tracking-tight">
-					<AnimatedMoney value={18440} />
+					<AnimatedCount value={247} />
+					<span className="ml-1 text-[1rem] text-white/50">present today</span>
 				</p>
 			</div>
 
@@ -388,13 +390,7 @@ function ReadyPreview() {
 							<HugeiconsIcon icon={row.Icon} className="size-3.5" aria-hidden={true} />
 						</span>
 						<span className="min-w-0 flex-1 truncate text-[12px] text-white">{row.name}</span>
-						<span className="font-medium text-[12px] text-white/80 tabular-nums">
-							{row.value.toLocaleString("en-US", {
-								style: "currency",
-								currency: "USD",
-								maximumFractionDigits: 0,
-							})}
-						</span>
+						<span className="font-medium text-[11px] text-white/70">{row.phase}</span>
 						<motion.span
 							initial={reduce ? false : { scale: 0 }}
 							whileInView={{ scale: 1 }}
@@ -419,7 +415,7 @@ function ReadyPreview() {
 				transition={{ ...springSnappy, delay: 0.5 }}
 			>
 				<HugeiconsIcon icon={LockIcon} className="size-3.5" aria-hidden={true} />
-				Clone & run
+				Start pilot
 				<HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" aria-hidden={true} />
 			</motion.div>
 		</div>

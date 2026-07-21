@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { JetBrains_Mono, Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { AgentShell, atlasThemeScript, PricingSection } from "@/modules/landing";
 import "@/modules/landing/styles/landing.css";
@@ -10,9 +10,9 @@ const jakarta = Plus_Jakarta_Sans({
 	display: "swap",
 });
 
-const fraunces = Fraunces({
+const playfair = Playfair_Display({
 	subsets: ["latin"],
-	variable: "--font-fraunces",
+	variable: "--font-playfair",
 	display: "swap",
 });
 
@@ -35,7 +35,7 @@ export default function PricingPage() {
 				// biome-ignore lint/security/noDangerouslySetInnerHtml: theme before paint
 				dangerouslySetInnerHTML={{ __html: atlasThemeScript }}
 			/>
-			<div className={cn(jakarta.variable, fraunces.variable, jetbrains.variable)}>
+			<div className={cn(jakarta.variable, playfair.variable, jetbrains.variable)}>
 				<AgentShell>
 					<PricingSection />
 				</AgentShell>

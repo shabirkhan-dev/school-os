@@ -45,7 +45,12 @@ export function useAtlasTheme(): {
 	setTheme: (theme: AtlasTheme) => void;
 	toggleTheme: () => void;
 } {
-	const [theme, setThemeState] = useState<AtlasTheme>(ATLAS_DEFAULT_THEME);
+	const [theme, setThemeState] = useState<AtlasTheme>(() => {
+		if (typeof window === "undefined") {
+			return ATLAS_DEFAULT_THEME;
+		}
+		return getStoredAtlasTheme();
+	});
 
 	useEffect(() => {
 		const initial = getStoredAtlasTheme();

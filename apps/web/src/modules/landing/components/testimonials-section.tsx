@@ -46,7 +46,7 @@ export function TestimonialsSection() {
 function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 	return (
 		<motion.figure
-			className="flex w-[380px] max-w-[85vw] flex-col justify-between rounded-3xl border border-border/60 bg-card/50 p-6"
+			className="flex w-[min(100%,20rem)] max-w-[85vw] flex-col justify-between rounded-3xl border border-border/60 bg-card/50 p-5 sm:w-[380px] sm:p-6"
 			whileHover={hoverLift}
 			transition={springSnappy}
 		>

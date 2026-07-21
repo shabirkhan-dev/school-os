@@ -29,7 +29,7 @@ const PRINCIPLE_ICONS = {
 const TONE_BG: Record<AboutTeamMember["tone"], string> = {
 	green: "from-emerald-950/80 via-emerald-900/40 to-neutral-950",
 	teal: "from-teal-950/80 via-teal-900/40 to-neutral-950",
-	blue: "from-sky-950/80 via-blue-900/40 to-neutral-950",
+	blue: "from-emerald-950/80 via-emerald-900/40 to-neutral-950",
 	amber: "from-amber-950/70 via-orange-950/35 to-neutral-950",
 };
 
@@ -60,9 +60,9 @@ function AboutHero() {
 				</FadeIn>
 				<FadeIn delay={0.12}>
 					<p className="mt-6 max-w-2xl text-pretty text-muted-foreground text-base leading-8 sm:text-lg">
-						School OS gives affordable private schools a mobile-first way to prove student safety,
-						keep parents informed on WhatsApp, and grow admissions — on a production-grade open
-						monorepo teams can extend.
+						School OS gives institutional school networks — including Aga Khan Schools — a
+						mobile-first way to prove student safety, keep parents informed on WhatsApp, and grow
+						admissions on a production-grade platform teams can extend.
 					</p>
 				</FadeIn>
 			</div>
