@@ -1,6 +1,7 @@
 # School OS - Project overview
 
 This document is the deeper technical reference for the School OS monorepo.
+For product vision and positioning, see `README.md` and `/docs/product-vision`.
 For quick setup/use, start with `README.md`.
 
 ## What this repository includes
@@ -175,6 +176,6 @@ More details: docs app `/docs/docker` and `docker/README.md`.
 ## Related docs
 
 - `README.md` - quick start and high-level navigation
-- Docs app (`apps/docs`): `/docs/product-system-design`, `/docs/qol`, `/docs/production-roadmap`
+- Docs app (`apps/docs`): `/docs/product-vision`, `/docs/product-system-design`, `/docs/qol`, `/docs/production-roadmap`
 - `scripts/README.md` - script usage and structure
 - `apps/*/README.md` - per-app setup and workflows

@@ -2,7 +2,7 @@
 title: Product System Design
 description: Product architecture, data model, services, and security model.
 ---
-Last updated: 2026-05-21
+Last updated: 2026-07-22
 
 Status: working architecture blueprint. This is the target design for turning the current
 school-os monorepo into the product described in the portfolio/spec notes: a mobile-first trust
@@ -54,7 +54,7 @@ best initial production stack is:
 
 - Next.js web dashboard.
 - Expo mobile app for parents, teachers, guards, and bus conductors.
-- Hono API as the primary product API.
+- NestJS API as the primary product API.
 - Postgres as the only source-of-truth database.
 - Redis for cache, rate limits, short-lived locks, and lightweight queues.
 - A worker process for outbox delivery, scheduled jobs, reminders, and AI pipelines.
@@ -88,7 +88,7 @@ Primary personas:
                     +----------+-----------+
                                |
 +----------------+     +-------v--------+      +------------------+
-| apps/web       |     | apps/hono-api  |      | apps/mobile      |
+| apps/web       |     | apps/nest-api  |      | apps/mobile      |
 | Next dashboard |<--->| Product API    |<---->| Expo app         |
 +----------------+     +-------+--------+      +------------------+
                                |
@@ -123,8 +123,8 @@ Later:
 | --- | --- | --- | --- |
 | Web app | `apps/web` | Principal/admin/teacher web workflows | Keep route composition in `src/app`, feature UI in `src/modules` |
 | Mobile app | `apps/mobile` | Parent, teacher, guard, bus workflows | Use role-specific route groups and secure token storage |
-| Product API | `apps/hono-api` | Auth, tenancy, domain APIs, webhooks | Primary backend for production |
-| Worker | `apps/hono-api/src/workers` | Outbox, reminders, notification dispatch, AI jobs | Same codebase at first to avoid a premature service split |
+| Product API | `apps/nest-api` | Auth, tenancy, domain APIs, webhooks | Primary backend for production |
+| Worker | `apps/nest-api/src/workers` | Outbox, reminders, notification dispatch, AI jobs | Same codebase at first to avoid a premature service split |
 | Docs app | `apps/docs` | Internal/product docs | Publish architecture and API docs here later |
 | Postgres | Docker/cloud managed | Primary data store | Tenant-scoped relational source of truth |
 | Redis | Docker/cloud managed | Cache, rate limit, locks, queue buffer | Never source of truth for business records |
@@ -152,7 +152,7 @@ Only split after clear operational pressure:
 - `transport-service`: routes, trips, locations, bus attendance.
 - `ai-intelligence-service`: student profiles, risk signals, actions, agent runs.
 
-Until then, keep them as modules inside `apps/hono-api/src/modules`.
+Until then, keep them as modules inside `apps/nest-api/src/modules`.
 
 ## Internal Communication
 
@@ -160,9 +160,9 @@ Until then, keep them as modules inside `apps/hono-api/src/modules`.
 
 Use HTTP JSON for direct request/response flows:
 
-- Browser/mobile -> Hono API.
-- Hono API -> payment provider, WhatsApp provider, map provider, object storage.
-- Hono API -> FastAPI AI service later, only through a typed internal client.
+- Browser/mobile -> Nest API.
+- Nest API -> payment provider, WhatsApp provider, map provider, object storage.
+- Nest API -> FastAPI AI service later, only through a typed internal client.
 
 Rules:
 
@@ -170,7 +170,7 @@ Rules:
 - Authenticated requests derive `tenantId`, `userId`, and `role` from the session, not from the
   body.
 - Service-to-service calls use service JWTs or mTLS once split.
-- Public contracts use OpenAPI. TypeScript internal clients may use Hono RPC where useful.
+- Public contracts use OpenAPI (Swagger). TypeScript clients use typed fetch or generated SDKs.
 
 ### Asynchronous Events
 
@@ -416,8 +416,8 @@ flags, discipline notes, emergency alerts, and parent-facing academic summaries.
 
 ## API Route Design
 
-Expose versioned product APIs under `/api/v1`. The current `/auth/*` Hono routes can remain during
-transition, but new product routes should be versioned.
+Expose versioned product APIs under `/api/v1`. Auth routes live under `/api/v1/auth` in Nest;
+new product routes should follow the same versioned prefix.
 
 Response envelope:
 
@@ -511,7 +511,7 @@ apps/web/src/app
 
 Next.js guidance from the installed docs supports route groups for organization without changing
 URLs, route handlers for backend-for-frontend endpoints, and a dedicated data access layer for
-server-side authorization and minimal DTOs. For School OS, use direct Hono API calls through a
+server-side authorization and minimal DTOs. For School OS, use direct Nest API calls through a
 small DAL/client and do not pass full database objects into client components.
 
 ### Expo Mobile
@@ -808,9 +808,9 @@ events. Treat it as high-sensitivity software from the start.
 | Webhooks | Signature verification, idempotency, replay window |
 | Audit | Append-only audit for auth, permissions, attendance corrections, payments, AI actions |
 
-The current web auth context supports Hono cookie auth but still supports Python/Rust bearer tokens
-stored in localStorage. Before production, standardize on cookie/BFF style auth for the web and
-SecureStore-backed sessions for mobile.
+The current web auth context uses Nest cookie sessions; mobile uses SecureStore-backed tokens.
+Before production, standardize on cookie/BFF style auth for the web and SecureStore-backed
+sessions for mobile.
 
 ### Privacy And Compliance
 
@@ -906,7 +906,7 @@ Backups:
 Recommended module layout:
 
 ```text
-apps/hono-api/src/modules/attendance
+apps/nest-api/src/modules/attendance
 +-- attendance.routes.ts
 +-- attendance.controller.ts
 +-- attendance.service.ts
@@ -931,7 +931,7 @@ Shared packages to add when implementation starts:
 
 ### Phase 0: Architecture Foundation
 
-- Pick one production API: Hono.
+- Pick one production API: NestJS (`apps/nest-api`).
 - Keep FastAPI/Rust/Nest as labs until a concrete service split is justified.
 - Add product schema plan and module boundaries.
 - Add shared contracts package.
@@ -999,7 +999,7 @@ Shared packages to add when implementation starts:
 | MySQL | Integration/import target only, not core product DB |
 | Cache | Redis cache-aside plus rate limits, locks, and lightweight queues |
 | Kafka | Not MVP; add after outbox/worker is insufficient |
-| API framework | Hono for primary product API |
+| API framework | NestJS for primary product API |
 | Python/FastAPI | Use later for AI/ML service, not core CRUD |
 | Rust | Use later for high-throughput edge scanner/realtime/infra work if needed |
 | Vector search | pgvector first |
@@ -1045,8 +1045,8 @@ Shared packages to add when implementation starts:
   and https://www.ftc.gov/business-guidance/resources/complying-coppa-frequently-asked-questions
 - FERPA directory information guidance:
   https://studentprivacy.ed.gov/content/directory-information
-- Hono secure headers middleware:
-  https://hono.dev/docs/middleware/builtin/secure-headers
+- NestJS Helmet and security middleware:
+  https://docs.nestjs.com/security/helmet
 - Expo SecureStore documentation:
   https://docs.expo.dev/versions/latest/sdk/securestore/
 - OpenAI Responses API and Agents SDK:

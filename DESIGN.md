@@ -6,8 +6,9 @@ Figma MCP, Onlook, Scamp, or similar tools.
 
 ## Product Intent
 
-This School OS should produce production-grade application interfaces, not generic demo pages.
-Generated UI must feel domain-specific, accessible, responsive, and built from reusable components.
+School OS is a **trust engine for schools** — mobile-first, WhatsApp-native, starting with Smart
+Attendance and parent alerts. Generated UI must feel domain-specific (school operations, not generic
+SaaS), accessible, responsive, and built from reusable components.
 
 ## Audience
 

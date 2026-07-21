@@ -1,21 +1,124 @@
 # School OS
 
-**An AI-native operating system for schools** — built as a production-grade monorepo with Bun, Turborepo, Next.js, Expo, and NestJS.
+> **The trust engine for schools. Peace of mind for parents.**
 
-School OS is not a generic ERP or dashboard. It is designed to understand school state, surface risk and policy gaps, orchestrate workflows, and assist staff with AI — while keeping humans in the loop for important decisions.
+School OS is a **mobile-first, Apple-polished** school management platform built on one premise: **parents want to know their child is safe, and schools want to prove it.**
 
-## What's in the box
+It is **not a generic ERP**. It is a **trust and communication engine** for affordable private schools (roughly 200–2,000 students) — starting with **Smart Attendance** and WhatsApp alerts, then expanding into communication, academics, finance, and AI-assisted teaching tools.
+
+This repository is the **production monorepo** for that product: Bun, Turborepo, Next.js, Expo, NestJS, optional FastAPI AI assist, shared packages, Docker, and CI.
+
+---
+
+## The killer demo
+
+```text
+Teacher scans a student's QR code at the school gate.
+→ Within seconds, the parent's phone buzzes on WhatsApp:
+  "Rohan has arrived safely at school. 8:17 AM."
+
+Principal's dashboard updates in real time:
+  247 students in · 3 absent · 1 late
+```
+
+That loop — **scan → parent alert → live dashboard** — is Phase 1. Everything else builds on that trust signal.
+
+---
+
+## Core philosophy
+
+| Principle | What it means in practice |
+| --- | --- |
+| **Trust first, ERP second** | Every feature answers: *How does this build trust between school and parent?* |
+| **Mobile-first** | Teachers and parents live on their phones. Design for **WhatsApp**, not email. |
+| **Apple-level polish** | Zero training required. Smooth, intentional, beautiful interactions. |
+| **Privacy by default** | Encrypted data, consent tracking, audit logs — especially for minors. |
+| **AI assists, humans decide** | AI drafts and flags; policy checks and approvals gate high-impact actions. |
+| **Built for the exit** | Clean modules, tenant-safe APIs, documentation — ready for acquisition or white-label. |
+
+**Research-informed messaging (2026):** Use the official **WhatsApp Business Cloud API** (not personal WhatsApp or unofficial gateways). Collect explicit parent opt-in, route all minor communication through guardians, prefer **utility templates** for transactional alerts, respect quiet hours, and let schools tune frequency (exception alerts vs. weekly digests) to avoid notification fatigue.
+
+---
+
+## Who it's for
+
+| Persona | Primary device | Core pain |
+| --- | --- | --- |
+| **School owner / principal** | Laptop + phone | *Are parents happy? Are admissions up? Is staff accountable?* |
+| **Teacher** | Phone (often Android) | *Attendance takes forever. Parents keep calling. Reports are manual.* |
+| **Parent / guardian** | Phone (WhatsApp) | *Is my child safe? Did they reach school? What's the homework?* |
+| **Student** | Phone | *What's due tomorrow? Did I miss anything?* |
+
+---
+
+## Product modules (roadmap)
+
+| Phase | Focus | Highlights |
+| --- | --- | --- |
+| **0 — Foundation** | Monorepo, auth, design system | ✅ In progress — see [Built today](#built-today) |
+| **1 — Smart Attendance MVP** | The hook | QR check-in, scan UI, WhatsApp/SMS/email alerts, principal dashboard, parent feed |
+| **2 — Communication & academics** | Retention | Announcements, teacher–parent chat, homework, timetable, report cards |
+| **3 — Finance & AI** | Revenue + moat | Fees, Razorpay/Stripe, AI report comments, early warnings, bus GPS, admissions CRM |
+| **4 — Polish & scale** | Exit-ready | UX audit, white-label, performance, demo videos, enterprise isolation |
+
+Detailed backend phases: [production-roadmap](http://localhost:3002/docs/production-roadmap) · Full architecture: [product-system-design](http://localhost:3002/docs/product-system-design) · Vision brief: [product-vision](http://localhost:3002/docs/product-vision)
+
+### Smart Attendance (Phase 1 detail)
+
+| Feature | Why it matters |
+| --- | --- |
+| QR check-in (phone or card) | Fast gate flow — no special hardware |
+| Multi-channel alerts (WhatsApp, SMS, email, push) | Parents get peace of mind on the channel they use |
+| Departure + absentee auto-notify | Closes the safety loop; cuts truancy |
+| Late arrival log | Discipline with data, not guesswork |
+| Bus attendance + GPS (later) | Premium safety and upsell |
+| Exportable reports | Saves teachers hours vs. paper registers |
+
+Face recognition stays **optional and off by default** until consent, legal review, and a pilot require it.
+
+---
+
+## Built today
+
+The monorepo is a **production-shaped foundation**. Domain modules from the spec are mostly **planned**, not shipped yet.
+
+| Area | Status |
+| --- | --- |
+| Monorepo (Bun, Turbo, Biome, Lefthook, CI) | ✅ |
+| Web admin shell + marketing (`apps/web`) | ✅ |
+| Expo mobile scaffold (`apps/mobile`) | ✅ |
+| NestJS API spine — auth, sessions, MFA, passkeys, profiles (`apps/nest-api`) | ✅ |
+| Billing hooks — Stripe / Razorpay (`apps/nest-api`) | ✅ |
+| AI assist proxy — FastAPI (`apps/ai-api`) | ✅ |
+| Docs site (`apps/docs`) | ✅ |
+| **Attendance, tenants, students, WhatsApp pipeline** | 🔜 Phase 1 per roadmap |
+
+---
+
+## What's in the box (technical)
 
 | Surface | Stack | Role |
 | --- | --- | --- |
-| **Web** | Next.js 16, React 19, Tailwind 4 | Admin, marketing, auth, billing |
-| **Mobile** | Expo SDK 57, Expo Router, NativeWind | Student/parent mobile experience |
-| **API** | NestJS 11, Drizzle, Postgres/Neon | Production backend spine |
-| **Docs** | Fumadocs + MDX | Project documentation site |
-| **AI assist** | FastAPI (optional) | Proxied by Nest — never public-facing |
+| **Web** | Next.js 16, React 19, Tailwind 4 | Admin dashboard, marketing, auth, billing |
+| **Mobile** | Expo SDK 57, Expo Router, NativeWind | Parent, teacher, guard, bus workflows |
+| **API** | NestJS 11, Drizzle, PostgreSQL / Neon | Production backend spine |
+| **Docs** | Fumadocs + MDX | Product and engineering documentation |
+| **AI assist** | FastAPI (optional) | Proxied by Nest — never public-facing LLM keys |
 | **Rust demo** | Axum (optional) | Reference binary / experiments |
 
 Shared packages (`@school-os/ui`, `@school-os/logger`, TypeScript configs), Docker Compose, Dev Container, Lefthook hooks, and CI/CD pipelines are included out of the box.
+
+### Positioning vs. the detailed spec
+
+| Topic | Portfolio spec | This repo (source of truth) |
+| --- | --- | --- |
+| Backend | FastAPI or Hono / Express | **NestJS** — modules, guards, queues, WebSockets |
+| Database | PostgreSQL + SQLite cache | **PostgreSQL** (Neon in prod); Redis planned for cache/queues |
+| AI | OpenAI / Ollama | **FastAPI** behind Nest proxy; human approval for high-risk actions |
+| Messaging | Twilio / WhatsApp Cloud API | Planned via notification engine + outbox worker |
+| Payments | Stripe / Razorpay | **Stripe + Razorpay** providers in `nest-api` billing module |
+
+---
 
 ## Quick start
 
@@ -50,6 +153,8 @@ Before pushing changes:
 bun run lint && bun run format && bun run typecheck
 ```
 
+---
+
 ## Architecture
 
 ```text
@@ -65,14 +170,29 @@ bun run lint && bun run format && bun run typecheck
        │    (NestJS)     │
        └────────┬────────┘
                 ▼
-       ┌─────────────────┐
-       │ Postgres / Neon │
-       └─────────────────┘
+       ┌─────────────────┐     ┌──────────────────┐
+       │ Postgres / Neon │     │ WhatsApp / SMS /   │
+       └─────────────────┘     │ email (Phase 1+)   │
+                               └──────────────────┘
 
 packages/ui · packages/logger · packages/typescript-config
 ```
 
-Import boundaries and naming rules are enforced via `bun run architecture:check`.
+**Core product loop (target):**
+
+```text
+Student arrives → attendance event → parent alert → live dashboard → AI risk signal
+```
+
+**Engineering loop (target):**
+
+```text
+Write to Postgres + outbox in one transaction → worker delivers notifications & realtime → idempotent, auditable side effects
+```
+
+Import boundaries and naming rules: `bun run architecture:check`.
+
+---
 
 ## Monorepo layout
 
@@ -95,6 +215,8 @@ school-os/
 └── .devcontainer/    Reproducible dev environment
 ```
 
+---
+
 ## Commands
 
 | Command | Purpose |
@@ -111,12 +233,16 @@ school-os/
 | `bun run architecture:check` | Import boundary enforcement |
 | `bun run preflight` | Lint + typecheck + test (CI parity) |
 
+---
+
 ## Tooling
 
 - **Bun** workspaces + **Turborepo** orchestration
 - **Biome** for TS/JS lint and format (tabs, line width 100)
 - **Lefthook** pre-commit and commit-msg hooks (Conventional Commits, lowercase)
 - Bash: ShellCheck + shfmt · Python: Ruff · Rust: rustfmt + clippy
+
+---
 
 ## Docker
 
@@ -135,6 +261,8 @@ Optional profiles: `docker compose --profile rust up -d --build` · `--profile a
 
 See [docker/README.md](docker/README.md) and `/docs/docker`.
 
+---
+
 ## Deploy
 
 | Piece | Host |
@@ -144,6 +272,8 @@ See [docker/README.md](docker/README.md) and `/docs/docker`.
 | Database | [Neon](https://neon.tech) (`DATABASE_URL`) |
 
 Guide: `/docs/deploy` ([apps/docs/content/docs/deploy.mdx](apps/docs/content/docs/deploy.mdx)).
+
+---
 
 ## Dev Container
 
@@ -155,6 +285,8 @@ Reopen in Container → bun run prepare → bun run dev
 
 See [.devcontainer/README.md](.devcontainer/README.md).
 
+---
+
 ## Documentation
 
 ```bash
@@ -163,14 +295,27 @@ bun --cwd apps/docs run dev
 
 Key routes (http://localhost:3002/docs/…):
 
+- [product-vision](http://localhost:3002/docs/product-vision) — trust engine positioning and feature spec
 - [quick-start](http://localhost:3002/docs/quick-start) — setup and first run
-- [production-roadmap](http://localhost:3002/docs/production-roadmap) — phased build plan
+- [production-roadmap](http://localhost:3002/docs/production-roadmap) — phased NestJS build plan
+- [product-system-design](http://localhost:3002/docs/product-system-design) — data model, security, APIs
 - [architecture](http://localhost:3002/docs/architecture) — boundaries and conventions
-- [docker](http://localhost:3002/docs/docker) — Compose setup
-- [deploy](http://localhost:3002/docs/deploy) — production deployment
-- [product-system-design](http://localhost:3002/docs/product-system-design) — security and product model
+- [docker](http://localhost:3002/docs/docker) · [deploy](http://localhost:3002/docs/deploy)
 
 Also see [PROJECT.md](PROJECT.md), [DESIGN.md](DESIGN.md), [AGENTS.md](AGENTS.md), [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## Monetization (if operated as SaaS)
+
+| Tier | Monthly (indicative) | Includes |
+| --- | --- | --- |
+| **Pilot** | $0 | Up to ~100 students · attendance + alerts · 1 school |
+| **Standard** | $50–$100 | Up to ~500 students · attendance, communication, homework |
+| **Premium** | $200–$500 | Unlimited · all modules including AI |
+| **Enterprise** | Custom | Multi-school chains · white-label · SLA |
+
+---
 
 ## Contributing
 
@@ -178,7 +323,9 @@ Also see [PROJECT.md](PROJECT.md), [DESIGN.md](DESIGN.md), [AGENTS.md](AGENTS.md
 2. `bun install && bun run prepare`
 3. Create a branch and make changes.
 4. Run `bun run preflight` before opening a PR.
-5. Use [Conventional Commits](https://www.conventionalcommits.org/) — lowercase subjects, e.g. `feat(auth): add password reset flow`.
+5. Use [Conventional Commits](https://www.conventionalcommits.org/) — lowercase subjects, e.g. `feat(attendance): add qr scan endpoint`.
+
+---
 
 ## License
 

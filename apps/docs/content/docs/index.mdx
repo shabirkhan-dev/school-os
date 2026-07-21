@@ -8,17 +8,27 @@ Welcome to the official documentation for the School OS monorepo.
 This project combines modern tooling and a production-minded structure so you can ship web,
 mobile, and API apps from one workspace.
 
-## Why this school-os
+## Why School OS
 
-- Monorepo by default with Turborepo workspaces (`apps/*`, `packages/*`)
+School OS is a **trust engine for schools** — mobile-first, WhatsApp-native, starting with Smart
+Attendance and parent alerts, not a generic ERP. This docs site covers both **product vision** and
+**engineering** for the monorepo.
+
+- Trust-first product: attendance → parent alert → dashboard → AI signals
+- Monorepo with Turborepo workspaces (`apps/*`, `packages/*`)
 - Bun-first package and task management
 - Shared TypeScript and UI packages across apps
 - Built-in quality gates with Biome and Lefthook
-- Multi-platform app setup (Web, Mobile, Nest API, Docs, Rust)
+- Multi-platform: Web, Mobile, Nest API, Docs, optional AI + Rust
 
 ## Start here
 
 <Cards>
+  <Card
+    title="Product Vision"
+    description="Trust engine positioning, personas, and phased roadmap."
+    href="/docs/product-vision"
+  />
   <Card
     title="Quick Start"
     description="Install, bootstrap, and run your first dev session."
