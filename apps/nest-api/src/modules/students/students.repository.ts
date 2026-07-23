@@ -1,0 +1,153 @@
+import { Injectable } from '@nestjs/common';
+import { and, asc, eq, isNull } from 'drizzle-orm';
+
+import { DatabaseService } from '@/database/database.service';
+import { enrollments, type StudentRecord, students } from '@/database/schema';
+
+@Injectable()
+export class StudentsRepository {
+	constructor(private readonly database: DatabaseService) {}
+
+	async listStudents(
+		tenantId: string,
+		filters?: { campusId?: string; status?: StudentRecord['status'] },
+	) {
+		const conditions = [eq(students.tenantId, tenantId), isNull(students.deletedAt)];
+		if (filters?.campusId) conditions.push(eq(students.campusId, filters.campusId));
+		if (filters?.status) conditions.push(eq(students.status, filters.status));
+
+		return this.database.db
+			.select()
+			.from(students)
+			.where(and(...conditions))
+			.orderBy(asc(students.lastName), asc(students.firstName));
+	}
+
+	async findStudentById(tenantId: string, studentId: string) {
+		const [student] = await this.database.db
+			.select()
+			.from(students)
+			.where(
+				and(
+					eq(students.id, studentId),
+					eq(students.tenantId, tenantId),
+					isNull(students.deletedAt),
+				),
+			)
+			.limit(1);
+		return student ?? null;
+	}
+
+	async findStudentByCode(tenantId: string, studentCode: string) {
+		const [student] = await this.database.db
+			.select()
+			.from(students)
+			.where(
+				and(
+					eq(students.tenantId, tenantId),
+					eq(students.studentCode, studentCode),
+					isNull(students.deletedAt),
+				),
+			)
+			.limit(1);
+		return student ?? null;
+	}
+
+	async createStudent(input: typeof students.$inferInsert) {
+		const [student] = await this.database.db.insert(students).values(input).returning();
+		return student;
+	}
+
+	async updateStudent(
+		tenantId: string,
+		studentId: string,
+		input: Partial<typeof students.$inferInsert>,
+	) {
+		const [student] = await this.database.db
+			.update(students)
+			.set({ ...input, updatedAt: new Date() })
+			.where(
+				and(
+					eq(students.id, studentId),
+					eq(students.tenantId, tenantId),
+					isNull(students.deletedAt),
+				),
+			)
+			.returning();
+		return student ?? null;
+	}
+
+	async listEnrollments(
+		tenantId: string,
+		filters?: { studentId?: string; sectionId?: string; academicYearId?: string },
+	) {
+		const conditions = [eq(enrollments.tenantId, tenantId), isNull(enrollments.deletedAt)];
+		if (filters?.studentId) conditions.push(eq(enrollments.studentId, filters.studentId));
+		if (filters?.sectionId) conditions.push(eq(enrollments.sectionId, filters.sectionId));
+		if (filters?.academicYearId) {
+			conditions.push(eq(enrollments.academicYearId, filters.academicYearId));
+		}
+
+		return this.database.db
+			.select()
+			.from(enrollments)
+			.where(and(...conditions))
+			.orderBy(asc(enrollments.enrolledOn));
+	}
+
+	async findEnrollmentById(tenantId: string, enrollmentId: string) {
+		const [enrollment] = await this.database.db
+			.select()
+			.from(enrollments)
+			.where(
+				and(
+					eq(enrollments.id, enrollmentId),
+					eq(enrollments.tenantId, tenantId),
+					isNull(enrollments.deletedAt),
+				),
+			)
+			.limit(1);
+		return enrollment ?? null;
+	}
+
+	async findActiveEnrollmentForYear(tenantId: string, studentId: string, academicYearId: string) {
+		const [enrollment] = await this.database.db
+			.select()
+			.from(enrollments)
+			.where(
+				and(
+					eq(enrollments.tenantId, tenantId),
+					eq(enrollments.studentId, studentId),
+					eq(enrollments.academicYearId, academicYearId),
+					eq(enrollments.status, 'active'),
+					isNull(enrollments.deletedAt),
+				),
+			)
+			.limit(1);
+		return enrollment ?? null;
+	}
+
+	async createEnrollment(input: typeof enrollments.$inferInsert) {
+		const [enrollment] = await this.database.db.insert(enrollments).values(input).returning();
+		return enrollment;
+	}
+
+	async updateEnrollment(
+		tenantId: string,
+		enrollmentId: string,
+		input: Partial<typeof enrollments.$inferInsert>,
+	) {
+		const [enrollment] = await this.database.db
+			.update(enrollments)
+			.set({ ...input, updatedAt: new Date() })
+			.where(
+				and(
+					eq(enrollments.id, enrollmentId),
+					eq(enrollments.tenantId, tenantId),
+					isNull(enrollments.deletedAt),
+				),
+			)
+			.returning();
+		return enrollment ?? null;
+	}
+}

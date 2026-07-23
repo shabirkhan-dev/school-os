@@ -7,6 +7,7 @@ const fullTenantAccess = new Set<PermissionCode>(Object.values(PermissionCodes))
 const readOnlyTenantAccess = new Set<PermissionCode>([
 	PermissionCodes.TENANT_SETTINGS_READ,
 	PermissionCodes.ACADEMIC_READ,
+	PermissionCodes.STUDENTS_READ,
 ]);
 
 const roleMatrix: Record<MembershipRecord['role'], ReadonlySet<PermissionCode>> = {

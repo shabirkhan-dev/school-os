@@ -12,6 +12,7 @@ import { BillingModule } from '@/modules/billing/billing.module';
 import { CampusesModule } from '@/modules/campuses/campuses.module';
 import { HealthModule } from '@/modules/health/health.module';
 import { ProfilesModule } from '@/modules/profiles/profiles.module';
+import { StudentsModule } from '@/modules/students/students.module';
 import { TenantsModule } from '@/modules/tenants/tenants.module';
 import { UsersModule } from '@/modules/users/users.module';
 
@@ -28,6 +29,7 @@ import { UsersModule } from '@/modules/users/users.module';
 		TenantsModule,
 		CampusesModule,
 		AcademicModule,
+		StudentsModule,
 		AuthorizationModule,
 		AiModule,
 	],

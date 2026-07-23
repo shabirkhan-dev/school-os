@@ -229,6 +229,81 @@ describe('Tenancy (e2e)', () => {
 		expect(listSections.body.data.sections).toHaveLength(1);
 	});
 
+	it('creates students and enrolls them into sections', async () => {
+		const campuses = await request(app.getHttpServer())
+			.get(`/api/v1/tenants/${tenantId}/campuses`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.expect(200);
+
+		const campusId = campuses.body.data.campuses[0].id as string;
+
+		const createYear = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/academic-years`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({
+				name: '2026–27 Students',
+				startsOn: '2026-04-01',
+				endsOn: '2027-03-31',
+				status: 'active',
+			})
+			.expect(201);
+
+		const academicYearId = createYear.body.data.academicYear.id as string;
+
+		const createClass = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/classes`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({ name: 'Grade 8', sortOrder: 8 })
+			.expect(201);
+
+		const classId = createClass.body.data.class.id as string;
+
+		const createSection = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/sections`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({
+				campusId,
+				classId,
+				academicYearId,
+				name: '8-A',
+			})
+			.expect(201);
+
+		const sectionId = createSection.body.data.section.id as string;
+
+		const createStudent = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/students`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({
+				campusId,
+				studentCode: 'E2E-2026-001',
+				firstName: 'Amara',
+				lastName: 'Okafor',
+			})
+			.expect(201);
+
+		const studentId = createStudent.body.data.student.id as string;
+		expect(createStudent.body.data.student.studentCode).toBe('E2E-2026-001');
+
+		const createEnrollment = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/students/${studentId}/enrollments`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({ sectionId, academicYearId })
+			.expect(201);
+
+		expect(createEnrollment.body.data.enrollment.sectionId).toBe(sectionId);
+
+		const listStudents = await request(app.getHttpServer())
+			.get(`/api/v1/tenants/${tenantId}/students`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.query({ campusId })
+			.expect(200);
+
+		expect(
+			listStudents.body.data.students.some((student: { id: string }) => student.id === studentId),
+		).toBe(true);
+	});
+
 	it('returns validation errors for invalid tenant input', async () => {
 		const response = await request(app.getHttpServer())
 			.post('/api/v1/tenants')
