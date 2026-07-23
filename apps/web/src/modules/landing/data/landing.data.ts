@@ -16,7 +16,19 @@ export const SITE = {
 	title: "School OS — the trust engine for schools",
 	description:
 		"Mobile-first school management for networks like Aga Khan Schools — Smart Attendance and instant WhatsApp parent alerts, not another ERP.",
+	githubUrl: "https://github.com/shabirkhan-dev/school-os",
 } as const;
+
+const DOCS_ORIGIN = (process.env.NEXT_PUBLIC_DOCS_URL ?? "http://localhost:3002/docs").replace(
+	/\/$/,
+	"",
+);
+
+/** Build a docs site URL from a path segment (e.g. `product-vision`). */
+export function docsHref(path = ""): string {
+	const segment = path.replace(/^\//, "");
+	return segment ? `${DOCS_ORIGIN}/${segment}` : DOCS_ORIGIN;
+}
 
 export const TRUST_BAR = {
 	headline: "Designed for Pakistani school networks",
@@ -70,7 +82,7 @@ export const NAV_ITEMS: NavItem[] = [
 			{
 				label: "Docs",
 				description: "Product vision and engineering guides",
-				href: "http://localhost:3002/docs/product-vision",
+				href: docsHref("product-vision"),
 			},
 			{
 				label: "Stack",
@@ -84,7 +96,7 @@ export const NAV_ITEMS: NavItem[] = [
 			},
 		],
 	},
-	{ label: "Pricing", href: "/pricing" },
+	{ label: "Pricing", href: "/#pricing" },
 	{ label: "About", href: "/about" },
 ];
 
@@ -459,20 +471,23 @@ export type Testimonial = {
 	seed: string;
 };
 
+export const TESTIMONIAL_DISCLAIMER =
+	"Composite pilot scenarios inspired by AKES-scale school networks — not individual endorsements.";
+
 export const TESTIMONIALS_ROW_ONE: Testimonial[] = [
 	{
 		quote:
 			"Parents stopped calling the office by 10 AM. The WhatsApp arrival alert sold the whole campus in one demo.",
-		name: "Dr. Sana Malik",
+		name: "Dr. Farah Siddiqui",
 		role: "Principal, AKES Karachi",
-		seed: "SanaMalik",
+		seed: "FarahSiddiqui",
 	},
 	{
 		quote:
 			"Attendance used to take twelve minutes per class. Ab gate par scan karte hain aur parents ko pehle period se pehle pata chal jata hai.",
-		name: "Bilal Ahmed",
+		name: "Imran Siddiqui",
 		role: "Class teacher, Lahore",
-		seed: "BilalAhmed",
+		seed: "ImranSiddiqui",
 	},
 	{
 		quote:
@@ -487,9 +502,9 @@ export const TESTIMONIALS_ROW_TWO: Testimonial[] = [
 	{
 		quote:
 			"The principal dashboard updates live during subah ki rush. Absentee follow-ups ab khud hoti hain.",
-		name: "Zainab Shah",
+		name: "Nadia Hussain",
 		role: "School owner, Islamabad",
-		seed: "ZainabShah",
+		seed: "NadiaHussain",
 	},
 	{
 		quote:
@@ -640,14 +655,14 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
 		links: [
 			{ label: "Smart Attendance", href: "/#product" },
 			{ label: "Modules", href: "/#capabilities" },
-			{ label: "Pricing", href: "/pricing" },
+			{ label: "Pricing", href: "/#pricing" },
 		],
 	},
 	{
 		title: "Resources",
 		links: [
-			{ label: "Product vision", href: "http://localhost:3002/docs/product-vision" },
-			{ label: "Roadmap", href: "http://localhost:3002/docs/production-roadmap" },
+			{ label: "Product vision", href: docsHref("product-vision") },
+			{ label: "Roadmap", href: docsHref("production-roadmap") },
 			{ label: "FAQ", href: "/#faq" },
 			{ label: "Developers", href: "/#deploy" },
 		],

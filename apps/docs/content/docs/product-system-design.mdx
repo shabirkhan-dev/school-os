@@ -12,18 +12,17 @@ engine for schools, starting with smart attendance and growing into an AI-first 
 
 Product inputs:
 
-- `/home/shabir/Documents/Portfolio/School Management OS.md`
-- `/home/shabir/Documents/Portfolio/School Management OS - Spec.md`
-- `/home/shabir/Documents/School OS AI-First Smart System README.md`
+- Portfolio spec notes (School Management OS — trust engine positioning)
+- GitHub repo README and product vision docs
 
 Repo inputs:
 
 - `README.md`, `PROJECT.md`, `AGENTS.md`, `DESIGN.md`
+- `/docs/product-vision`, `/docs/production-roadmap`
 - `/docs/ai-first-workflow`
 - `/docs/architecture`
 - `/docs/architecture/adr-0001-strong-default-overridable`
 - App code in `apps/web`, `apps/mobile`, `apps/nest-api`, `apps/docs`, and `apps/rust`
-- Installed Next.js docs under `apps/web/node_modules/next/dist/docs/`
 
 External research was refreshed on 2026-05-21. References are listed at the end.
 
@@ -36,8 +35,12 @@ compliance pressure justifies it.
 The highest-value product loop is:
 
 ```text
-Student arrives -> attendance event -> parent alert -> live dashboard -> AI risk/update signal
+Student arrives -> attendance event -> WhatsApp parent alert -> live dashboard -> AI risk/update signal
 ```
+
+First production pilots target **Pakistani private and network schools** (AKES as design
+reference): ~200–2K students per campus, multi-campus chains, mid-range Android devices, and
+97%+ WhatsApp open rates for guardian alerts.
 
 The safest engineering loop is:
 
@@ -216,7 +219,7 @@ Use a shared Postgres database and shared tables with `tenant_id` on every tenan
 
 Why:
 
-- Affordable private schools are small to mid-size.
+- Pakistani school networks are typically small to mid-size (200–2K students per campus).
 - Shared tables simplify migrations and cross-tenant product analytics.
 - Tenant isolation can be enforced with app authorization and Postgres row-level security.
 - Enterprise isolation can still be offered later with dedicated DB/schema deployments.
@@ -1013,11 +1016,14 @@ Shared packages to add when implementation starts:
 
 1. Standard ID format: migrate from current string CUID-style IDs to UUIDv7, or standardize CUID2
    text IDs across all services.
-2. WhatsApp provider: Meta WhatsApp Cloud API directly, Twilio, or a regional BSP.
-3. Payment provider priority by market: Stripe, Razorpay, Paymob, Flutterwave, or local PSPs.
+2. WhatsApp provider: Meta WhatsApp Cloud API directly, Twilio, or a **Pakistan-routing regional BSP**
+   (evaluate Infobip and local Meta partners for PK delivery and template approval).
+3. Payment provider priority by market: **Razorpay/Stripe for international**, plus local PSPs
+   (**Paymob, JazzCash, Easypaisa**) for fee reminders in Phase 4.
 4. AI provider policy: OpenAI first with abstraction, or provider-neutral from day one.
 5. Biometric attendance: explicitly out of MVP unless consent/legal review and a pilot demand it.
-6. Data residency target for first market.
+6. Data residency target for first market: **Pakistan (Asia/Karachi)** for p95 latency and
+   enterprise deal requirements.
 7. Whether to put generated report cards in object storage only or also store normalized snapshots.
 
 ## Research References

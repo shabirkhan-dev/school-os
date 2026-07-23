@@ -7,8 +7,10 @@ import Link from "next/link";
 import { useId, useState } from "react";
 import { NAV_ITEMS, type NavItem, type NavSubItem, SITE } from "../data/landing.data";
 import { ATLAS_EASE, menuItemVariants, springSnappy, springSoft } from "../lib/motion";
+import { useAtlasTheme } from "../lib/theme";
 import { cn } from "../lib/utils";
 import { LandingAuthActions } from "./landing-auth-actions";
+import { ThemeToggle } from "./theme-toggle";
 
 function SchoolOsMark({ className }: { className?: string }) {
 	return (
@@ -41,6 +43,7 @@ export function SiteHeader() {
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [mobileSection, setMobileSection] = useState<string | null>("Resources");
 	const reduceMotion = useReducedMotion();
+	const { theme, toggleTheme, mounted } = useAtlasTheme();
 
 	const closeMobile = () => setMobileOpen(false);
 
@@ -91,6 +94,12 @@ export function SiteHeader() {
 					</nav>
 
 					<div className="flex items-center gap-2">
+						<ThemeToggle
+							theme={theme}
+							onToggle={toggleTheme}
+							mounted={mounted}
+							className="hidden sm:inline-flex"
+						/>
 						<LandingAuthActions />
 						<button
 							type="button"
@@ -145,6 +154,9 @@ export function SiteHeader() {
 								)}
 
 								<LandingAuthActions mobile onNavigate={closeMobile} />
+								<div className="mt-2 flex justify-center px-1.5 pb-1 sm:hidden">
+									<ThemeToggle theme={theme} onToggle={toggleTheme} mounted={mounted} />
+								</div>
 							</nav>
 						</motion.div>
 					) : null}

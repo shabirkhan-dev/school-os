@@ -7,16 +7,17 @@
 		"apps-overview",
 		"commands-and-tooling",
 		"development-workflow",
-		"---",
-		"docker",
-		"deploy",
-		"qol",
+		"---Product",
 		"product-vision",
 		"production-roadmap",
 		"product-system-design",
+		"---Engineering",
 		"ai-first-workflow",
 		"architecture",
 		"overrides",
+		"docker",
+		"deploy",
+		"qol",
 		"dependency-upgrade-report"
 	]
 }

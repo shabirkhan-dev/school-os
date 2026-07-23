@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import {
 	dicebearUrl,
+	TESTIMONIAL_DISCLAIMER,
 	TESTIMONIALS_ROW_ONE,
 	TESTIMONIALS_ROW_TWO,
 	type Testimonial,
@@ -13,17 +14,22 @@ import { Marquee } from "./marquee";
 
 export function TestimonialsSection() {
 	return (
-		<section className="overflow-hidden px-4 py-20 sm:py-28">
+		<section id="testimonials" className="overflow-hidden px-4 py-20 sm:py-28">
 			<div className="mx-auto mb-14 max-w-2xl text-center">
 				<FadeIn>
 					<span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-						Trusted in pilots
+						Pilot scenarios
 					</span>
 				</FadeIn>
 				<FadeIn delay={0.08}>
 					<h2 className="mt-5 text-balance font-serif text-3xl font-medium leading-tight tracking-tight sm:text-4xl">
 						Schools, teachers, and parents feel the difference.
 					</h2>
+				</FadeIn>
+				<FadeIn delay={0.12}>
+					<p className="mt-4 text-pretty text-muted-foreground text-sm leading-6">
+						{TESTIMONIAL_DISCLAIMER}
+					</p>
 				</FadeIn>
 			</div>
 

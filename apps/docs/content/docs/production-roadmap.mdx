@@ -8,9 +8,15 @@ description: Phased NestJS backend spine and product build plan.
 
 ## 1. Project Vision
 
-School OS is not another school ERP, digital register, or dashboard.
+School OS is **not** another school ERP, digital register, or dashboard.
 
-School OS is an **AI-native, policy-native, workflow-native operating system for schools**.
+School OS is the **trust engine for Pakistani school networks** — mobile-first, WhatsApp-native,
+and designed with **Aga Khan Schools (AKES)**-scale multi-campus operators in mind (Karachi,
+Lahore, Islamabad). The first product milestone is the ninety-second demo:
+
+```txt
+QR scan at gate → attendance recorded → WhatsApp parent alert → live principal dashboard (<5s)
+```
 
 Traditional school software usually does this:
 
@@ -24,22 +30,19 @@ User takes action manually
 School OS should do this:
 
 ```txt
-System understands school state
-System detects missing work, risk, and policy violations
-System creates tasks and reminders
-AI drafts or assists the next action
-Policy engine checks what is allowed
-Human approval is required for important actions
-System executes approved workflow
-Audit log records everything
+Student arrives → attendance event → parent alert on WhatsApp
+→ live dashboard updates → optional AI risk signal (with human approval)
+→ audit log records everything
 ```
 
-The long-term idea is bigger than school management. School OS is the first product in a future **Community OS / Quality of Life OS** approach, where the same architecture can later support education, health navigation, welfare, disaster preparedness, environment, youth development, and community service.
+Workflow, policy, and AI engines support that loop — they are not the headline. Ship the
+scan→alert→dashboard hook before expanding scope.
 
-But the build focus now is strict:
+The long-term platform direction may grow into a broader **Community OS**, but the build focus now
+is strict:
 
 ```txt
-Start with School OS.
+Start with School OS trust loop.
 Build slowly.
 One production-quality vertical slice at a time.
 ```
@@ -155,13 +158,15 @@ offline workflows
 One-line positioning:
 
 ```txt
-School OS turns school operations from manual data entry into guided, automated, policy-safe workflows.
+School OS is the trust engine for schools — scan, WhatsApp alert, live dashboard, then grow.
 ```
 
-Stronger long-term positioning:
+Product differentiation (what parents and principals feel):
 
 ```txt
-School OS is an execution layer for education and human development, starting with schools.
+Parents feel it in seconds — WhatsApp arrival alerts, not another portal login
+Safe by architecture — tenant scope, guardian consent, audit logs, AI gated by policy
+Grows without replatforming — attendance first, then communication, finance, and AI on one spine
 ```
 
 ---
@@ -234,12 +239,13 @@ Assign substitute teacher
 Handles communication through:
 
 ```txt
-in-app
-email
-SMS
-WhatsApp later
-push notifications later
+WhatsApp (primary parent channel from Product Milestone 1)
+in-app and push (teachers, staff)
+email and SMS (fallback)
 ```
+
+Guardian opt-in, utility templates, quiet hours, and delivery audit logs are required before
+production pilots. See [Product Vision](/docs/product-vision) for compliance notes.
 
 ### 6.5 AI Orchestration Engine
 
@@ -631,7 +637,46 @@ Example:
 
 ---
 
-## 15. Roadmap Overview
+## 15. Product Milestone 1 — Trust Engine Demo
+
+This is the **product** definition of done — distinct from backend engineering phases below.
+Engineering Phases 0–6 build the spine; **the demo ships when this loop works end-to-end.**
+
+Target scenario (AKES Karachi reference):
+
+```txt
+Hassan Raza · Class 7-B · Gate A scanned at 8:17 AM
+→ WhatsApp to guardian Amina Khan: "Hassan arrived safely at 8:17 AM"
+→ Principal dashboard: 247 in · 3 absent · 1 late
+```
+
+Build:
+
+```txt
+tenants, campuses, classes, sections, students, guardians
+QR token generation and gate scanner (mobile + web)
+attendance mark + idempotent event emission
+WhatsApp outbox worker (Meta Cloud API or approved BSP)
+principal live dashboard (web)
+parent attendance feed (mobile optional; WhatsApp is the hook)
+guardian consent records and delivery audit log
+```
+
+Definition of done:
+
+```txt
+scan → record → WhatsApp → dashboard in under 5 seconds (p95, single campus pilot)
+guardian opt-in enforced before first message
+no cross-tenant data leakage
+attendance and notification attempts audited
+```
+
+Aligns with [Product Vision](/docs/product-vision) Phase 1 and
+[Product System Design](/docs/product-system-design) Phase 1: Smart Attendance MVP.
+
+---
+
+## 16. Roadmap Overview — Backend Engineering Phases
 
 ### Phase 0 — Clean Nest Foundation
 
@@ -842,7 +887,7 @@ read section attendance
 read student attendance history
 attendance status counts
 teacher assignment access check
-parent notification event later
+emit attendance event for notification outbox (WhatsApp parent alert)
 ```
 
 Definition of done:
@@ -923,9 +968,9 @@ Build:
 ```txt
 Redis
 BullMQ
-notification queue
-email/SMS adapter placeholder
-parent absence message draft/send later
+notification queue and outbox worker
+WhatsApp adapter (primary) + email/SMS placeholders
+parent arrival/absence utility templates with guardian consent check
 ```
 
 Definition of done:
@@ -1031,7 +1076,7 @@ health checks
 
 ---
 
-## 16. First Build Target Now
+## 17. First Build Target Now
 
 We start with **Phase 0 only**.
 
@@ -1057,7 +1102,7 @@ Zod pipe
 
 ---
 
-## 17. Development Commands
+## 18. Development Commands
 
 From repo root:
 
@@ -1090,7 +1135,7 @@ Expected response:
 
 ---
 
-## 18. Definition of Done for Every Slice
+## 19. Definition of Done for Every Slice
 
 A feature is not done until:
 
@@ -1108,7 +1153,7 @@ no random architecture shortcuts
 
 ---
 
-## 19. What Not To Do Yet
+## 20. What Not To Do Yet
 
 Do not start with:
 
@@ -1130,27 +1175,32 @@ Start with the backend spine.
 
 ---
 
-## 20. Other AI Review Prompt
+## 21. Other AI Review Prompt
 
 Use this prompt when asking another AI to review the plan:
 
 ```txt
-We are building School OS, an AI-native, policy-native, workflow-native operating system for schools. It is not a simple ERP or digital register. The backend starts with a clean NestJS app inside a Bun + Turborepo monorepo. We use PostgreSQL, Drizzle ORM, Zod validation, REST first, and production-grade architecture.
+We are building School OS, the trust engine for Pakistani school networks (AKES-scale reference).
+The first product milestone is Smart Attendance: QR scan → WhatsApp parent alert → live principal
+dashboard in under five seconds. The backend starts with a clean NestJS app inside a Bun +
+Turborepo monorepo. We use PostgreSQL, Drizzle ORM, Zod validation, REST first, and
+production-grade architecture. Workflow, policy, and AI engines support the trust loop — they are
+not the headline for Month 1–3.
 
 Please review this README as a senior backend/product architect. Focus on:
-1. Whether the architecture is too much or too little for the first MVP.
-2. Whether the build phases are in the correct order.
-3. Whether AI safety, policy engine, workflow engine, and task engine are placed correctly.
+1. Whether Product Milestone 1 (attendance + WhatsApp) is achievable on the backend spine order.
+2. Whether engineering phases are in the correct order relative to the trust-engine demo.
+3. Whether WhatsApp, consent, and audit are placed early enough for Pakistani school pilots.
 4. What should be removed from the first 3 months.
-5. What hidden risks exist in multi-tenant school software.
-6. How to make this more fundable without overpromising.
+5. What hidden risks exist in multi-tenant school software handling minors.
+6. How to make this more fundable without overpromising ERP breadth.
 
-Do not suggest generic ERP features unless they support the workflow/policy/AI-native vision.
+Do not suggest generic ERP features unless they support the scan→alert→dashboard hook.
 ```
 
 ---
 
-## 21. References and Technical Anchors
+## 22. References and Technical Anchors
 
 - NestJS documentation: https://docs.nestjs.com
 - NestJS CLI/workspaces: https://docs.nestjs.com/cli/monorepo
@@ -1164,7 +1214,7 @@ Do not suggest generic ERP features unless they support the workflow/policy/AI-n
 
 ---
 
-## 22. Final Build Principle
+## 23. Final Build Principle
 
 ```txt
 Slow is smooth.

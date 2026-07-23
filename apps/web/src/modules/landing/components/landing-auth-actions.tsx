@@ -60,11 +60,18 @@ export function LandingAuthActions({ mobile = false, onNavigate }: LandingAuthAc
 				Sign in
 			</Link>
 			<Link
-				href="#deploy"
+				href="/billing"
 				onClick={onNavigate}
 				className="inline-flex h-12 items-center justify-center rounded-full bg-primary px-4 text-center font-medium text-primary-foreground text-sm transition-colors hover:bg-primary/90"
 			>
-				Get started
+				Start pilot
+			</Link>
+			<Link
+				href="#deploy"
+				onClick={onNavigate}
+				className="inline-flex h-12 items-center justify-center rounded-full border border-border bg-background px-4 text-center font-medium text-foreground text-sm transition-colors hover:bg-muted"
+			>
+				For developers
 			</Link>
 		</div>
 	) : (
@@ -77,10 +84,10 @@ export function LandingAuthActions({ mobile = false, onNavigate }: LandingAuthAc
 			</Link>
 			<motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={springSnappy}>
 				<Link
-					href="#deploy"
+					href="/billing"
 					className="hidden h-8 items-center justify-center rounded-full bg-primary px-3 font-medium text-primary-foreground text-xs transition-colors hover:bg-primary/90 sm:inline-flex"
 				>
-					Get started
+					Start pilot
 				</Link>
 			</motion.div>
 		</div>

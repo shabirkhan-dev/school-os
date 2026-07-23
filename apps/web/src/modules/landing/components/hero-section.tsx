@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import Link from "next/link";
-import { dicebearUrl, HERO_AVATARS } from "../data/landing.data";
+import { dicebearUrl, docsHref, HERO_AVATARS } from "../data/landing.data";
 import { AttendanceWalkthrough } from "./attendance-walkthrough";
 import { FadeIn } from "./fade-in";
 import { MeshCanvas } from "./mesh-canvas";
@@ -73,7 +73,7 @@ export function HeroSection() {
 						</motion.div>
 						<motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }}>
 							<Link
-								href="http://localhost:3002/docs"
+								href={docsHref()}
 								className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-border bg-card px-6 text-base font-medium text-foreground transition-colors hover:bg-secondary sm:w-auto"
 							>
 								Read the docs
