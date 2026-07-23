@@ -1,17 +1,19 @@
 import {
 	BadRequestException,
 	ConflictException,
+	ForbiddenException,
 	Injectable,
 	NotFoundException,
 } from '@nestjs/common';
 
-import type { StudentRecord } from '@/database/schema';
+import type { MembershipRecord, StudentRecord } from '@/database/schema';
 import { AcademicRepository } from '@/modules/academic/academic.repository';
 import { PermissionCodes } from '@/modules/authorization/permission-codes';
 import { CampusesRepository } from '@/modules/campuses/campuses.repository';
 import { GuardiansRepository } from '@/modules/guardians/guardians.repository';
 import { toPublicStudentGuardianLink } from '@/modules/guardians/guardians.types';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
+import { StaffRepository } from '@/modules/staff/staff.repository';
 import type {
 	CreateEnrollmentInput,
 	CreateStudentInput,
@@ -29,6 +31,7 @@ export class StudentsService {
 		private readonly academic: AcademicRepository,
 		private readonly guardians: GuardiansRepository,
 		private readonly membershipAccess: MembershipsService,
+		private readonly staff: StaffRepository,
 	) {}
 
 	async listStudents(
@@ -36,17 +39,25 @@ export class StudentsService {
 		tenantId: string,
 		filters?: { campusId?: string; status?: StudentRecord['status'] },
 	) {
-		await this.requireRead(userId, tenantId);
+		const membership = await this.requireRead(userId, tenantId);
 		if (filters?.campusId) {
 			await this.requireCampus(tenantId, filters.campusId);
 		}
+
+		if (await this.isTeacherScopedMember(membership)) {
+			const sectionIds = await this.staff.listTeacherAssignedSectionIds(tenantId, membership.id);
+			const rows = await this.students.listStudentsInSections(tenantId, sectionIds, filters);
+			return { students: rows.map(toPublicStudent) };
+		}
+
 		const rows = await this.students.listStudents(tenantId, filters);
 		return { students: rows.map(toPublicStudent) };
 	}
 
 	async getStudent(userId: string, tenantId: string, studentId: string) {
-		await this.requireRead(userId, tenantId);
+		const membership = await this.requireRead(userId, tenantId);
 		const student = await this.requireStudent(tenantId, studentId);
+		await this.requireTeacherStudentAccess(membership, tenantId, studentId);
 		const guardianRows = await this.guardians.listStudentGuardians(tenantId, studentId);
 		return {
 			student: toPublicStudent(student),
@@ -181,18 +192,24 @@ export class StudentsService {
 		tenantId: string,
 		filters?: { studentId?: string; sectionId?: string; academicYearId?: string },
 	) {
-		await this.requireRead(userId, tenantId);
+		const membership = await this.requireRead(userId, tenantId);
 		if (filters?.studentId) {
 			await this.requireStudent(tenantId, filters.studentId);
+			await this.requireTeacherStudentAccess(membership, tenantId, filters.studentId);
 		}
 		if (filters?.sectionId) {
 			await this.requireSection(tenantId, filters.sectionId);
+			await this.requireTeacherSectionAccess(membership, tenantId, filters.sectionId);
 		}
 		if (filters?.academicYearId) {
 			await this.requireAcademicYear(tenantId, filters.academicYearId);
 		}
 
-		const rows = await this.students.listEnrollments(tenantId, filters);
+		const sectionScope = (await this.isTeacherScopedMember(membership))
+			? await this.staff.listTeacherAssignedSectionIds(tenantId, membership.id)
+			: undefined;
+
+		const rows = await this.students.listEnrollments(tenantId, filters, sectionScope);
 		return { enrollments: rows.map(toPublicEnrollment) };
 	}
 
@@ -279,7 +296,42 @@ export class StudentsService {
 	}
 
 	private async requireRead(userId: string, tenantId: string) {
-		await this.membershipAccess.requirePermission(userId, tenantId, PermissionCodes.STUDENTS_READ);
+		return this.membershipAccess.requirePermission(userId, tenantId, PermissionCodes.STUDENTS_READ);
+	}
+
+	private async isTeacherScopedMember(membership: MembershipRecord) {
+		if (membership.role !== 'teacher') return false;
+		return !(await this.membershipAccess.isManagementMember(membership));
+	}
+
+	private async requireTeacherSectionAccess(
+		membership: MembershipRecord,
+		tenantId: string,
+		sectionId: string,
+	) {
+		if (!(await this.isTeacherScopedMember(membership))) return;
+		const hasAccess = await this.staff.teacherHasSectionAccess(tenantId, membership.id, sectionId);
+		if (!hasAccess) {
+			throw new ForbiddenException({
+				code: 'STUDENT_SECTION_FORBIDDEN',
+				message: 'You are not assigned to this section',
+			});
+		}
+	}
+
+	private async requireTeacherStudentAccess(
+		membership: MembershipRecord,
+		tenantId: string,
+		studentId: string,
+	) {
+		if (!(await this.isTeacherScopedMember(membership))) return;
+		const hasAccess = await this.staff.teacherCanAccessStudent(tenantId, membership.id, studentId);
+		if (!hasAccess) {
+			throw new ForbiddenException({
+				code: 'STUDENT_ACCESS_FORBIDDEN',
+				message: 'This student is not in one of your assigned classes',
+			});
+		}
 	}
 
 	private async requireWrite(userId: string, tenantId: string) {

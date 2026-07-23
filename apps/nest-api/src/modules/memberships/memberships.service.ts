@@ -4,6 +4,7 @@ import type { MembershipRecord } from '@/database/schema';
 import { type PermissionCode, PermissionCodes } from '@/modules/authorization/permission-codes';
 import { PermissionsService, permissionDenied } from '@/modules/authorization/permissions.service';
 
+import { hasManagementRole } from './membership-roles';
 import { MembershipsRepository } from './memberships.repository';
 
 @Injectable()
@@ -45,6 +46,11 @@ export class MembershipsService {
 
 	async requireManagementAccess(userId: string, tenantId: string) {
 		return this.requirePermission(userId, tenantId, PermissionCodes.TENANT_SETTINGS_WRITE);
+	}
+
+	async isManagementMember(membership: MembershipRecord): Promise<boolean> {
+		const roles = await this.listRoleCodes(membership.id, membership.role);
+		return hasManagementRole(roles);
 	}
 
 	async addRole(tenantId: string, membershipId: string, role: MembershipRecord['role']) {

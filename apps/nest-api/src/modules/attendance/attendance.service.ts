@@ -8,13 +8,13 @@ import {
 import type { MembershipRecord } from '@/database/schema';
 import { AcademicRepository } from '@/modules/academic/academic.repository';
 import { PermissionCodes } from '@/modules/authorization/permission-codes';
+import { hasManagementRole, managementRoles } from '@/modules/memberships/membership-roles';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
+import { StaffRepository } from '@/modules/staff/staff.repository';
 import { StudentsRepository } from '@/modules/students/students.repository';
 import type { CreateAttendanceSessionInput, MarkAttendanceInput } from './attendance.dto';
 import { AttendanceRepository } from './attendance.repository';
 import { countMarksByStatus, toPublicMark, toPublicSession } from './attendance.types';
-
-const managementRoles = new Set<MembershipRecord['role']>(['owner', 'principal', 'admin']);
 
 @Injectable()
 export class AttendanceService {
@@ -23,11 +23,13 @@ export class AttendanceService {
 		private readonly academic: AcademicRepository,
 		private readonly students: StudentsRepository,
 		private readonly membershipAccess: MembershipsService,
+		private readonly staff: StaffRepository,
 	) {}
 
 	async getOrCreateSession(userId: string, tenantId: string, input: CreateAttendanceSessionInput) {
 		const section = await this.requireSection(tenantId, input.sectionId);
 		const sessionDate = input.sessionDate;
+		const membership = await this.requireRead(userId, tenantId);
 
 		const existing = await this.attendance.findSessionBySectionAndDate(
 			tenantId,
@@ -35,12 +37,12 @@ export class AttendanceService {
 			sessionDate,
 		);
 		if (existing) {
-			await this.requireRead(userId, tenantId);
+			await this.requireSectionReadAccess(tenantId, membership, section);
 			return this.buildSessionResponse(tenantId, existing);
 		}
 
-		const membership = await this.requireMark(userId, tenantId);
-		this.requireSectionMarkAccess(membership, section);
+		const markMembership = await this.requireMark(userId, tenantId);
+		await this.requireSectionMarkAccess(tenantId, markMembership, section);
 
 		const session = await this.attendance.createSession({
 			tenantId,
@@ -60,8 +62,12 @@ export class AttendanceService {
 	}
 
 	async getSession(userId: string, tenantId: string, sessionId: string) {
-		await this.requireRead(userId, tenantId);
+		const membership = await this.requireRead(userId, tenantId);
 		const session = await this.requireSession(tenantId, sessionId);
+		if (session.sectionId) {
+			const section = await this.requireSection(tenantId, session.sectionId);
+			await this.requireSectionReadAccess(tenantId, membership, section);
+		}
 		return this.buildSessionResponse(tenantId, session);
 	}
 
@@ -70,8 +76,9 @@ export class AttendanceService {
 		tenantId: string,
 		filters: { sectionId: string; sessionDate: string },
 	) {
-		await this.requireRead(userId, tenantId);
-		await this.requireSection(tenantId, filters.sectionId);
+		const membership = await this.requireRead(userId, tenantId);
+		const section = await this.requireSection(tenantId, filters.sectionId);
+		await this.requireSectionReadAccess(tenantId, membership, section);
 
 		const session = await this.attendance.findSessionBySectionAndDate(
 			tenantId,
@@ -101,7 +108,7 @@ export class AttendanceService {
 			: null;
 
 		if (section) {
-			this.requireSectionMarkAccess(membership, section);
+			await this.requireSectionMarkAccess(tenantId, membership, section);
 		}
 
 		const enrolled = await this.students.listEnrollments(tenantId, {
@@ -141,13 +148,29 @@ export class AttendanceService {
 	}
 
 	async getStudentHistory(userId: string, tenantId: string, studentId: string, limit?: number) {
-		await this.requireRead(userId, tenantId);
+		const membership = await this.requireRead(userId, tenantId);
 		const student = await this.students.findStudentById(tenantId, studentId);
 		if (!student) {
 			throw new NotFoundException({
 				code: 'STUDENT_NOT_FOUND',
 				message: 'Student not found',
 			});
+		}
+		if (membership.role === 'teacher') {
+			const roles = await this.membershipAccess.listRoleCodes(membership.id, membership.role);
+			if (!hasManagementRole(roles)) {
+				const hasAccess = await this.staff.teacherCanAccessStudent(
+					tenantId,
+					membership.id,
+					studentId,
+				);
+				if (!hasAccess) {
+					throw new ForbiddenException({
+						code: 'STUDENT_ACCESS_FORBIDDEN',
+						message: 'This student is not in one of your assigned classes',
+					});
+				}
+			}
 		}
 
 		const rows = await this.attendance.listMarksForStudent(tenantId, studentId, limit ?? 50);
@@ -171,7 +194,8 @@ export class AttendanceService {
 		};
 	}
 
-	private requireSectionMarkAccess(
+	private async requireSectionMarkAccess(
+		tenantId: string,
 		membership: MembershipRecord,
 		section: NonNullable<Awaited<ReturnType<AcademicRepository['findSectionById']>>>,
 	) {
@@ -182,10 +206,35 @@ export class AttendanceService {
 				message: 'You cannot mark attendance for this section',
 			});
 		}
-		if (section.homeroomTeacherMembershipId !== membership.id) {
+		const hasAccess = await this.staff.teacherHasHomeroomAccess(
+			tenantId,
+			membership.id,
+			section.id,
+		);
+		if (!hasAccess) {
+			throw new ForbiddenException({
+				code: 'ATTENDANCE_HOMEROOM_REQUIRED',
+				message: 'Only the homeroom teacher can mark attendance for this section',
+			});
+		}
+	}
+
+	private async requireSectionReadAccess(
+		tenantId: string,
+		membership: MembershipRecord,
+		section: NonNullable<Awaited<ReturnType<AcademicRepository['findSectionById']>>>,
+	) {
+		if (managementRoles.has(membership.role)) return;
+		if (membership.role !== 'teacher') return;
+
+		const roles = await this.membershipAccess.listRoleCodes(membership.id, membership.role);
+		if (hasManagementRole(roles)) return;
+
+		const hasAccess = await this.staff.teacherHasSectionAccess(tenantId, membership.id, section.id);
+		if (!hasAccess) {
 			throw new ForbiddenException({
 				code: 'ATTENDANCE_SECTION_NOT_ASSIGNED',
-				message: 'You are not assigned as the homeroom teacher for this section',
+				message: 'You are not assigned to this section',
 			});
 		}
 	}

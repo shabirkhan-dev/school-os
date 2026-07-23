@@ -4,6 +4,7 @@ import { AcademicModule } from '@/modules/academic/academic.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { PermissionsModule } from '@/modules/authorization/permissions.module';
 import { MembershipsModule } from '@/modules/memberships/memberships.module';
+import { StaffModule } from '@/modules/staff/staff.module';
 import { StudentsModule } from '@/modules/students/students.module';
 import { TenantsModule } from '@/modules/tenants/tenants.module';
 import { AttendanceController } from './attendance.controller';
@@ -18,6 +19,7 @@ import { AttendanceService } from './attendance.service';
 		TenantsModule,
 		AcademicModule,
 		StudentsModule,
+		StaffModule,
 	],
 	controllers: [AttendanceController],
 	providers: [AttendanceRepository, AttendanceService],

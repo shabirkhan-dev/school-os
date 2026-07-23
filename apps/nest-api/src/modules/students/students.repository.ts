@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, asc, eq, isNull } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
 
 import { DatabaseService } from '@/database/database.service';
 import { enrollments, type StudentRecord, students } from '@/database/schema';
@@ -21,6 +21,33 @@ export class StudentsRepository {
 			.from(students)
 			.where(and(...conditions))
 			.orderBy(asc(students.lastName), asc(students.firstName));
+	}
+
+	async listStudentsInSections(
+		tenantId: string,
+		sectionIds: string[],
+		filters?: { campusId?: string; status?: StudentRecord['status'] },
+	) {
+		if (sectionIds.length === 0) return [];
+
+		const conditions = [
+			eq(students.tenantId, tenantId),
+			isNull(students.deletedAt),
+			eq(enrollments.status, 'active'),
+			isNull(enrollments.deletedAt),
+			inArray(enrollments.sectionId, sectionIds),
+		];
+		if (filters?.campusId) conditions.push(eq(students.campusId, filters.campusId));
+		if (filters?.status) conditions.push(eq(students.status, filters.status));
+
+		const rows = await this.database.db
+			.selectDistinct({ student: students })
+			.from(students)
+			.innerJoin(enrollments, eq(enrollments.studentId, students.id))
+			.where(and(...conditions))
+			.orderBy(asc(students.lastName), asc(students.firstName));
+
+		return rows.map((row) => row.student);
 	}
 
 	async findStudentById(tenantId: string, studentId: string) {
@@ -80,12 +107,16 @@ export class StudentsRepository {
 	async listEnrollments(
 		tenantId: string,
 		filters?: { studentId?: string; sectionId?: string; academicYearId?: string },
+		sectionScope?: string[],
 	) {
 		const conditions = [eq(enrollments.tenantId, tenantId), isNull(enrollments.deletedAt)];
 		if (filters?.studentId) conditions.push(eq(enrollments.studentId, filters.studentId));
 		if (filters?.sectionId) conditions.push(eq(enrollments.sectionId, filters.sectionId));
 		if (filters?.academicYearId) {
 			conditions.push(eq(enrollments.academicYearId, filters.academicYearId));
+		}
+		if (sectionScope && sectionScope.length > 0) {
+			conditions.push(inArray(enrollments.sectionId, sectionScope));
 		}
 
 		return this.database.db

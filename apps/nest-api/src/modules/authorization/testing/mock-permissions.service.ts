@@ -44,5 +44,14 @@ export function createMockPermissionsService(): PermissionsService {
 		getPermissionsForRole(role: MembershipRecord['role']) {
 			return [...(roleMatrix[role] ?? [])];
 		},
+		getPermissionsForRoles(roles: readonly MembershipRecord['role'][]) {
+			const merged = new Set<PermissionCode>();
+			for (const role of roles) {
+				for (const permission of roleMatrix[role] ?? []) {
+					merged.add(permission);
+				}
+			}
+			return [...merged];
+		},
 	} as unknown as PermissionsService;
 }

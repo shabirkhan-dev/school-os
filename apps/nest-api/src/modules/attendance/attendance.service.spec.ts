@@ -5,6 +5,7 @@ import { AcademicRepository } from '@/modules/academic/academic.repository';
 import { createMockPermissionsService } from '@/modules/authorization/testing/mock-permissions.service';
 import { MembershipsRepository } from '@/modules/memberships/memberships.repository';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
+import { StaffRepository } from '@/modules/staff/staff.repository';
 import { StudentsRepository } from '@/modules/students/students.repository';
 import { AttendanceRepository } from './attendance.repository';
 import { AttendanceService } from './attendance.service';
@@ -52,8 +53,14 @@ describe('AttendanceService', () => {
 		findStudentById: ReturnType<typeof vi.fn>;
 		listEnrollments: ReturnType<typeof vi.fn>;
 	};
+	let staffRepository: {
+		teacherHasHomeroomAccess: ReturnType<typeof vi.fn>;
+		teacherHasSectionAccess: ReturnType<typeof vi.fn>;
+		teacherCanAccessStudent: ReturnType<typeof vi.fn>;
+	};
 	let membershipsRepository: {
 		findActiveByTenantAndUser: ReturnType<typeof vi.fn>;
+		listRolesForMembership: ReturnType<typeof vi.fn>;
 	};
 
 	beforeEach(() => {
@@ -71,8 +78,14 @@ describe('AttendanceService', () => {
 			findStudentById: vi.fn(),
 			listEnrollments: vi.fn(),
 		};
+		staffRepository = {
+			teacherHasHomeroomAccess: vi.fn(),
+			teacherHasSectionAccess: vi.fn(),
+			teacherCanAccessStudent: vi.fn(),
+		};
 		membershipsRepository = {
 			findActiveByTenantAndUser: vi.fn(),
+			listRolesForMembership: vi.fn().mockResolvedValue([]),
 		};
 
 		service = new AttendanceService(
@@ -83,6 +96,7 @@ describe('AttendanceService', () => {
 				membershipsRepository as unknown as MembershipsRepository,
 				createMockPermissionsService(),
 			),
+			staffRepository as unknown as StaffRepository,
 		);
 	});
 
@@ -95,6 +109,7 @@ describe('AttendanceService', () => {
 			status: 'active',
 		});
 		academicRepository.findSectionById.mockResolvedValue(sectionRecord);
+		staffRepository.teacherHasSectionAccess.mockResolvedValue(true);
 		attendanceRepository.findSessionBySectionAndDate.mockResolvedValue(sessionRecord);
 		attendanceRepository.listMarksForSession.mockResolvedValue([]);
 
@@ -117,6 +132,7 @@ describe('AttendanceService', () => {
 		});
 		attendanceRepository.findSessionById.mockResolvedValue(sessionRecord);
 		academicRepository.findSectionById.mockResolvedValue(sectionRecord);
+		staffRepository.teacherHasHomeroomAccess.mockResolvedValue(false);
 
 		await expect(
 			service.markAttendance('user-1', 'tenant-1', 'session-1', {
@@ -135,6 +151,7 @@ describe('AttendanceService', () => {
 		});
 		attendanceRepository.findSessionById.mockResolvedValue(sessionRecord);
 		academicRepository.findSectionById.mockResolvedValue(sectionRecord);
+		staffRepository.teacherHasHomeroomAccess.mockResolvedValue(true);
 		studentsRepository.listEnrollments.mockResolvedValue([
 			{
 				id: 'enrollment-1',
