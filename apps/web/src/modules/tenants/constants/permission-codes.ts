@@ -3,6 +3,8 @@ export const PermissionCodes = {
 	TENANT_SETTINGS_WRITE: "tenant.settings.write",
 	TENANT_CAMPUS_CREATE: "tenant.campus.create",
 	TENANT_CAMPUS_UPDATE: "tenant.campus.update",
+	ACADEMIC_READ: "academic.read",
+	ACADEMIC_WRITE: "academic.write",
 } as const;
 
 export type PermissionCode = (typeof PermissionCodes)[keyof typeof PermissionCodes];

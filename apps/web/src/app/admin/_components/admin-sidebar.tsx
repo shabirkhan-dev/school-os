@@ -78,7 +78,7 @@ const sections: NavSection[] = [
 		items: [
 			{ id: "admissions", label: "Admissions", icon: UserAdd01Icon },
 			{ id: "fees", label: "Fees & Invoices", icon: Invoice01Icon },
-			{ id: "academics", label: "Academics", icon: Mortarboard01Icon },
+			{ id: "academics", label: "Academics", icon: Mortarboard01Icon, href: "/admin/academics" },
 			{ id: "roles", label: "Roles & Permissions", icon: UserSettings01Icon },
 			{ id: "integrations", label: "Integrations", icon: PuzzleIcon },
 		],
