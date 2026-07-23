@@ -68,7 +68,7 @@ const sections: NavSection[] = [
 	{
 		heading: "People",
 		items: [
-			{ id: "students", label: "Students", icon: StudentIcon },
+			{ id: "students", label: "Students", icon: StudentIcon, href: "/admin/students" },
 			{ id: "teachers", label: "Teachers", icon: TeacherIcon },
 			{ id: "guardians", label: "Guardians", icon: UserMultiple02Icon },
 		],

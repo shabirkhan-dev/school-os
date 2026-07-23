@@ -5,6 +5,8 @@ export const PermissionCodes = {
 	TENANT_CAMPUS_UPDATE: "tenant.campus.update",
 	ACADEMIC_READ: "academic.read",
 	ACADEMIC_WRITE: "academic.write",
+	STUDENTS_READ: "students.read",
+	STUDENTS_WRITE: "students.write",
 } as const;
 
 export type PermissionCode = (typeof PermissionCodes)[keyof typeof PermissionCodes];
