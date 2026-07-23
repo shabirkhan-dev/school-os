@@ -11,9 +11,12 @@ import { AuthModule } from '@/modules/auth/auth.module';
 import { AuthorizationModule } from '@/modules/authorization/authorization.module';
 import { BillingModule } from '@/modules/billing/billing.module';
 import { CampusesModule } from '@/modules/campuses/campuses.module';
+import { GuardiansModule } from '@/modules/guardians/guardians.module';
 import { HealthModule } from '@/modules/health/health.module';
 import { MembersModule } from '@/modules/members/members.module';
+import { NavigationModule } from '@/modules/navigation/navigation.module';
 import { ProfilesModule } from '@/modules/profiles/profiles.module';
+import { StaffModule } from '@/modules/staff/staff.module';
 import { StudentsModule } from '@/modules/students/students.module';
 import { TenantsModule } from '@/modules/tenants/tenants.module';
 import { UsersModule } from '@/modules/users/users.module';
@@ -34,6 +37,9 @@ import { UsersModule } from '@/modules/users/users.module';
 		StudentsModule,
 		AttendanceModule,
 		MembersModule,
+		NavigationModule,
+		StaffModule,
+		GuardiansModule,
 		AuthorizationModule,
 		AiModule,
 	],

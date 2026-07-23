@@ -9,6 +9,8 @@ import type { StudentRecord } from '@/database/schema';
 import { AcademicRepository } from '@/modules/academic/academic.repository';
 import { PermissionCodes } from '@/modules/authorization/permission-codes';
 import { CampusesRepository } from '@/modules/campuses/campuses.repository';
+import { GuardiansRepository } from '@/modules/guardians/guardians.repository';
+import { toPublicStudentGuardianLink } from '@/modules/guardians/guardians.types';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import type {
 	CreateEnrollmentInput,
@@ -25,6 +27,7 @@ export class StudentsService {
 		private readonly students: StudentsRepository,
 		private readonly campuses: CampusesRepository,
 		private readonly academic: AcademicRepository,
+		private readonly guardians: GuardiansRepository,
 		private readonly membershipAccess: MembershipsService,
 	) {}
 
@@ -44,7 +47,11 @@ export class StudentsService {
 	async getStudent(userId: string, tenantId: string, studentId: string) {
 		await this.requireRead(userId, tenantId);
 		const student = await this.requireStudent(tenantId, studentId);
-		return { student: toPublicStudent(student) };
+		const guardianRows = await this.guardians.listStudentGuardians(tenantId, studentId);
+		return {
+			student: toPublicStudent(student),
+			guardians: guardianRows.map(toPublicStudentGuardianLink),
+		};
 	}
 
 	async createStudent(userId: string, tenantId: string, input: CreateStudentInput) {
@@ -65,10 +72,57 @@ export class StudentsService {
 			studentCode,
 			firstName: input.firstName.trim(),
 			lastName: input.lastName.trim(),
+			middleName: input.middleName?.trim() ?? null,
 			dateOfBirth: input.dateOfBirth ?? null,
 			gender: input.gender ?? null,
+			email: input.email?.trim() ?? null,
+			phone: input.phone?.trim() ?? null,
+			addressLine1: input.addressLine1?.trim() ?? null,
+			addressLine2: input.addressLine2?.trim() ?? null,
+			city: input.city?.trim() ?? null,
+			state: input.state?.trim() ?? null,
+			postalCode: input.postalCode?.trim() ?? null,
+			country: input.country?.trim() ?? null,
+			bloodGroup: input.bloodGroup?.trim() ?? null,
+			medicalNotes: input.medicalNotes?.trim() ?? null,
+			emergencyContactName: input.emergencyContactName?.trim() ?? null,
+			emergencyContactPhone: input.emergencyContactPhone?.trim() ?? null,
+			admittedOn: input.admittedOn ?? new Date().toISOString().slice(0, 10),
+			previousSchool: input.previousSchool?.trim() ?? null,
 			status: input.status ?? 'active',
 		});
+
+		if (input.guardians?.length) {
+			for (const guardianInput of input.guardians) {
+				const guardian = await this.guardians.createGuardian({
+					tenantId,
+					membershipId: null,
+					firstName: guardianInput.firstName.trim(),
+					lastName: guardianInput.lastName.trim(),
+					email: guardianInput.email?.trim() ?? null,
+					phone: guardianInput.phone?.trim() ?? null,
+					alternatePhone: guardianInput.alternatePhone?.trim() ?? null,
+					addressLine1: null,
+					addressLine2: null,
+					city: null,
+					state: null,
+					postalCode: null,
+					country: null,
+					occupation: guardianInput.occupation?.trim() ?? null,
+					preferredChannel: guardianInput.preferredChannel ?? 'phone',
+				});
+				await this.guardians.linkStudentGuardian({
+					tenantId,
+					studentId: student.id,
+					guardianId: guardian.id,
+					relationship: guardianInput.relationship,
+					isPrimary: guardianInput.isPrimary ?? false,
+					canPickup: guardianInput.canPickup ?? true,
+					receivesNotifications: guardianInput.receivesNotifications ?? true,
+				});
+			}
+		}
+
 		return { student: toPublicStudent(student) };
 	}
 
@@ -84,9 +138,34 @@ export class StudentsService {
 		const student = await this.students.updateStudent(tenantId, studentId, {
 			firstName: input.firstName?.trim(),
 			lastName: input.lastName?.trim(),
+			middleName: input.middleName === undefined ? undefined : (input.middleName?.trim() ?? null),
 			dateOfBirth: input.dateOfBirth === undefined ? undefined : input.dateOfBirth,
 			gender: input.gender === undefined ? undefined : input.gender,
 			status: input.status,
+			email: input.email === undefined ? undefined : (input.email?.trim() ?? null),
+			phone: input.phone === undefined ? undefined : (input.phone?.trim() ?? null),
+			addressLine1:
+				input.addressLine1 === undefined ? undefined : (input.addressLine1?.trim() ?? null),
+			addressLine2:
+				input.addressLine2 === undefined ? undefined : (input.addressLine2?.trim() ?? null),
+			city: input.city === undefined ? undefined : (input.city?.trim() ?? null),
+			state: input.state === undefined ? undefined : (input.state?.trim() ?? null),
+			postalCode: input.postalCode === undefined ? undefined : (input.postalCode?.trim() ?? null),
+			country: input.country === undefined ? undefined : (input.country?.trim() ?? null),
+			bloodGroup: input.bloodGroup === undefined ? undefined : (input.bloodGroup?.trim() ?? null),
+			medicalNotes:
+				input.medicalNotes === undefined ? undefined : (input.medicalNotes?.trim() ?? null),
+			emergencyContactName:
+				input.emergencyContactName === undefined
+					? undefined
+					: (input.emergencyContactName?.trim() ?? null),
+			emergencyContactPhone:
+				input.emergencyContactPhone === undefined
+					? undefined
+					: (input.emergencyContactPhone?.trim() ?? null),
+			admittedOn: input.admittedOn === undefined ? undefined : input.admittedOn,
+			previousSchool:
+				input.previousSchool === undefined ? undefined : (input.previousSchool?.trim() ?? null),
 		});
 		if (!student) {
 			throw new NotFoundException({

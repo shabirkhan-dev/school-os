@@ -4,6 +4,7 @@ import { AcademicModule } from '@/modules/academic/academic.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { PermissionsModule } from '@/modules/authorization/permissions.module';
 import { CampusesModule } from '@/modules/campuses/campuses.module';
+import { GuardiansModule } from '@/modules/guardians/guardians.module';
 import { MembershipsModule } from '@/modules/memberships/memberships.module';
 import { TenantsModule } from '@/modules/tenants/tenants.module';
 import { StudentsController } from './students.controller';
@@ -18,6 +19,7 @@ import { StudentsService } from './students.service';
 		TenantsModule,
 		CampusesModule,
 		AcademicModule,
+		GuardiansModule,
 	],
 	controllers: [StudentsController],
 	providers: [StudentsRepository, StudentsService],

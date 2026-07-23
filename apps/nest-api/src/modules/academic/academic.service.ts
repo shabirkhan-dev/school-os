@@ -228,6 +228,64 @@ export class AcademicService {
 		return { section: toPublicSection(section) };
 	}
 
+	async deleteAcademicYear(userId: string, tenantId: string, academicYearId: string) {
+		await this.requireWrite(userId, tenantId);
+		await this.requireAcademicYear(tenantId, academicYearId);
+
+		const sectionCount = await this.academic.countSectionsForAcademicYear(tenantId, academicYearId);
+		if (sectionCount > 0) {
+			throw new ConflictException({
+				code: 'ACADEMIC_YEAR_IN_USE',
+				message: 'Remove or reassign sections before deleting this academic year',
+			});
+		}
+
+		const year = await this.academic.softDeleteAcademicYear(tenantId, academicYearId);
+		if (!year) {
+			throw new NotFoundException({
+				code: 'ACADEMIC_YEAR_NOT_FOUND',
+				message: 'Academic year not found',
+			});
+		}
+		return { success: true };
+	}
+
+	async deleteClass(userId: string, tenantId: string, classId: string) {
+		await this.requireWrite(userId, tenantId);
+		await this.requireClass(tenantId, classId);
+
+		const sectionCount = await this.academic.countSectionsForClass(tenantId, classId);
+		if (sectionCount > 0) {
+			throw new ConflictException({
+				code: 'CLASS_IN_USE',
+				message: 'Remove or reassign sections before deleting this grade',
+			});
+		}
+
+		const classRecord = await this.academic.softDeleteClass(tenantId, classId);
+		if (!classRecord) {
+			throw new NotFoundException({
+				code: 'CLASS_NOT_FOUND',
+				message: 'Class not found',
+			});
+		}
+		return { success: true };
+	}
+
+	async deleteSection(userId: string, tenantId: string, sectionId: string) {
+		await this.requireWrite(userId, tenantId);
+		await this.requireSection(tenantId, sectionId);
+
+		const section = await this.academic.softDeleteSection(tenantId, sectionId);
+		if (!section) {
+			throw new NotFoundException({
+				code: 'SECTION_NOT_FOUND',
+				message: 'Section not found',
+			});
+		}
+		return { success: true };
+	}
+
 	private async requireRead(userId: string, tenantId: string) {
 		await this.membershipAccess.requirePermission(userId, tenantId, PermissionCodes.ACADEMIC_READ);
 	}

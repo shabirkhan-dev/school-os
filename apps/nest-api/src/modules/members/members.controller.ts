@@ -22,7 +22,7 @@ import { RequirePermissions } from '@/modules/authorization/require-permissions.
 import { CurrentTenant } from '@/modules/tenants/current-tenant.decorator';
 import { TenantGuard } from '@/modules/tenants/tenant.guard';
 import type { TenantContext } from '@/modules/tenants/tenant-context.types';
-import { InviteMemberDto, UpdateMemberDto } from './members.dto';
+import { AddMemberRoleDto, InviteMemberDto, UpdateMemberDto } from './members.dto';
 import { MembersService } from './members.service';
 
 @ApiTags('Members')
@@ -65,6 +65,19 @@ export class MembersController {
 		@Body() body: UpdateMemberDto,
 	) {
 		return this.members.updateMember(user.sub, tenantId, membershipId, body, tenant.membershipId);
+	}
+
+	@Post(':membershipId/roles')
+	@RequirePermissions(PermissionCodes.TENANT_MEMBERSHIP_MANAGE)
+	@ApiOperation({ summary: 'Add a secondary role to a member (e.g. teacher + parent)' })
+	addMemberRole(
+		@CurrentUser() user: AccessTokenPayload,
+		@CurrentTenant() tenant: TenantContext,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Param('membershipId', new ParseUUIDPipe({ version: '4' })) membershipId: string,
+		@Body() body: AddMemberRoleDto,
+	) {
+		return this.members.addMemberRole(user.sub, tenantId, membershipId, body, tenant.membershipId);
 	}
 
 	@Delete('invites/:inviteId')

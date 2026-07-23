@@ -1,6 +1,7 @@
 import {
 	Body,
 	Controller,
+	Delete,
 	Get,
 	Param,
 	ParseUUIDPipe,
@@ -69,6 +70,17 @@ export class AcademicController {
 		return this.academic.updateAcademicYear(user.sub, tenantId, academicYearId, body);
 	}
 
+	@Delete('academic-years/:academicYearId')
+	@RequirePermissions(PermissionCodes.ACADEMIC_WRITE)
+	@ApiOperation({ summary: 'Soft-delete an academic year' })
+	deleteAcademicYear(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Param('academicYearId', new ParseUUIDPipe({ version: '4' })) academicYearId: string,
+	) {
+		return this.academic.deleteAcademicYear(user.sub, tenantId, academicYearId);
+	}
+
 	@Get('classes')
 	@RequirePermissions(PermissionCodes.ACADEMIC_READ)
 	@ApiOperation({ summary: 'List grade levels / classes for a tenant' })
@@ -100,6 +112,17 @@ export class AcademicController {
 		@Body() body: UpdateClassDto,
 	) {
 		return this.academic.updateClass(user.sub, tenantId, classId, body);
+	}
+
+	@Delete('classes/:classId')
+	@RequirePermissions(PermissionCodes.ACADEMIC_WRITE)
+	@ApiOperation({ summary: 'Soft-delete a grade level / class' })
+	deleteClass(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Param('classId', new ParseUUIDPipe({ version: '4' })) classId: string,
+	) {
+		return this.academic.deleteClass(user.sub, tenantId, classId);
 	}
 
 	@Get('sections')
@@ -135,6 +158,17 @@ export class AcademicController {
 		@Body() body: UpdateSectionDto,
 	) {
 		return this.academic.updateSection(user.sub, tenantId, sectionId, body);
+	}
+
+	@Delete('sections/:sectionId')
+	@RequirePermissions(PermissionCodes.ACADEMIC_WRITE)
+	@ApiOperation({ summary: 'Soft-delete a section' })
+	deleteSection(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Param('sectionId', new ParseUUIDPipe({ version: '4' })) sectionId: string,
+	) {
+		return this.academic.deleteSection(user.sub, tenantId, sectionId);
 	}
 
 	@Post('sections/:sectionId/assign-teacher')

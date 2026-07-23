@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, asc, eq, isNull, ne } from 'drizzle-orm';
+import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm';
 
 import { DatabaseService } from '@/database/database.service';
 import { academicYears, classes, sections } from '@/database/schema';
@@ -165,6 +165,75 @@ export class AcademicRepository {
 		const [section] = await this.database.db
 			.update(sections)
 			.set({ ...input, updatedAt: new Date() })
+			.where(
+				and(
+					eq(sections.id, sectionId),
+					eq(sections.tenantId, tenantId),
+					isNull(sections.deletedAt),
+				),
+			)
+			.returning();
+		return section ?? null;
+	}
+
+	async countSectionsForAcademicYear(tenantId: string, academicYearId: string) {
+		const [row] = await this.database.db
+			.select({ count: sql<number>`count(*)::int` })
+			.from(sections)
+			.where(
+				and(
+					eq(sections.tenantId, tenantId),
+					eq(sections.academicYearId, academicYearId),
+					isNull(sections.deletedAt),
+				),
+			);
+		return row?.count ?? 0;
+	}
+
+	async countSectionsForClass(tenantId: string, classId: string) {
+		const [row] = await this.database.db
+			.select({ count: sql<number>`count(*)::int` })
+			.from(sections)
+			.where(
+				and(
+					eq(sections.tenantId, tenantId),
+					eq(sections.classId, classId),
+					isNull(sections.deletedAt),
+				),
+			);
+		return row?.count ?? 0;
+	}
+
+	async softDeleteAcademicYear(tenantId: string, academicYearId: string) {
+		const [year] = await this.database.db
+			.update(academicYears)
+			.set({ deletedAt: new Date(), updatedAt: new Date() })
+			.where(
+				and(
+					eq(academicYears.id, academicYearId),
+					eq(academicYears.tenantId, tenantId),
+					isNull(academicYears.deletedAt),
+				),
+			)
+			.returning();
+		return year ?? null;
+	}
+
+	async softDeleteClass(tenantId: string, classId: string) {
+		const [classRecord] = await this.database.db
+			.update(classes)
+			.set({ deletedAt: new Date(), updatedAt: new Date() })
+			.where(
+				and(eq(classes.id, classId), eq(classes.tenantId, tenantId), isNull(classes.deletedAt)),
+			)
+			.returning();
+		return classRecord ?? null;
+	}
+
+	async softDeleteSection(tenantId: string, sectionId: string) {
+		const [section] = await this.database.db
+			.update(sections)
+			.set({ deletedAt: new Date(), updatedAt: new Date() })
 			.where(
 				and(
 					eq(sections.id, sectionId),

@@ -1,8 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 
 import { DatabaseService } from '@/database/database.service';
-import { type MembershipRecord, membershipInvites, memberships, users } from '@/database/schema';
+import {
+	type MembershipRecord,
+	membershipInvites,
+	membershipRoles,
+	memberships,
+	users,
+} from '@/database/schema';
 
 @Injectable()
 export class MembershipsRepository {
@@ -97,6 +103,10 @@ export class MembershipsRepository {
 	async create(input: typeof memberships.$inferInsert) {
 		const [membership] = await this.database.db.insert(memberships).values(input).returning();
 		if (!membership) throw new Error('Membership insert did not return a record');
+		await this.database.db
+			.insert(membershipRoles)
+			.values({ membershipId: membership.id, role: membership.role })
+			.onConflictDoNothing();
 		return membership;
 	}
 
@@ -110,7 +120,43 @@ export class MembershipsRepository {
 			.set({ ...input, updatedAt: new Date() })
 			.where(and(eq(memberships.id, membershipId), eq(memberships.tenantId, tenantId)))
 			.returning();
+		if (membership?.role) {
+			await this.database.db
+				.insert(membershipRoles)
+				.values({ membershipId: membership.id, role: membership.role })
+				.onConflictDoNothing();
+		}
 		return membership ?? null;
+	}
+
+	async listRolesForMembership(membershipId: string) {
+		return this.database.db
+			.select()
+			.from(membershipRoles)
+			.where(eq(membershipRoles.membershipId, membershipId));
+	}
+
+	async listRolesForMembershipIds(membershipIds: string[]) {
+		if (membershipIds.length === 0) return [];
+		return this.database.db
+			.select()
+			.from(membershipRoles)
+			.where(inArray(membershipRoles.membershipId, membershipIds));
+	}
+
+	async addRole(membershipId: string, role: MembershipRecord['role']) {
+		const [row] = await this.database.db
+			.insert(membershipRoles)
+			.values({ membershipId, role })
+			.onConflictDoNothing()
+			.returning();
+		return row ?? null;
+	}
+
+	async removeRole(membershipId: string, role: MembershipRecord['role']) {
+		await this.database.db
+			.delete(membershipRoles)
+			.where(and(eq(membershipRoles.membershipId, membershipId), eq(membershipRoles.role, role)));
 	}
 
 	async createInvite(input: typeof membershipInvites.$inferInsert) {

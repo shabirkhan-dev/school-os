@@ -3,6 +3,7 @@ import { and, eq, inArray, isNull } from 'drizzle-orm';
 
 import { DatabaseService } from '@/database/database.service';
 import {
+	membershipRoles,
 	memberships,
 	type TenantRecord,
 	tenantBranding,
@@ -47,11 +48,20 @@ export class TenantsRepository {
 			const [tenant] = await transaction.insert(tenants).values(input.tenant).returning();
 			if (!tenant) throw new Error('Tenant insert did not return a record');
 
-			await transaction.insert(memberships).values({
-				tenantId: tenant.id,
-				userId: input.userId,
+			const [membership] = await transaction
+				.insert(memberships)
+				.values({
+					tenantId: tenant.id,
+					userId: input.userId,
+					role: 'owner',
+					status: 'active',
+				})
+				.returning();
+			if (!membership) throw new Error('Membership insert did not return a record');
+
+			await transaction.insert(membershipRoles).values({
+				membershipId: membership.id,
 				role: 'owner',
-				status: 'active',
 			});
 
 			await transaction.insert(tenantSettings).values({ tenantId: tenant.id });

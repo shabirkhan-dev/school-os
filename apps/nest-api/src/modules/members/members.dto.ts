@@ -52,5 +52,16 @@ export class AcceptInviteDto {
 	inviteId?: string;
 }
 
+export const addMemberRoleSchema = z
+	.object({
+		role: z.enum(['teacher', 'parent', 'student']),
+	})
+	.strict();
+
+export class AddMemberRoleDto {
+	static schema = addMemberRoleSchema;
+	role!: 'teacher' | 'parent' | 'student';
+}
+export type AddMemberRoleInput = z.infer<typeof addMemberRoleSchema>;
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
 export type UpdateMemberInput = z.infer<typeof updateMemberSchema>;

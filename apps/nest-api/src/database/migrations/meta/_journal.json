@@ -85,6 +85,20 @@
       "when": 1785500647371,
       "tag": "0011_membership_management",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1785600647371,
+      "tag": "0012_navigation_items",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1785700647371,
+      "tag": "0013_staff_guardians_subjects",
+      "breakpoints": true
     }
   ]
 }

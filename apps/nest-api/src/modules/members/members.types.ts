@@ -8,6 +8,7 @@ export type PublicMember = {
 	username: string;
 	emailVerified: boolean;
 	role: MembershipRecord['role'];
+	roles: MembershipRecord['role'][];
 	status: MembershipRecord['status'];
 	campusId: string | null;
 	campusName: string | null;
@@ -62,7 +63,13 @@ export function toPublicMember(input: {
 	user: { id: string; email: string; username: string; emailVerified: Date | null };
 	campus?: CampusInfo | null;
 	pendingInvite?: { id: string; expiresAt: Date } | null;
+	roles?: MembershipRecord['role'][];
 }): PublicMember {
+	const roles = input.roles?.length
+		? input.roles
+		: input.membership.role
+			? [input.membership.role]
+			: [];
 	return {
 		id: input.membership.id,
 		tenantId: input.membership.tenantId,
@@ -71,6 +78,7 @@ export function toPublicMember(input: {
 		username: input.user.username,
 		emailVerified: input.user.emailVerified !== null,
 		role: input.membership.role,
+		roles,
 		status: input.membership.status,
 		campusId: input.membership.campusId,
 		campusName: input.campus?.name ?? null,

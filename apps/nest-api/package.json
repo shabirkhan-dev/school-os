@@ -8,6 +8,7 @@
     "build": "nest build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun src/database/migrate.ts",
+    "db:seed": "bun src/database/seed/seed.ts",
     "db:studio": "drizzle-kit studio",
     "dev": "nest start --watch",
     "start": "nest start",

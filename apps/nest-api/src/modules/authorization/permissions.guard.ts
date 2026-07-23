@@ -43,7 +43,8 @@ export class PermissionsGuard implements CanActivate {
 			});
 		}
 
-		if (!this.permissions.hasEveryPermission(request.tenant.role, required)) {
+		const granted = new Set(request.tenant.permissions);
+		if (!required.every((permission) => granted.has(permission))) {
 			throw new ForbiddenException({
 				code: 'PERMISSION_DENIED',
 				message: 'You do not have permission to perform this action',

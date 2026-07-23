@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
+import type { MembershipRecord } from '@/database/schema';
 import { type PermissionCode, PermissionCodes } from '@/modules/authorization/permission-codes';
-import { PermissionsService } from '@/modules/authorization/permissions.service';
+import { PermissionsService, permissionDenied } from '@/modules/authorization/permissions.service';
 
 import { MembershipsRepository } from './memberships.repository';
 
@@ -23,13 +24,37 @@ export class MembershipsService {
 		return membership;
 	}
 
+	async listRolesForMembership(membershipId: string) {
+		return this.memberships.listRolesForMembership(membershipId);
+	}
+
+	async listRoleCodes(membershipId: string, primaryRole: MembershipRecord['role']) {
+		const rows = await this.listRolesForMembership(membershipId);
+		return rows.length > 0 ? rows.map((row) => row.role) : [primaryRole];
+	}
+
 	async requirePermission(userId: string, tenantId: string, permission: PermissionCode) {
 		const membership = await this.requireActiveMembership(userId, tenantId);
-		this.permissions.requirePermission(membership.role, permission);
+		const roles = await this.listRoleCodes(membership.id, membership.role);
+		const granted = this.permissions.getPermissionsForRoles(roles);
+		if (!granted.includes(permission)) {
+			throw permissionDenied();
+		}
 		return membership;
 	}
 
 	async requireManagementAccess(userId: string, tenantId: string) {
 		return this.requirePermission(userId, tenantId, PermissionCodes.TENANT_SETTINGS_WRITE);
+	}
+
+	async addRole(tenantId: string, membershipId: string, role: MembershipRecord['role']) {
+		const membership = await this.memberships.findById(tenantId, membershipId);
+		if (!membership) {
+			throw new NotFoundException({
+				code: 'MEMBERSHIP_NOT_FOUND',
+				message: 'Membership not found',
+			});
+		}
+		return this.memberships.addRole(membershipId, role);
 	}
 }

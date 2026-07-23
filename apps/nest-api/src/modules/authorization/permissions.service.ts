@@ -30,6 +30,16 @@ export class PermissionsService implements OnModuleInit {
 		return [...(this.rolePermissions.get(role) ?? [])];
 	}
 
+	getPermissionsForRoles(roles: readonly MembershipRecord['role'][]): readonly PermissionCode[] {
+		const merged = new Set<PermissionCode>();
+		for (const role of roles) {
+			for (const permission of this.getPermissionsForRole(role)) {
+				merged.add(permission);
+			}
+		}
+		return [...merged];
+	}
+
 	hasPermission(role: MembershipRecord['role'], permission: PermissionCode): boolean {
 		return this.rolePermissions.get(role)?.has(permission) ?? false;
 	}

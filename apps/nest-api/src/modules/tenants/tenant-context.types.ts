@@ -7,6 +7,7 @@ export type TenantContext = {
 	membershipId: string;
 	userId: string;
 	role: MembershipRecord['role'];
+	roles: readonly MembershipRecord['role'][];
 	campusId: string | null;
 	permissions: readonly PermissionCode[];
 };

@@ -19,7 +19,7 @@ import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { TenantsRepository } from '@/modules/tenants/tenants.repository';
 import { UsersService } from '@/modules/users/users.service';
 import { buildActorCapabilities, canManageTarget, getInvitableRoles } from './members.capabilities';
-import type { InviteMemberInput, UpdateMemberInput } from './members.dto';
+import type { AddMemberRoleInput, InviteMemberInput, UpdateMemberInput } from './members.dto';
 import { toPublicMember, toPublicPendingInvite } from './members.types';
 
 const INVITE_TTL_DAYS = 7;
@@ -56,6 +56,15 @@ export class MembersService {
 				.map((invite) => [invite.membershipId as string, invite]),
 		);
 
+		const membershipIds = rows.map((row) => row.membership.id);
+		const roleRows = await this.memberships.listRolesForMembershipIds(membershipIds);
+		const rolesByMembershipId = new Map<string, MembershipRecord['role'][]>();
+		for (const roleRow of roleRows) {
+			const existing = rolesByMembershipId.get(roleRow.membershipId) ?? [];
+			existing.push(roleRow.role);
+			rolesByMembershipId.set(roleRow.membershipId, existing);
+		}
+
 		const members = rows.map((row) => {
 			const campus = row.membership.campusId
 				? (campusById.get(row.membership.campusId) ?? null)
@@ -68,6 +77,7 @@ export class MembersService {
 				pendingInvite: pendingInvite
 					? { id: pendingInvite.id, expiresAt: pendingInvite.expiresAt }
 					: null,
+				roles: rolesByMembershipId.get(row.membership.id),
 			});
 		});
 
@@ -321,6 +331,46 @@ export class MembersService {
 					? { id: pendingInvite.id, expiresAt: pendingInvite.expiresAt }
 					: null,
 			}),
+		};
+	}
+
+	async addMemberRole(
+		userId: string,
+		tenantId: string,
+		membershipId: string,
+		input: AddMemberRoleInput,
+		actorMembershipId: string,
+	) {
+		const actor = await this.requireManage(userId, tenantId);
+		const membership = await this.requireMembership(tenantId, membershipId);
+
+		if (membership.id === actorMembershipId) {
+			throw new BadRequestException({
+				code: 'CANNOT_UPDATE_SELF',
+				message: 'Use another admin to change your own roles',
+			});
+		}
+
+		if (!canManageTarget(actor.role, membership.role)) {
+			throw new ForbiddenException({
+				code: 'MEMBERSHIP_MANAGE_FORBIDDEN',
+				message: 'You cannot manage this member',
+			});
+		}
+
+		if (!['teacher', 'parent', 'student'].includes(input.role)) {
+			throw new BadRequestException({
+				code: 'INVALID_SECONDARY_ROLE',
+				message: 'Only teacher, parent, or student can be added as a secondary role',
+			});
+		}
+
+		await this.membershipAccess.addRole(tenantId, membershipId, input.role);
+		const roles = await this.membershipAccess.listRolesForMembership(membershipId);
+
+		return {
+			membershipId,
+			roles: roles.map((row) => row.role),
 		};
 	}
 
