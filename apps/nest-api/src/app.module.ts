@@ -19,6 +19,7 @@ import { ProfilesModule } from '@/modules/profiles/profiles.module';
 import { StaffModule } from '@/modules/staff/staff.module';
 import { StudentsModule } from '@/modules/students/students.module';
 import { TenantsModule } from '@/modules/tenants/tenants.module';
+import { TimetableModule } from '@/modules/timetable/timetable.module';
 import { UsersModule } from '@/modules/users/users.module';
 
 @Module({
@@ -40,6 +41,7 @@ import { UsersModule } from '@/modules/users/users.module';
 		NavigationModule,
 		StaffModule,
 		GuardiansModule,
+		TimetableModule,
 		AuthorizationModule,
 		AiModule,
 	],

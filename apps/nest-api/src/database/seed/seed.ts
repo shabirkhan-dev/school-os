@@ -5,6 +5,7 @@ import { and, eq, inArray, like, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
+import { DEFAULT_PERIOD_DEFS, ROOM_NAMES } from '../../modules/timetable/timetable.utils';
 import * as schema from '../schema';
 import {
 	ATTENDANCE_WEIGHTS,
@@ -79,6 +80,14 @@ async function main(): Promise<void> {
 				return;
 			}
 
+			const timetableEntries = await countTimetableEntries(db, tenant.id);
+			if (timetableEntries === 0) {
+				console.log('No timetable entries — generating demo teacher schedules…');
+				await seedTimetable(db, tenant.id);
+				console.log('Timetable seed complete.');
+				return;
+			}
+
 			console.log(
 				`Found ${existingSeedStudents} seeded students (code prefix "${SEED_STUDENT_CODE_PREFIX}").`,
 			);
@@ -113,6 +122,7 @@ async function main(): Promise<void> {
 		);
 
 		await seedAttendance(db, tenant.id, campuses, sections, teachers[0]?.membershipId ?? null);
+		await seedTimetable(db, tenant.id);
 
 		console.log('\nSeed complete.');
 		console.log(`  Campuses:     ${campuses.length}`);
@@ -235,6 +245,8 @@ async function clearSeedData(db: Db, tenantId: string): Promise<void> {
 	}
 
 	await db.delete(schema.sectionSubjects).where(eq(schema.sectionSubjects.tenantId, tenantId));
+	await db.delete(schema.timetableEntries).where(eq(schema.timetableEntries.tenantId, tenantId));
+	await db.delete(schema.timetablePeriods).where(eq(schema.timetablePeriods.tenantId, tenantId));
 	await db
 		.update(schema.sections)
 		.set({ homeroomTeacherMembershipId: null, updatedAt: new Date() })
@@ -851,6 +863,105 @@ async function seedAttendance(
 				await db.insert(schema.attendanceMarks).values(marks.slice(offset, offset + BATCH_SIZE));
 			}
 		}
+	}
+}
+
+async function countTimetableEntries(db: Db, tenantId: string): Promise<number> {
+	const [row] = await db
+		.select({ count: sql<number>`count(*)::int` })
+		.from(schema.timetableEntries)
+		.where(eq(schema.timetableEntries.tenantId, tenantId));
+	return row?.count ?? 0;
+}
+
+async function seedTimetable(db: Db, tenantId: string): Promise<void> {
+	const existingPeriods = await db
+		.select()
+		.from(schema.timetablePeriods)
+		.where(eq(schema.timetablePeriods.tenantId, tenantId));
+
+	let periods = existingPeriods;
+	if (periods.length === 0) {
+		periods = await db
+			.insert(schema.timetablePeriods)
+			.values(
+				DEFAULT_PERIOD_DEFS.map((period) => ({
+					tenantId,
+					name: period.name,
+					startsAt: period.startsAt,
+					endsAt: period.endsAt,
+					kind: period.kind,
+					sortOrder: period.sortOrder,
+				})),
+			)
+			.returning();
+	}
+
+	const teachingPeriods = periods
+		.filter((period) => period.kind === 'period')
+		.sort((a, b) => a.sortOrder - b.sortOrder);
+	if (teachingPeriods.length === 0) return;
+
+	const assignments = await db
+		.select({
+			sectionId: schema.sectionSubjects.sectionId,
+			subjectId: schema.sectionSubjects.subjectId,
+			teacherMembershipId: schema.sectionSubjects.teacherMembershipId,
+			campusId: schema.sections.campusId,
+		})
+		.from(schema.sectionSubjects)
+		.innerJoin(schema.sections, eq(schema.sectionSubjects.sectionId, schema.sections.id))
+		.where(
+			and(
+				eq(schema.sectionSubjects.tenantId, tenantId),
+				sql`${schema.sectionSubjects.teacherMembershipId} IS NOT NULL`,
+			),
+		);
+
+	const byTeacher = new Map<string, typeof assignments>();
+	for (const assignment of assignments) {
+		if (!assignment.teacherMembershipId) continue;
+		const bucket = byTeacher.get(assignment.teacherMembershipId) ?? [];
+		bucket.push(assignment);
+		byTeacher.set(assignment.teacherMembershipId, bucket);
+	}
+
+	const entries: (typeof schema.timetableEntries.$inferInsert)[] = [];
+	let roomIndex = 0;
+
+	for (const [teacherMembershipId, teacherAssignments] of byTeacher) {
+		const usedSlots = new Set<string>();
+		for (let index = 0; index < teacherAssignments.length; index += 1) {
+			const assignment = teacherAssignments[index];
+			if (!assignment) continue;
+
+			const dayOfWeek = 1 + (index % 5);
+			const period = teachingPeriods[index % teachingPeriods.length];
+			if (!period) continue;
+
+			const slotKey = `${dayOfWeek}-${period.id}`;
+			if (usedSlots.has(slotKey)) continue;
+			usedSlots.add(slotKey);
+
+			entries.push({
+				tenantId,
+				campusId: assignment.campusId,
+				periodId: period.id,
+				dayOfWeek,
+				sectionId: assignment.sectionId,
+				subjectId: assignment.subjectId,
+				teacherMembershipId,
+				roomName: ROOM_NAMES[roomIndex % ROOM_NAMES.length] ?? 'Room 1',
+			});
+			roomIndex += 1;
+		}
+	}
+
+	for (let offset = 0; offset < entries.length; offset += BATCH_SIZE) {
+		await db
+			.insert(schema.timetableEntries)
+			.values(entries.slice(offset, offset + BATCH_SIZE))
+			.onConflictDoNothing();
 	}
 }
 

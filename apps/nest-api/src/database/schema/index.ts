@@ -29,6 +29,7 @@ export * from './tenant-branding.schema';
 export * from './tenant-communication-policies.schema';
 export * from './tenant-settings.schema';
 export * from './tenants.schema';
+export * from './timetable.schema';
 export * from './totp-factors.schema';
 export * from './user-profiles.schema';
 export * from './users.schema';
