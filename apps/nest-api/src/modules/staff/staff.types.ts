@@ -1,5 +1,7 @@
 import type { SectionRecord, StaffProfileRecord, SubjectRecord } from '@/database/schema';
 
+import type { PublicTeacherDaySchedule } from '@/modules/timetable/timetable.types';
+
 export type PublicStaffProfile = {
 	id: string | null;
 	membershipId: string;
@@ -31,6 +33,78 @@ export type PublicSubjectAssignment = {
 	subjectId: string;
 	subjectCode: string;
 	subjectName: string;
+};
+
+export type PublicTeacherAccessibleSection = {
+	id: string;
+	name: string;
+	campusId: string;
+	classId: string;
+	academicYearId: string;
+	accessType: 'homeroom' | 'subject';
+	subjectId: string | null;
+	subjectName: string | null;
+	subjectCode: string | null;
+};
+
+export type PublicTeacherDashboardAttendanceSummary = {
+	present: number;
+	absent: number;
+	late: number;
+	excused: number;
+	leftEarly: number;
+	unknown: number;
+	total: number;
+	attendanceRate: number | null;
+};
+
+export type PublicTeacherDashboardSection = {
+	section: PublicTeacherAccessibleSection;
+	studentCount: number;
+	todayAttendance: {
+		sessionId: string | null;
+		isComplete: boolean;
+		summary: PublicTeacherDashboardAttendanceSummary | null;
+	};
+};
+
+export type PublicTeacherDashboardPriorityAction = {
+	type: 'mark_attendance' | 'review_absences';
+	sectionId: string;
+	label: string;
+	reason: string;
+};
+
+export type PublicTeacherDashboardAlert = {
+	type: 'consecutive_absence';
+	studentId: string;
+	studentName: string;
+	sectionId: string;
+	sectionLabel: string;
+	consecutiveDays: number;
+};
+
+export type PublicTeacherDashboard = {
+	sessionDate: string;
+	teacher: PublicTeacher;
+	stats: {
+		totalClasses: number;
+		homeroomCount: number;
+		subjectCount: number;
+		totalStudents: number;
+		pendingAttendanceCount: number;
+		todayPresent: number;
+		todayAbsent: number;
+		todayLate: number;
+		todayAttendanceRate: number | null;
+		todayPeriodCount: number;
+		alertCount: number;
+		pendingTaskCount: number;
+	};
+	sections: PublicTeacherDashboardSection[];
+	priorityActions: PublicTeacherDashboardPriorityAction[];
+	alerts: PublicTeacherDashboardAlert[];
+	todaySchedule: PublicTeacherDaySchedule | null;
 };
 
 export type PublicSubject = {

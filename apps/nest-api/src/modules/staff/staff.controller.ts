@@ -6,6 +6,7 @@ import {
 	ParseUUIDPipe,
 	Patch,
 	Post,
+	Query,
 	UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -39,6 +40,34 @@ export class StaffController {
 	@ApiOperation({ summary: 'Get current teacher profile and assignments' })
 	getMyProfile(@CurrentTenant() tenant: TenantContext) {
 		return this.staff.getMyTeacherProfile(tenant);
+	}
+
+	@Get('teachers/me/dashboard')
+	@ApiOperation({ summary: 'Get smart dashboard stats for the current teacher' })
+	getMyDashboard(
+		@CurrentTenant() tenant: TenantContext,
+		@Query('sessionDate') sessionDate?: string,
+	) {
+		const date = sessionDate ?? new Date().toISOString().slice(0, 10);
+		return this.staff.getMyTeacherDashboard(tenant, date);
+	}
+
+	@Get('teachers/me/sections/:sectionId/students')
+	@ApiOperation({ summary: 'List students in a section assigned to the current teacher' })
+	getMySectionStudents(
+		@CurrentTenant() tenant: TenantContext,
+		@Param('sectionId', new ParseUUIDPipe({ version: '4' })) sectionId: string,
+	) {
+		return this.staff.getMySectionStudents(tenant, sectionId);
+	}
+
+	@Patch('teachers/me/profile')
+	@ApiOperation({ summary: 'Update current teacher staff profile' })
+	upsertMyProfile(
+		@CurrentTenant() tenant: TenantContext,
+		@Body(new ZodValidationPipe(UpsertStaffProfileDto.schema)) body: UpsertStaffProfileDto,
+	) {
+		return this.staff.upsertMyTeacherProfile(tenant, body);
 	}
 
 	@Get('teachers/:membershipId')
