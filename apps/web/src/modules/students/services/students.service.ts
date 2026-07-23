@@ -20,11 +20,25 @@ export const studentsService = {
 		apiClient.post<{ student: Student }>(`/tenants/${tenantId}/students`, input, {
 			accessToken,
 		}),
-	listEnrollments: (accessToken: string, tenantId: string, studentId: string) =>
-		apiClient.get<{ enrollments: Enrollment[] }>(
-			`/tenants/${tenantId}/students/${studentId}/enrollments`,
+	listEnrollments: (
+		accessToken: string,
+		tenantId: string,
+		params?: { studentId?: string; sectionId?: string },
+	) => {
+		if (params?.studentId) {
+			return apiClient.get<{ enrollments: Enrollment[] }>(
+				`/tenants/${tenantId}/students/${params.studentId}/enrollments`,
+				{ accessToken },
+			);
+		}
+		const search = new URLSearchParams();
+		if (params?.sectionId) search.set("sectionId", params.sectionId);
+		const query = search.toString();
+		return apiClient.get<{ enrollments: Enrollment[] }>(
+			`/tenants/${tenantId}/enrollments${query ? `?${query}` : ""}`,
 			{ accessToken },
-		),
+		);
+	},
 	createEnrollment: (
 		accessToken: string,
 		tenantId: string,

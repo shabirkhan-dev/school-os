@@ -41,10 +41,28 @@ export function useStudentEnrollmentsQuery(
 		queryFn: () => {
 			if (!tenantId || !studentId) throw new Error("Tenant and student id required");
 			return studentsService
-				.listEnrollments(requireToken(token), tenantId, studentId)
+				.listEnrollments(requireToken(token), tenantId, { studentId })
 				.then((response) => response.enrollments);
 		},
 		enabled: enabled && Boolean(token && tenantId && studentId),
+	});
+}
+
+export function useSectionEnrollmentsQuery(
+	tenantId: string | null,
+	sectionId: string | null,
+	enabled = true,
+) {
+	const { token } = useAuth();
+	return useQuery({
+		queryKey: ["students", "section-enrollments", tenantId ?? "", sectionId ?? ""] as const,
+		queryFn: () => {
+			if (!tenantId || !sectionId) throw new Error("Tenant and section id required");
+			return studentsService
+				.listEnrollments(requireToken(token), tenantId, { sectionId })
+				.then((response) => response.enrollments);
+		},
+		enabled: enabled && Boolean(token && tenantId && sectionId),
 	});
 }
 

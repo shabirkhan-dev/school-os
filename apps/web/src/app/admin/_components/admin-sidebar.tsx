@@ -59,7 +59,7 @@ const sections: NavSection[] = [
 		items: [
 			{ id: "dashboard", label: "Dashboard", icon: DashboardSquare01Icon, href: "/admin" },
 			{ id: "ai-assist", label: "AI Assist", icon: BubbleChatIcon, href: "/admin/ai" },
-			{ id: "attendance", label: "Attendance", icon: ClipboardIcon },
+			{ id: "attendance", label: "Attendance", icon: ClipboardIcon, href: "/admin/attendance" },
 			{ id: "timetable", label: "Timetable", icon: Calendar03Icon },
 			{ id: "exams", label: "Exams", icon: File01Icon },
 			{ id: "announcements", label: "Announcements", icon: Megaphone01Icon },

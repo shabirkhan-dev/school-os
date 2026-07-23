@@ -2,6 +2,7 @@ export { StudentsPage } from "./components/students-page";
 export {
 	useCreateEnrollmentMutation,
 	useCreateStudentMutation,
+	useSectionEnrollmentsQuery,
 	useStudentEnrollmentsQuery,
 	useStudentsQuery,
 } from "./hooks/use-student-queries";
