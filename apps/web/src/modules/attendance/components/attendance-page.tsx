@@ -11,8 +11,9 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@school-os/ui/components/card";
+import { DatePicker } from "@school-os/ui/components/date-picker";
 import { Field, FieldGroup, FieldLabel } from "@school-os/ui/components/field";
-import { Input } from "@school-os/ui/components/input";
+import { SelectField } from "@school-os/ui/components/select-field";
 import { Spinner } from "@school-os/ui/components/spinner";
 import { useMemo, useState } from "react";
 import { useSectionsQuery } from "@/modules/academic";
@@ -146,12 +147,14 @@ export function AttendancePage() {
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center gap-3">
-				<div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-					<HugeiconsIcon icon={ClipboardIcon} className="size-5" />
+				<div className="flex size-10 items-center justify-center rounded-xl bg-dashboard-accent-soft text-dashboard-accent">
+					<HugeiconsIcon icon={ClipboardIcon} className="size-5" strokeWidth={2} />
 				</div>
 				<div>
-					<h1 className="text-2xl font-semibold tracking-tight">Attendance</h1>
-					<p className="text-sm text-muted-foreground">
+					<h1 className="font-semibold text-[22px] text-dashboard-text-primary tracking-tight sm:text-2xl">
+						Attendance
+					</h1>
+					<p className="text-[13px] text-dashboard-text-secondary">
 						Mark daily class attendance for enrolled students.
 					</p>
 				</div>
@@ -168,7 +171,7 @@ export function AttendancePage() {
 				</Alert>
 			) : null}
 
-			<Card>
+			<Card className="border-dashboard-border bg-dashboard-surface">
 				<CardHeader>
 					<CardTitle>Session</CardTitle>
 					<CardDescription>
@@ -180,27 +183,24 @@ export function AttendancePage() {
 						<FieldGroup>
 							<Field>
 								<FieldLabel htmlFor="attendance-section">Section</FieldLabel>
-								<select
+								<SelectField
 									id="attendance-section"
-									className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
 									value={sectionId}
-									onChange={(event) => setSectionId(event.target.value)}
-								>
-									<option value="">Select section</option>
-									{(sectionsQuery.data ?? []).map((section) => (
-										<option key={section.id} value={section.id}>
-											{section.name}
-										</option>
-									))}
-								</select>
+									onValueChange={setSectionId}
+									nullable
+									placeholder="Select section"
+									items={(sectionsQuery.data ?? []).map((section) => ({
+										label: section.name,
+										value: section.id,
+									}))}
+								/>
 							</Field>
 							<Field>
 								<FieldLabel htmlFor="attendance-date">Date</FieldLabel>
-								<Input
+								<DatePicker
 									id="attendance-date"
-									type="date"
 									value={sessionDate}
-									onChange={(event) => setSessionDate(event.target.value)}
+									onValueChange={setSessionDate}
 								/>
 							</Field>
 						</FieldGroup>
@@ -212,7 +212,7 @@ export function AttendancePage() {
 			</Card>
 
 			{sessionId ? (
-				<Card>
+				<Card className="border-dashboard-border bg-dashboard-surface">
 					<CardHeader>
 						<CardTitle>Roster</CardTitle>
 						<CardDescription>
@@ -243,23 +243,22 @@ export function AttendancePage() {
 													<p className="font-medium">{student.fullName}</p>
 													<p className="text-xs text-muted-foreground">{student.studentCode}</p>
 												</div>
-												<select
-													className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+												<SelectField
 													value={markDraft[student.id] ?? "unknown"}
-													onChange={(event) =>
+													onValueChange={(status) =>
 														setMarkDraft((current) => ({
 															...current,
-															[student.id]: event.target.value as AttendanceMarkStatus,
+															[student.id]: status as AttendanceMarkStatus,
 														}))
 													}
 													disabled={!canMark}
-												>
-													{statusOptions.map((status) => (
-														<option key={status} value={status}>
-															{status.replaceAll("_", " ")}
-														</option>
-													))}
-												</select>
+													size="sm"
+													triggerClassName="w-auto min-w-[8rem]"
+													items={statusOptions.map((status) => ({
+														label: status.replaceAll("_", " "),
+														value: status,
+													}))}
+												/>
 											</li>
 										) : null,
 									)}

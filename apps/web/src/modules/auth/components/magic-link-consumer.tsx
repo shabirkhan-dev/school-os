@@ -52,7 +52,7 @@ export function MagicLinkConsumer() {
 						Signing you in...
 					</div>
 				)}
-				<Button variant="outline" render={<Link href="/login" />}>
+				<Button variant="outline" render={<Link href="/login" />} nativeButton={false}>
 					Back to login
 				</Button>
 			</CardContent>

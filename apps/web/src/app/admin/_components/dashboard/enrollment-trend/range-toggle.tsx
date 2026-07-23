@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { ToggleGroup, ToggleGroupItem } from "@school-os/ui/components/toggle-group";
 import { cn } from "@/lib/utils";
 
 export type Range = "Weekly" | "Monthly" | "Yearly";
@@ -17,40 +17,30 @@ type Props = {
 	className?: string;
 };
 
-export function RangeToggle({ value: controlled, onChange, className }: Props) {
-	const [internal, setInternal] = useState<Range>("Monthly");
-	const value = controlled ?? internal;
-
+export function RangeToggle({ value = "Monthly", onChange, className }: Props) {
 	return (
-		<fieldset
-			className={cn(
-				"m-0 inline-flex h-8 w-full items-center gap-0.5 rounded-lg border border-dashboard-border bg-dashboard-surface-elevated p-0.5 sm:w-auto",
-				className,
-			)}
+		<ToggleGroup
+			value={[value]}
+			onValueChange={(next) => {
+				const selected = next[0] as Range | undefined;
+				if (selected) onChange?.(selected);
+			}}
+			variant="outline"
+			size="sm"
+			spacing={0}
+			className={cn("h-8 w-full sm:w-auto", className)}
+			aria-label="Time range"
 		>
-			<legend className="sr-only">Time range</legend>
-			{ranges.map((r) => {
-				const active = r.value === value;
-				return (
-					<button
-						key={r.value}
-						type="button"
-						onClick={() => {
-							setInternal(r.value);
-							onChange?.(r.value);
-						}}
-						className={cn(
-							"h-7 flex-1 rounded-md px-2 font-medium text-[11px] transition-all sm:flex-none sm:px-3 sm:text-[12px]",
-							active
-								? "border border-dashboard-border-strong bg-dashboard-surface-hover text-dashboard-text-primary"
-								: "text-dashboard-text-muted hover:text-dashboard-text-primary",
-						)}
-					>
-						<span className="sm:hidden">{r.short}</span>
-						<span className="hidden sm:inline">{r.value}</span>
-					</button>
-				);
-			})}
-		</fieldset>
+			{ranges.map((r) => (
+				<ToggleGroupItem
+					key={r.value}
+					value={r.value}
+					className="h-7 flex-1 px-2 text-[11px] sm:flex-none sm:px-3 sm:text-[12px]"
+				>
+					<span className="sm:hidden">{r.short}</span>
+					<span className="hidden sm:inline">{r.value}</span>
+				</ToggleGroupItem>
+			))}
+		</ToggleGroup>
 	);
 }

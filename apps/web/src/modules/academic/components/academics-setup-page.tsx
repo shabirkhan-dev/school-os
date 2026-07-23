@@ -13,6 +13,7 @@ import {
 } from "@school-os/ui/components/card";
 import { Field, FieldGroup, FieldLabel } from "@school-os/ui/components/field";
 import { Input } from "@school-os/ui/components/input";
+import { SelectField } from "@school-os/ui/components/select-field";
 import { Spinner } from "@school-os/ui/components/spinner";
 import { useState } from "react";
 import {
@@ -237,37 +238,31 @@ export function AcademicsSetupPage() {
 								<div className="grid gap-3 sm:grid-cols-2">
 									<Field>
 										<FieldLabel htmlFor="section-year">Academic year</FieldLabel>
-										<select
+										<SelectField
 											id="section-year"
-											className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
 											value={selectedYearId}
-											onChange={(e) => setSelectedYearId(e.target.value)}
-											required
-										>
-											<option value="">Select year</option>
-											{(yearsQuery.data ?? []).map((year) => (
-												<option key={year.id} value={year.id}>
-													{year.name}
-												</option>
-											))}
-										</select>
+											onValueChange={setSelectedYearId}
+											nullable
+											placeholder="Select year"
+											items={(yearsQuery.data ?? []).map((year) => ({
+												label: year.name,
+												value: year.id,
+											}))}
+										/>
 									</Field>
 									<Field>
 										<FieldLabel htmlFor="section-class">Class</FieldLabel>
-										<select
+										<SelectField
 											id="section-class"
-											className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
 											value={selectedClassId}
-											onChange={(e) => setSelectedClassId(e.target.value)}
-											required
-										>
-											<option value="">Select class</option>
-											{(classesQuery.data ?? []).map((item) => (
-												<option key={item.id} value={item.id}>
-													{item.name}
-												</option>
-											))}
-										</select>
+											onValueChange={setSelectedClassId}
+											nullable
+											placeholder="Select class"
+											items={(classesQuery.data ?? []).map((item) => ({
+												label: item.name,
+												value: item.id,
+											}))}
+										/>
 									</Field>
 								</div>
 								<Field>

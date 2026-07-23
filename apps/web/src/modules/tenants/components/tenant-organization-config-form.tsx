@@ -14,6 +14,7 @@ import {
 import { Checkbox } from "@school-os/ui/components/checkbox";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@school-os/ui/components/field";
 import { Input } from "@school-os/ui/components/input";
+import { SelectField } from "@school-os/ui/components/select-field";
 import { Spinner } from "@school-os/ui/components/spinner";
 import { useEffect, useState } from "react";
 import { useUpdateOrganizationConfigMutation } from "../hooks/use-tenant-mutations";
@@ -114,23 +115,20 @@ export function TenantOrganizationConfigForm({
 						<div className="grid gap-4 sm:grid-cols-2">
 							<Field>
 								<FieldLabel htmlFor="academic-year-start">Academic year starts</FieldLabel>
-								<select
+								<SelectField
 									id="academic-year-start"
-									className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-									value={settings.academicYearStartMonth}
-									onChange={(e) =>
+									value={String(settings.academicYearStartMonth)}
+									onValueChange={(month) =>
 										setSettings((current) => ({
 											...current,
-											academicYearStartMonth: Number(e.target.value),
+											academicYearStartMonth: Number(month),
 										}))
 									}
-								>
-									{monthLabels.map((label, index) => (
-										<option key={label} value={index + 1}>
-											{label}
-										</option>
-									))}
-								</select>
+									items={monthLabels.map((label, index) => ({
+										label,
+										value: String(index + 1),
+									}))}
+								/>
 							</Field>
 							<Field>
 								<FieldLabel htmlFor="attendance-grace">Attendance grace (minutes)</FieldLabel>

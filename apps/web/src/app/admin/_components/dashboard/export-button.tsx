@@ -2,6 +2,7 @@
 
 import { Add01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -12,17 +13,10 @@ type Props = {
 
 export function ExportButton({ label = "Export CSV", onClick, className }: Props) {
 	return (
-		<button
-			type="button"
-			onClick={onClick}
-			className={cn(
-				"flex h-9 items-center gap-1.5 rounded-lg bg-dashboard-accent px-3 font-semibold text-[12.5px] text-dashboard-accent-fg transition-all hover:bg-dashboard-accent-hover active:scale-[0.97] sm:px-3.5 sm:text-[13px]",
-				className,
-			)}
-		>
-			<HugeiconsIcon icon={Add01Icon} size={15} strokeWidth={2.4} />
+		<Button size="sm" className={cn("h-9 gap-1.5", className)} onClick={onClick}>
+			<HugeiconsIcon icon={Add01Icon} data-icon="inline-start" strokeWidth={2.4} />
 			<span className="sm:hidden">Export</span>
 			<span className="hidden sm:inline">{label}</span>
-		</button>
+		</Button>
 	);
 }

@@ -24,13 +24,13 @@ type Props = {
 const trendSpec: Record<Trend, { icon: typeof ArrowUp01Icon; chip: string; delta: string }> = {
 	up: {
 		icon: ArrowUp01Icon,
-		chip: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-		delta: "text-emerald-600 dark:text-emerald-400",
+		chip: "bg-primary/10 text-primary",
+		delta: "text-primary",
 	},
 	down: {
 		icon: ArrowDown01Icon,
-		chip: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-		delta: "text-rose-600 dark:text-rose-400",
+		chip: "bg-destructive/10 text-destructive",
+		delta: "text-destructive",
 	},
 	flat: {
 		icon: ArrowRight01Icon,

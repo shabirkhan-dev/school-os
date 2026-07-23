@@ -13,6 +13,7 @@ import {
 } from "@school-os/ui/components/card";
 import { Field, FieldGroup, FieldLabel } from "@school-os/ui/components/field";
 import { Input } from "@school-os/ui/components/input";
+import { SelectField } from "@school-os/ui/components/select-field";
 import { Spinner } from "@school-os/ui/components/spinner";
 import { useMemo, useState } from "react";
 import { useAcademicYearsQuery, useSectionsQuery } from "@/modules/academic";
@@ -127,8 +128,8 @@ export function StudentsPage() {
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center gap-3">
-				<div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-					<HugeiconsIcon icon={StudentIcon} className="size-5" />
+				<div className="flex size-10 items-center justify-center rounded-xl bg-dashboard-accent-soft text-dashboard-accent">
+					<HugeiconsIcon icon={StudentIcon} className="size-5" strokeWidth={2} />
 				</div>
 				<div>
 					<h1 className="font-semibold text-[24px] text-dashboard-text-primary">Students</h1>
@@ -150,7 +151,7 @@ export function StudentsPage() {
 			) : null}
 
 			<div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-				<Card>
+				<Card className="border-dashboard-border bg-dashboard-surface">
 					<CardHeader>
 						<CardTitle>Student roster</CardTitle>
 						<CardDescription>
@@ -193,7 +194,7 @@ export function StudentsPage() {
 
 				<div className="space-y-6">
 					{canWrite ? (
-						<Card>
+						<Card className="border-dashboard-border bg-dashboard-surface">
 							<CardHeader>
 								<CardTitle>Add student</CardTitle>
 								<CardDescription>
@@ -241,7 +242,7 @@ export function StudentsPage() {
 					) : null}
 
 					{canWrite ? (
-						<Card>
+						<Card className="border-dashboard-border bg-dashboard-surface">
 							<CardHeader>
 								<CardTitle>Enroll student</CardTitle>
 								<CardDescription>
@@ -253,35 +254,29 @@ export function StudentsPage() {
 									<FieldGroup>
 										<Field>
 											<FieldLabel htmlFor="enroll-year">Academic year</FieldLabel>
-											<select
+											<SelectField
 												id="enroll-year"
-												className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
 												value={selectedYearId || activeYearId}
-												onChange={(event) => setSelectedYearId(event.target.value)}
-											>
-												{(yearsQuery.data ?? []).map((year) => (
-													<option key={year.id} value={year.id}>
-														{year.name}
-													</option>
-												))}
-											</select>
+												onValueChange={setSelectedYearId}
+												items={(yearsQuery.data ?? []).map((year) => ({
+													label: year.name,
+													value: year.id,
+												}))}
+											/>
 										</Field>
 										<Field>
 											<FieldLabel htmlFor="enroll-section">Section</FieldLabel>
-											<select
+											<SelectField
 												id="enroll-section"
-												className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
 												value={selectedSectionId}
-												onChange={(event) => setSelectedSectionId(event.target.value)}
-												required
-											>
-												<option value="">Select section</option>
-												{sectionOptions.map((section) => (
-													<option key={section.id} value={section.id}>
-														{section.name}
-													</option>
-												))}
-											</select>
+												onValueChange={setSelectedSectionId}
+												nullable
+												placeholder="Select section"
+												items={sectionOptions.map((section) => ({
+													label: section.name,
+													value: section.id,
+												}))}
+											/>
 										</Field>
 										<Button
 											type="submit"
