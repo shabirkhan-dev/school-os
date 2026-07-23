@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MembershipsRepository } from '@/modules/memberships/memberships.repository';
@@ -103,6 +103,52 @@ describe('TenantsService', () => {
 	it('rejects invalid slug derivation', async () => {
 		await expect(service.create('user-1', { name: '!!!' })).rejects.toBeInstanceOf(
 			ConflictException,
+		);
+	});
+
+	it('lists only tenants the user belongs to', async () => {
+		const now = new Date('2026-07-23T00:00:00.000Z');
+		membershipsRepository.listActiveTenantIdsForUser.mockResolvedValue(['tenant-1']);
+		tenantsRepository.listByIds.mockResolvedValue([
+			{
+				id: 'tenant-1',
+				name: 'AKES Network',
+				slug: 'akes-network',
+				mission: null,
+				status: 'active',
+				timezone: 'Asia/Karachi',
+				defaultLocale: 'en',
+				deletedAt: null,
+				createdAt: now,
+				updatedAt: now,
+			},
+		]);
+
+		const result = await service.listForUser('user-1');
+
+		expect(membershipsRepository.listActiveTenantIdsForUser).toHaveBeenCalledWith('user-1');
+		expect(result.tenants).toHaveLength(1);
+	});
+
+	it('returns 404 for cross-tenant reads', async () => {
+		membershipsRepository.findActiveByTenantAndUser.mockResolvedValue(null);
+
+		await expect(service.getForUser('user-1', 'tenant-other')).rejects.toBeInstanceOf(
+			NotFoundException,
+		);
+	});
+
+	it('requires management role to update tenant', async () => {
+		membershipsRepository.findActiveByTenantAndUser.mockResolvedValue({
+			id: 'membership-1',
+			tenantId: 'tenant-1',
+			userId: 'user-1',
+			role: 'teacher',
+			status: 'active',
+		});
+
+		await expect(service.update('user-1', 'tenant-1', { name: 'New Name' })).rejects.toBeInstanceOf(
+			ForbiddenException,
 		);
 	});
 });
