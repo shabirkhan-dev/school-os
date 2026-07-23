@@ -26,14 +26,19 @@ import {
 } from "@school-os/ui/components/input-group";
 import { Spinner } from "@school-os/ui/components/spinner";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
-import { buildAuthRedirectUrl } from "@/modules/auth/lib/dev-auth-code";
+import {
+	buildAuthRedirectUrl,
+	readInviteTokenFromSearchParams,
+} from "@/modules/auth/lib/dev-auth-code";
 
 export function SignupForm({ className, ...props }: React.ComponentProps<"div">) {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const inviteToken = readInviteTokenFromSearchParams(searchParams);
 	const { user, loading, error, clearError, register } = useAuth();
 	const [email, setEmail] = useState("");
 	const [username, setUsername] = useState("");
@@ -47,9 +52,11 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 
 	useEffect(() => {
 		if (!loading && user) {
-			router.replace("/admin");
+			router.replace(
+				inviteToken ? `/accept-invite?token=${encodeURIComponent(inviteToken)}` : "/admin",
+			);
 		}
-	}, [loading, router, user]);
+	}, [inviteToken, loading, router, user]);
 
 	if (loading || user) {
 		return (
@@ -76,7 +83,14 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 		setSubmitting(true);
 		try {
 			const result = await register({ email, username, password });
-			router.push(buildAuthRedirectUrl("/verify-email", email, result.developmentCode));
+			router.push(
+				buildAuthRedirectUrl(
+					"/verify-email",
+					email,
+					result.developmentCode,
+					inviteToken ?? undefined,
+				),
+			);
 		} catch {
 			// error set in context
 		} finally {

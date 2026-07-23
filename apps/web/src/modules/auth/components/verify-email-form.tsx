@@ -19,11 +19,13 @@ import * as api from "@/lib/api-client";
 import {
 	buildAuthRedirectUrl,
 	readDevCodeFromSearchParams,
+	readInviteTokenFromSearchParams,
 } from "@/modules/auth/lib/dev-auth-code";
 
 export function VerifyEmailForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
+	const inviteToken = readInviteTokenFromSearchParams(searchParams);
 	const [email, setEmail] = useState(searchParams.get("email") ?? "");
 	const [code, setCode] = useState("");
 	const [developmentCode, setDevelopmentCode] = useState<string | null>(null);
@@ -41,7 +43,9 @@ export function VerifyEmailForm() {
 		setSubmitting(true);
 		try {
 			await api.verifyEmail({ email, code });
-			router.push("/login?verified=true");
+			const loginParams = new URLSearchParams({ verified: "true" });
+			if (inviteToken) loginParams.set("invite", inviteToken);
+			router.push(`/login?${loginParams.toString()}`);
 		} catch (caught) {
 			setError(caught instanceof Error ? caught.message : "Verification failed");
 		} finally {
@@ -56,7 +60,14 @@ export function VerifyEmailForm() {
 			const result = await api.resendVerification(email);
 			if (result.developmentCode) {
 				setDevelopmentCode(result.developmentCode);
-				router.replace(buildAuthRedirectUrl("/verify-email", email, result.developmentCode));
+				router.replace(
+					buildAuthRedirectUrl(
+						"/verify-email",
+						email,
+						result.developmentCode,
+						inviteToken ?? undefined,
+					),
+				);
 			}
 		} catch (caught) {
 			setError(caught instanceof Error ? caught.message : "Could not resend code");
@@ -125,7 +136,10 @@ export function VerifyEmailForm() {
 							{resending ? "Sending..." : "Send a new code"}
 						</Button>
 						<p className="text-muted-foreground text-center text-sm">
-							<Link href="/login" className="underline underline-offset-4">
+							<Link
+								href={inviteToken ? `/login?invite=${encodeURIComponent(inviteToken)}` : "/login"}
+								className="underline underline-offset-4"
+							>
 								Back to sign in
 							</Link>
 						</p>

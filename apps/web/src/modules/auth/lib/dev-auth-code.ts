@@ -9,12 +9,25 @@ function isValidDevCode(code: string | undefined): code is string {
 }
 
 /** Pass dev OTP via URL in local development only (never persisted client-side). */
-export function buildAuthRedirectUrl(path: string, email: string, devCode?: string): string {
+export function buildAuthRedirectUrl(
+	path: string,
+	email: string,
+	devCode?: string,
+	inviteToken?: string,
+): string {
 	const params = new URLSearchParams({ email });
 	if (isDevAuthCodeEnabled() && isValidDevCode(devCode)) {
 		params.set(DEV_CODE_PARAM, devCode);
 	}
+	if (inviteToken) {
+		params.set("invite", inviteToken);
+	}
 	return `${path}?${params.toString()}`;
+}
+
+export function readInviteTokenFromSearchParams(searchParams: URLSearchParams): string | null {
+	const token = searchParams.get("invite") ?? searchParams.get("token");
+	return token && token.length >= 20 ? token : null;
 }
 
 export function readDevCodeFromSearchParams(searchParams: URLSearchParams): string | null {

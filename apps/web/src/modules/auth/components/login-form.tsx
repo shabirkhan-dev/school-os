@@ -13,9 +13,10 @@ import {
 } from "@school-os/ui/components/card";
 import { FieldDescription } from "@school-os/ui/components/field";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { readInviteTokenFromSearchParams } from "@/modules/auth/lib/dev-auth-code";
 import { useAuth } from "../context/auth-context";
 import {
 	useGoogleLoginMutation,
@@ -33,6 +34,8 @@ import { TwoFactorForm } from "./presentation/two-factor-form";
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const inviteToken = readInviteTokenFromSearchParams(searchParams);
 	const { user, loading, error, clearError } = useAuth();
 	const providers = useAuthProvidersQuery();
 	const login = useLoginMutation();
@@ -48,10 +51,20 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 	const [notice, setNotice] = useState<string | null>(null);
 
 	useEffect(() => {
-		if (!loading && user) router.replace("/admin");
-	}, [loading, router, user]);
+		if (!loading && user) {
+			router.replace(
+				inviteToken ? `/accept-invite?token=${encodeURIComponent(inviteToken)}` : "/admin",
+			);
+		}
+	}, [inviteToken, loading, router, user]);
 
-	const finish = useCallback(() => router.push("/admin"), [router]);
+	const finish = useCallback(() => {
+		if (inviteToken) {
+			router.push(`/accept-invite?token=${encodeURIComponent(inviteToken)}`);
+			return;
+		}
+		router.push("/admin");
+	}, [inviteToken, router]);
 	const handleGoogle = useCallback(
 		(credential: string) => google.mutate(credential, { onSuccess: finish }),
 		[finish, google],
@@ -158,7 +171,14 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 							</div>
 							<FieldDescription className="text-center">
 								Don&apos;t have an account?{" "}
-								<Link href="/register" className="text-primary underline">
+								<Link
+									href={
+										inviteToken
+											? `/register?invite=${encodeURIComponent(inviteToken)}`
+											: "/register"
+									}
+									className="text-primary underline"
+								>
 									Create one
 								</Link>
 							</FieldDescription>

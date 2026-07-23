@@ -69,6 +69,7 @@ const sections: NavSection[] = [
 		heading: "People",
 		items: [
 			{ id: "students", label: "Students", icon: StudentIcon, href: "/admin/students" },
+			{ id: "members", label: "Members", icon: UserMultiple02Icon, href: "/admin/members" },
 			{ id: "teachers", label: "Teachers", icon: TeacherIcon },
 			{ id: "guardians", label: "Guardians", icon: UserMultiple02Icon },
 		],
@@ -136,6 +137,15 @@ function activeNavId(pathname: string): string {
 	}
 	if (pathname.startsWith("/admin/ai")) {
 		return "ai-assist";
+	}
+	if (pathname.startsWith("/admin/attendance")) {
+		return "attendance";
+	}
+	if (pathname.startsWith("/admin/students")) {
+		return "students";
+	}
+	if (pathname.startsWith("/admin/members")) {
+		return "members";
 	}
 	if (pathname === "/admin" || pathname === "/admin/") {
 		return "dashboard";
