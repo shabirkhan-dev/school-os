@@ -82,6 +82,7 @@ export {
 	InputGroupTextarea,
 } from "./components/input-group";
 export { Label } from "./components/label";
+export { SchoolOsMark } from "./components/school-os-mark";
 export {
 	Select,
 	SelectContent,

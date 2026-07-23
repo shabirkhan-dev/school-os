@@ -12,10 +12,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
 	title: {
-		default: "Starter",
-		template: "%s | Starter",
+		default: "School OS",
+		template: "%s | School OS",
 	},
-	description: "Production-ready application starter",
+	description:
+		"The trust engine for schools — mobile-first Smart Attendance and WhatsApp parent alerts.",
 };
 
 export default function RootLayout({
