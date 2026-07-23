@@ -50,6 +50,13 @@
       "when": 1785000647371,
       "tag": "0006_roles_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1785100647371,
+      "tag": "0007_tenant_config",
+      "breakpoints": true
     }
   ]
 }
