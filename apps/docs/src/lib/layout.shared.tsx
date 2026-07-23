@@ -1,4 +1,4 @@
-import { SchoolOsLogo } from "@school-os/ui";
+import { SchoolOsBrand } from "@school-os/ui";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import Link from "next/link";
 import { gitConfig } from "./shared";
@@ -7,9 +7,11 @@ export function baseOptions(): BaseLayoutProps {
 	return {
 		nav: {
 			title: (
-				<Link href="/docs" className="flex items-center gap-2 font-semibold">
-					<SchoolOsLogo className="h-6" />
-					<span className="text-fd-muted-foreground font-medium text-sm">Docs</span>
+				<Link
+					href="/docs"
+					className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-fd-ring"
+				>
+					<SchoolOsBrand name="School OS Docs" nameClassName="text-base" />
 				</Link>
 			),
 		},

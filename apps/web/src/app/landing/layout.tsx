@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 	openGraph: {
 		title: SITE.title,
 		description: SITE.description,
-		images: [{ url: "/brand/school-os-logo.png", alt: "School OS" }],
+		images: [{ url: "/brand/school-os-mark.png", alt: "School OS" }],
 	},
 };
 

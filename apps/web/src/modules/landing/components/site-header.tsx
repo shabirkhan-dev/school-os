@@ -2,7 +2,7 @@
 
 import { ArrowDown01Icon, Cancel01Icon, Menu01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { SchoolOsLogo } from "@school-os/ui";
+import { SchoolOsBrand } from "@school-os/ui";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useId, useState } from "react";
@@ -35,7 +35,7 @@ export function SiteHeader() {
 						href="/"
 						className="flex shrink-0 items-center rounded-lg px-1 outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
 					>
-						<SchoolOsLogo className="h-6 sm:h-7" />
+						<SchoolOsBrand markClassName="size-7 sm:size-8" nameClassName="text-base sm:text-lg" />
 					</Link>
 
 					<nav className="-translate-x-1/2 absolute left-1/2 hidden items-center gap-0.5 lg:flex">

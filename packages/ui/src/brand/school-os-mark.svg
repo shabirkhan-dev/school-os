@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" role="img" aria-label="School OS">
+	<defs>
+		<linearGradient id="bg" x1="96" y1="64" x2="416" y2="448" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#007a52" />
+			<stop offset="1" stop-color="#005a3c" />
+		</linearGradient>
+	</defs>
+	<rect width="512" height="512" rx="112" fill="url(#bg)" />
+	<g fill="#ffffff">
+		<path
+			d="M256 118 132 176v36c0 78 56 142 124 164 68-22 124-86 124-164v-36L256 118Z"
+			opacity="0.98"
+		/>
+		<path d="M256 118v246" stroke="#ffffff" stroke-width="18" stroke-linecap="round" />
+		<path
+			d="M188 214c0-22 30-38 68-38s68 16 68 38"
+			stroke="#ffffff"
+			stroke-width="18"
+			stroke-linecap="round"
+			fill="none"
+		/>
+		<path d="M332 176 356 196 332 214" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+		<circle cx="356" cy="196" r="10" fill="#ffffff" />
+	</g>
+</svg>
