@@ -2,6 +2,7 @@
 
 import {
 	BubbleChatIcon,
+	Building03Icon,
 	Calendar03Icon,
 	ClipboardIcon,
 	DashboardSquare01Icon,
@@ -46,6 +47,7 @@ import { type ComponentProps, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { userInitials } from "@/lib/user-display";
 import { cn } from "@/lib/utils";
+import { useTenantContext } from "@/modules/tenants";
 
 type IconType = ComponentProps<typeof HugeiconsIcon>["icon"];
 type NavItem = { id: string; label: string; icon: IconType; href?: string };
@@ -87,6 +89,12 @@ const sections: NavSection[] = [
 			{ id: "help", label: "Help Center", icon: HelpCircleIcon },
 			{ id: "system", label: "System Settings", icon: Settings02Icon },
 			{
+				id: "organization",
+				label: "Organization",
+				icon: Building03Icon,
+				href: "/admin/organization",
+			},
+			{
 				id: "account-profile",
 				label: "Profile",
 				icon: UserCircle02Icon,
@@ -104,11 +112,11 @@ const sections: NavSection[] = [
 
 type School = { id: string; name: string; kind: string; mark: string };
 
-const schools: School[] = [
-	{ id: "northwood", name: "Northwood High School", kind: "Grades 9–12", mark: "N" },
-	{ id: "riverside", name: "Riverside Elementary", kind: "Grades K–5", mark: "R" },
-	{ id: "district", name: "District Office", kind: "All campuses", mark: "D" },
-];
+function campusMark(name: string, code: string): string {
+	const fromCode = code.replace(/[^A-Za-z0-9]/g, "").slice(0, 2);
+	if (fromCode) return fromCode.toUpperCase();
+	return name.trim().charAt(0).toUpperCase() || "S";
+}
 
 type AdminSidebarProps = {
 	className?: string;
@@ -117,6 +125,9 @@ type AdminSidebarProps = {
 };
 
 function activeNavId(pathname: string): string {
+	if (pathname.startsWith("/admin/tenants/") || pathname.startsWith("/admin/organization")) {
+		return "organization";
+	}
 	if (pathname.startsWith("/admin/account/profile")) {
 		return "account-profile";
 	}
@@ -136,10 +147,19 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 	const pathname = usePathname();
 	const router = useRouter();
 	const { user, logout } = useAuth();
+	const { activeTenant, activeCampus, campuses, setActiveCampusId, setActiveTenantId } =
+		useTenantContext();
 	const [collapsed, setCollapsed] = useState(false);
-	const [schoolId, setSchoolId] = useState(schools[0].id);
 
+	const schools: School[] = campuses.map((campus) => ({
+		id: campus.id,
+		name: campus.name,
+		kind: campus.code,
+		mark: campusMark(campus.name, campus.code),
+	}));
+	const schoolId = activeCampus?.id ?? schools[0]?.id ?? "";
 	const school = schools.find((s) => s.id === schoolId) ?? schools[0];
+	const tenantLabel = activeTenant?.name ?? "Organization";
 	const isCollapsed = !mobile && collapsed;
 	const width = mobile ? "w-full" : isCollapsed ? "w-[76px]" : "w-[260px]";
 	const activeId = activeNavId(pathname);
@@ -204,16 +224,18 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 									)}
 								>
 									<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-dashboard-accent-soft text-dashboard-accent">
-										<span className="font-bold text-[15px] leading-none">{school.mark}</span>
+										<span className="font-bold text-[15px] leading-none">
+											{school?.mark ?? tenantLabel.charAt(0).toUpperCase()}
+										</span>
 									</div>
 									{!isCollapsed && (
 										<>
 											<div className="min-w-0 flex-1">
 												<div className="text-[11px] text-dashboard-text-dim leading-tight">
-													{school.kind}
+													{tenantLabel}
 												</div>
 												<div className="truncate font-semibold text-[13px] text-dashboard-text-secondary leading-tight">
-													{school.name}
+													{school?.name ?? "Add a campus"}
 												</div>
 											</div>
 											<HugeiconsIcon
@@ -238,31 +260,52 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 								</DropdownMenuLabel>
 							</DropdownMenuGroup>
 							<DropdownMenuSeparator className="bg-dashboard-border" />
-							{schools.map((s) => {
-								const selected = s.id === schoolId;
-								return (
-									<DropdownMenuItem
-										key={s.id}
-										onClick={() => setSchoolId(s.id)}
-										className="gap-3 focus:bg-dashboard-hover-strong"
-									>
-										<div className="flex size-8 items-center justify-center rounded-md bg-dashboard-accent-soft font-bold text-[13px] text-dashboard-accent">
-											{s.mark}
-										</div>
-										<div className="min-w-0 flex-1">
-											<div className="truncate font-medium text-[13px]">{s.name}</div>
-											<div className="text-[11px] text-dashboard-text-dim">{s.kind}</div>
-										</div>
-										{selected && (
-											<HugeiconsIcon
-												icon={Tick02Icon}
-												size={16}
-												className="text-dashboard-accent"
-											/>
-										)}
-									</DropdownMenuItem>
-								);
-							})}
+							{schools.length === 0 ? (
+								<DropdownMenuItem
+									render={
+										<Link
+											href={
+												activeTenant
+													? `/admin/tenants/${activeTenant.id}/campuses`
+													: "/admin/onboarding/tenant"
+											}
+											onClick={onNavigate}
+										/>
+									}
+									className="gap-3 focus:bg-dashboard-hover-strong"
+								>
+									<div className="text-[13px] text-dashboard-text-muted">Add your first campus</div>
+								</DropdownMenuItem>
+							) : (
+								schools.map((s) => {
+									const selected = s.id === schoolId;
+									return (
+										<DropdownMenuItem
+											key={s.id}
+											onClick={() => {
+												if (activeTenant) setActiveTenantId(activeTenant.id);
+												setActiveCampusId(s.id);
+											}}
+											className="gap-3 focus:bg-dashboard-hover-strong"
+										>
+											<div className="flex size-8 items-center justify-center rounded-md bg-dashboard-accent-soft font-bold text-[13px] text-dashboard-accent">
+												{s.mark}
+											</div>
+											<div className="min-w-0 flex-1">
+												<div className="truncate font-medium text-[13px]">{s.name}</div>
+												<div className="text-[11px] text-dashboard-text-dim">{s.kind}</div>
+											</div>
+											{selected ? (
+												<HugeiconsIcon
+													icon={Tick02Icon}
+													size={16}
+													className="text-dashboard-accent"
+												/>
+											) : null}
+										</DropdownMenuItem>
+									);
+								})
+							)}
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>
