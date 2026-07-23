@@ -2,6 +2,7 @@
 
 import { ArrowDown01Icon, ArrowUp01Icon, ShieldIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -36,11 +37,12 @@ export function RoleAccessPanel({ className, defaultOpen = false }: Props) {
 				className,
 			)}
 		>
-			<button
+			<Button
 				type="button"
-				className="flex w-full items-center justify-between gap-3 px-3 py-3 text-start transition-colors hover:bg-dashboard-surface-hover sm:px-4 sm:py-3.5"
+				variant="ghost"
 				onClick={() => setOpen((value) => !value)}
 				aria-expanded={open}
+				className="h-auto w-full justify-between gap-3 rounded-none px-3 py-3 text-start sm:px-4 sm:py-3.5"
 			>
 				<div className="flex items-center gap-2">
 					<HugeiconsIcon
@@ -64,7 +66,7 @@ export function RoleAccessPanel({ className, defaultOpen = false }: Props) {
 					strokeWidth={2}
 					className="shrink-0 text-dashboard-text-muted"
 				/>
-			</button>
+			</Button>
 
 			{open ? (
 				<div className="border-dashboard-border border-t px-3 pb-3 sm:px-4 sm:pb-4">

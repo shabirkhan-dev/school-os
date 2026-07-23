@@ -2,6 +2,7 @@
 
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { DashboardCardFooter, DashboardCardHeader, FooterSep } from "../card-chrome";
@@ -57,13 +58,15 @@ export function RecentAdmissionsCard({ className }: Props) {
 			<DashboardCardFooter
 				className="shrink-0"
 				action={
-					<button
+					<Button
 						type="button"
-						className="inline-flex items-center gap-1 font-medium text-[12px] text-dashboard-accent transition-colors hover:text-dashboard-accent-hover"
+						variant="link"
+						size="sm"
+						className="h-auto gap-1 p-0 font-medium text-[12px] text-dashboard-accent hover:text-dashboard-accent-hover"
 					>
 						View all admissions
 						<HugeiconsIcon icon={ArrowRight01Icon} size={13} strokeWidth={2} />
-					</button>
+					</Button>
 				}
 			>
 				<span>

@@ -130,12 +130,13 @@ export function InviteMemberSheet({
 							{roles.map((option) => {
 								const selected = role === option;
 								return (
-									<button
+									<Button
 										key={option}
 										type="button"
+										variant={selected ? "default" : "outline"}
 										onClick={() => setRole(option)}
 										className={cn(
-											"rounded-xl border px-3 py-2.5 text-start transition-colors",
+											"h-auto w-full flex-col items-start rounded-xl px-3 py-2.5 text-start",
 											selected
 												? "border-dashboard-accent bg-dashboard-accent-soft/50 ring-1 ring-dashboard-accent/30"
 												: "border-dashboard-border bg-dashboard-surface hover:bg-dashboard-surface-hover",
@@ -152,7 +153,7 @@ export function InviteMemberSheet({
 										<p className="mt-1.5 text-[12px] text-dashboard-text-secondary leading-4">
 											{membershipRoleDescriptions[option]}
 										</p>
-									</button>
+									</Button>
 								);
 							})}
 						</div>

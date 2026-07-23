@@ -109,41 +109,30 @@ export function MembersDirectory({
 								)}
 							>
 								<td className="py-3 pr-3 pl-4 align-top">
-									<button
+									<Button
 										type="button"
-										className="w-full cursor-pointer text-start"
+										variant="ghost"
 										onClick={() => onSelect(member)}
+										className="h-auto w-full justify-start gap-0 p-0 font-normal hover:bg-transparent"
 									>
 										<MemberIdentity member={member} isSelf={member.id === currentMembershipId} />
-									</button>
+									</Button>
 								</td>
 								<td className="py-3 pr-3 align-top">
-									<button type="button" className="cursor-pointer" onClick={() => onSelect(member)}>
-										<MemberRoleBadge role={member.role} />
-									</button>
+									<MemberRoleBadge role={member.role} />
 								</td>
 								<td className="py-3 pr-3 align-top">
-									<button
-										type="button"
-										className="block w-full cursor-pointer truncate text-start text-[12.5px] text-dashboard-text-primary"
-										onClick={() => onSelect(member)}
-									>
+									<span className="block truncate text-[12.5px] text-dashboard-text-primary">
 										{member.campusName ?? "All campuses"}
-									</button>
+									</span>
 								</td>
 								<td className="py-3 pr-3 align-top">
-									<button type="button" className="cursor-pointer" onClick={() => onSelect(member)}>
-										<MemberStatusBadge status={member.status} />
-									</button>
+									<MemberStatusBadge status={member.status} />
 								</td>
 								<td className="py-3 pr-3 align-top tabular-nums">
-									<button
-										type="button"
-										className="cursor-pointer text-[12.5px] text-dashboard-text-secondary"
-										onClick={() => onSelect(member)}
-									>
+									<span className="text-[12.5px] text-dashboard-text-secondary">
 										{formatJoinedDate(member.createdAt)}
-									</button>
+									</span>
 								</td>
 								<td className="py-3 pr-3 align-top">
 									<MemberRowMenu
@@ -207,48 +196,51 @@ function MemberMobileRow({
 	onResendInvite?: (inviteId: string, email: string) => void;
 }) {
 	return (
-		<button
-			type="button"
-			className="flex w-full gap-3 px-4 py-3.5 text-start transition-colors hover:bg-dashboard-hover"
-			onClick={() => onSelect(member)}
-		>
-			<span
-				aria-hidden
-				className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-dashboard-surface-strong font-semibold text-[12px] text-dashboard-text-secondary ring-1 ring-dashboard-border"
+		<div className="px-4 py-3.5">
+			<button
+				type="button"
+				className="flex w-full cursor-pointer gap-3 rounded-lg text-start transition-colors hover:bg-dashboard-hover"
+				onClick={() => onSelect(member)}
 			>
-				{memberInitials(member)}
-			</span>
-			<div className="min-w-0 flex-1 space-y-2">
-				<div className="flex items-start justify-between gap-2">
-					<div className="min-w-0">
-						<p className="truncate font-semibold text-[14px] text-dashboard-text-primary">
-							{member.username}
-							{isSelf ? " · You" : ""}
-						</p>
-						<p className="mt-0.5 truncate text-[12px] text-dashboard-text-muted">{member.email}</p>
+				<span
+					aria-hidden
+					className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-dashboard-surface-strong font-semibold text-[12px] text-dashboard-text-secondary ring-1 ring-dashboard-border"
+				>
+					{memberInitials(member)}
+				</span>
+				<div className="min-w-0 flex-1 space-y-2">
+					<div className="flex items-start justify-between gap-2">
+						<div className="min-w-0">
+							<p className="truncate font-semibold text-[14px] text-dashboard-text-primary">
+								{member.username}
+								{isSelf ? " · You" : ""}
+							</p>
+							<p className="mt-0.5 truncate text-[12px] text-dashboard-text-muted">
+								{member.email}
+							</p>
+						</div>
+						<MemberStatusBadge status={member.status} className="shrink-0" />
 					</div>
-					<MemberStatusBadge status={member.status} className="shrink-0" />
+					<div className="flex flex-wrap items-center gap-2">
+						<MemberRoleBadge role={member.role} />
+						<span className="text-[11.5px] text-dashboard-text-dim">
+							{member.campusName ?? "All campuses"}
+						</span>
+					</div>
 				</div>
-				<div className="flex flex-wrap items-center gap-2">
-					<MemberRoleBadge role={member.role} />
-					<span className="text-[11.5px] text-dashboard-text-dim">
-						{member.campusName ?? "All campuses"}
-					</span>
-				</div>
-				{member.pendingInviteId && onResendInvite ? (
-					<button
-						type="button"
-						className="inline-block text-[11.5px] text-dashboard-accent underline-offset-2 hover:underline"
-						onClick={(e) => {
-							e.stopPropagation();
-							onResendInvite(member.pendingInviteId as string, member.email);
-						}}
-					>
-						Resend invite
-					</button>
-				) : null}
-			</div>
-		</button>
+			</button>
+			{member.pendingInviteId && onResendInvite ? (
+				<Button
+					type="button"
+					variant="link"
+					size="sm"
+					className="ms-[52px] mt-1 h-auto p-0 text-[11.5px] text-dashboard-accent"
+					onClick={() => onResendInvite(member.pendingInviteId as string, member.email)}
+				>
+					Resend invite
+				</Button>
+			) : null}
+		</div>
 	);
 }
 
