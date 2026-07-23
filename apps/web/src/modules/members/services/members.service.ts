@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api/client";
+import type { MembershipRole } from "@/modules/tenants";
 import type {
 	AcceptInviteResult,
 	InviteMemberInput,
@@ -22,6 +23,17 @@ export const membersService = {
 		apiClient.patch<{ member: MembersListResponse["members"][number] }>(
 			`/tenants/${tenantId}/members/${membershipId}`,
 			input,
+			{ accessToken },
+		),
+	addRole: (
+		accessToken: string,
+		tenantId: string,
+		membershipId: string,
+		role: Exclude<MembershipRole, "owner" | "principal" | "admin">,
+	) =>
+		apiClient.post<{ membershipId: string; roles: MembershipRole[] }>(
+			`/tenants/${tenantId}/members/${membershipId}/roles`,
+			{ role },
 			{ accessToken },
 		),
 	revokeInvite: (accessToken: string, tenantId: string, inviteId: string) =>

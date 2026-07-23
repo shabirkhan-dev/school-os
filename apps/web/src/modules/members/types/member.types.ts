@@ -10,6 +10,7 @@ export type Member = {
 	username: string;
 	emailVerified: boolean;
 	role: MembershipRole;
+	roles: MembershipRole[];
 	status: MemberStatus;
 	campusId: string | null;
 	campusName: string | null;

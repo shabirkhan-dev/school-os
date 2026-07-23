@@ -4,6 +4,7 @@ import type {
 	CreateStudentInput,
 	Enrollment,
 	Student,
+	StudentDetail,
 } from "../types/student.types";
 
 export const studentsService = {
@@ -16,6 +17,8 @@ export const studentsService = {
 			{ accessToken },
 		);
 	},
+	get: (accessToken: string, tenantId: string, studentId: string) =>
+		apiClient.get<StudentDetail>(`/tenants/${tenantId}/students/${studentId}`, { accessToken }),
 	create: (accessToken: string, tenantId: string, input: CreateStudentInput) =>
 		apiClient.post<{ student: Student }>(`/tenants/${tenantId}/students`, input, {
 			accessToken,

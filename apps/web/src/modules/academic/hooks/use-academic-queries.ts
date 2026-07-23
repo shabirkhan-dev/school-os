@@ -11,6 +11,9 @@ import type {
 	CreateSectionInput,
 	SchoolClass,
 	Section,
+	UpdateAcademicYearInput,
+	UpdateClassInput,
+	UpdateSectionInput,
 } from "../types/academic.types";
 
 function requireToken(token: string | null): string {
@@ -108,6 +111,83 @@ export function useCreateSectionMutation(tenantId: string) {
 			await queryClient.invalidateQueries({
 				queryKey: academicQueryKeys.sections(tenantId, data.section.campusId),
 			});
+		},
+	});
+}
+
+export function useUpdateAcademicYearMutation(tenantId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			academicYearId,
+			input,
+		}: {
+			academicYearId: string;
+			input: UpdateAcademicYearInput;
+		}) => academicService.updateYear(requireToken(token), tenantId, academicYearId, input),
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: academicQueryKeys.years(tenantId) });
+		},
+	});
+}
+
+export function useDeleteAcademicYearMutation(tenantId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (academicYearId: string) =>
+			academicService.deleteYear(requireToken(token), tenantId, academicYearId),
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: academicQueryKeys.years(tenantId) });
+		},
+	});
+}
+
+export function useUpdateClassMutation(tenantId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({ classId, input }: { classId: string; input: UpdateClassInput }) =>
+			academicService.updateClass(requireToken(token), tenantId, classId, input),
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: academicQueryKeys.classes(tenantId) });
+		},
+	});
+}
+
+export function useDeleteClassMutation(tenantId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (classId: string) =>
+			academicService.deleteClass(requireToken(token), tenantId, classId),
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: academicQueryKeys.classes(tenantId) });
+		},
+	});
+}
+
+export function useUpdateSectionMutation(tenantId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({ sectionId, input }: { sectionId: string; input: UpdateSectionInput }) =>
+			academicService.updateSection(requireToken(token), tenantId, sectionId, input),
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: ["academic", tenantId, "sections"] });
+		},
+	});
+}
+
+export function useDeleteSectionMutation(tenantId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (sectionId: string) =>
+			academicService.deleteSection(requireToken(token), tenantId, sectionId),
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: ["academic", tenantId, "sections"] });
 		},
 	});
 }

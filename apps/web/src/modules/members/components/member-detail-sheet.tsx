@@ -44,6 +44,11 @@ type Props = {
 	campuses: Array<{ id: string; name: string }>;
 	isSelf: boolean;
 	onSave: (membershipId: string, input: UpdateInput) => Promise<void>;
+	onAddRole?: (
+		membershipId: string,
+		role: "teacher" | "parent" | "student",
+		email: string,
+	) => Promise<void>;
 	onResendInvite?: (inviteId: string, email: string) => Promise<void>;
 	pending?: boolean;
 };
@@ -56,18 +61,25 @@ export function MemberDetailSheet({
 	campuses,
 	isSelf,
 	onSave,
+	onAddRole,
 	onResendInvite,
 	pending,
 }: Props) {
 	const [role, setRole] = useState<MembershipRole>("teacher");
 	const [status, setStatus] = useState<MemberStatus>("active");
 	const [campusId, setCampusId] = useState("");
+	const [secondaryRole, setSecondaryRole] = useState<"teacher" | "parent" | "student">("parent");
 
 	useEffect(() => {
 		if (!member) return;
 		setRole(member.role);
 		setStatus(member.status);
 		setCampusId(member.campusId ?? "");
+		const roles = member.roles?.length ? member.roles : [member.role];
+		const available = (["teacher", "parent", "student"] as const).filter(
+			(option) => !roles.includes(option),
+		);
+		if (available[0]) setSecondaryRole(available[0]);
 	}, [member]);
 
 	if (!member) return null;
@@ -76,6 +88,10 @@ export function MemberDetailSheet({
 	const roleOptions = actor ? roleOptionsForMember(actor, member) : [member.role];
 	const dirty =
 		role !== member.role || status !== member.status || (campusId || null) !== member.campusId;
+	const memberRoles = member.roles?.length ? member.roles : [member.role];
+	const addableRoles = (["teacher", "parent", "student"] as const).filter(
+		(option) => !memberRoles.includes(option),
+	);
 
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
@@ -95,6 +111,11 @@ export function MemberDetailSheet({
 							<SheetDescription className="truncate">{member.email}</SheetDescription>
 							<div className="mt-2 flex flex-wrap gap-1.5">
 								<MemberRoleBadge role={member.role} />
+								{memberRoles
+									.filter((item) => item !== member.role)
+									.map((item) => (
+										<MemberRoleBadge key={item} role={item} />
+									))}
 								<MemberStatusBadge status={member.status} />
 								<MemberVerifiedBadge verified={member.emailVerified} />
 							</div>
@@ -196,6 +217,48 @@ export function MemberDetailSheet({
 							lower tiers.
 						</p>
 					)}
+
+					{!isSelf && manageable && actor?.canManage && onAddRole && addableRoles.length > 0 ? (
+						<div className="rounded-lg border border-dashboard-border bg-dashboard-surface-elevated p-3">
+							<p className="mb-2 font-medium text-[13px] text-dashboard-text-primary">
+								Additional access
+							</p>
+							<p className="mb-3 text-[12px] text-dashboard-text-muted leading-5">
+								Add a secondary role when someone is both a teacher and a parent, or needs extra
+								portal access without changing their primary role.
+							</p>
+							<FieldGroup className="gap-3">
+								<Field>
+									<FieldLabel htmlFor="secondary-role">Secondary role</FieldLabel>
+									<SelectField
+										id="secondary-role"
+										value={secondaryRole}
+										onValueChange={(next) =>
+											setSecondaryRole(next as "teacher" | "parent" | "student")
+										}
+										disabled={pending}
+										items={addableRoles.map((option) => ({
+											label: membershipRoleLabels[option],
+											value: option,
+										}))}
+									/>
+								</Field>
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									disabled={pending}
+									onClick={() =>
+										void onAddRole(member.id, secondaryRole, member.email).then(() =>
+											onOpenChange(false),
+										)
+									}
+								>
+									Add {membershipRoleLabels[secondaryRole]} role
+								</Button>
+							</FieldGroup>
+						</div>
+					) : null}
 				</div>
 
 				<SheetFooter className="flex-row gap-2 border-dashboard-border border-t px-4 py-3">

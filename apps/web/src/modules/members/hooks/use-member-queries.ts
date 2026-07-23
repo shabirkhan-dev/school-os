@@ -56,6 +56,23 @@ export function useUpdateMemberMutation(tenantId: string) {
 	});
 }
 
+export function useAddMemberRoleMutation(tenantId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			membershipId,
+			role,
+		}: {
+			membershipId: string;
+			role: "teacher" | "parent" | "student";
+		}) => membersService.addRole(requireToken(token), tenantId, membershipId, role),
+		onSuccess: () => {
+			void queryClient.invalidateQueries({ queryKey: memberQueryKeys.list(tenantId) });
+		},
+	});
+}
+
 export function useRevokeInviteMutation(tenantId: string) {
 	const { token } = useAuth();
 	const queryClient = useQueryClient();

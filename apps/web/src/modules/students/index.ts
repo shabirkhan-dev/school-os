@@ -4,6 +4,7 @@ export {
 	useCreateStudentMutation,
 	useSectionEnrollmentsQuery,
 	useStudentEnrollmentsQuery,
+	useStudentQuery,
 	useStudentsQuery,
 } from "./hooks/use-student-queries";
 export type {
@@ -11,4 +12,6 @@ export type {
 	CreateStudentInput,
 	Enrollment,
 	Student,
+	StudentDetail,
+	StudentGuardianLink,
 } from "./types/student.types";

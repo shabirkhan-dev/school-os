@@ -4,6 +4,7 @@ import { useToast } from "@school-os/ui/components/toaster";
 import { ApiError } from "@/lib/api/client";
 import type { InviteMemberInput, UpdateMemberInput } from "../types/member.types";
 import {
+	useAddMemberRoleMutation,
 	useInviteMemberMutation,
 	useResendInviteMutation,
 	useRevokeInviteMutation,
@@ -20,6 +21,7 @@ export function useMembersActions(tenantId: string) {
 	const toast = useToast();
 	const inviteMember = useInviteMemberMutation(tenantId);
 	const updateMember = useUpdateMemberMutation(tenantId);
+	const addMemberRole = useAddMemberRoleMutation(tenantId);
 	const revokeInvite = useRevokeInviteMutation(tenantId);
 	const resendInvite = useResendInviteMutation(tenantId);
 
@@ -57,6 +59,28 @@ export function useMembersActions(tenantId: string) {
 			} catch (error) {
 				toast.show({
 					title: "Update failed",
+					description: formatError(error),
+					status: "error",
+				});
+				throw error;
+			}
+		},
+		addRole: async (
+			membershipId: string,
+			role: "teacher" | "parent" | "student",
+			email: string,
+		) => {
+			try {
+				const result = await addMemberRole.mutateAsync({ membershipId, role });
+				toast.show({
+					title: "Role added",
+					description: `${email} now has ${role} access alongside existing roles.`,
+					status: "success",
+				});
+				return result;
+			} catch (error) {
+				toast.show({
+					title: "Could not add role",
 					description: formatError(error),
 					status: "error",
 				});
@@ -102,6 +126,7 @@ export function useMembersActions(tenantId: string) {
 		isPending:
 			inviteMember.isPending ||
 			updateMember.isPending ||
+			addMemberRole.isPending ||
 			revokeInvite.isPending ||
 			resendInvite.isPending,
 	};

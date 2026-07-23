@@ -3,6 +3,7 @@
 import { UserMultiple02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert, AlertDescription, AlertTitle } from "@school-os/ui/components/alert";
+import { Spinner } from "@school-os/ui/components/spinner";
 import { motion, useReducedMotion } from "motion/react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -47,7 +48,7 @@ function FadeIn({
 export function MembersPage() {
 	const { activeTenant, campuses } = useTenantContext();
 	const { tenantContext } = useAuth();
-	const { can } = usePermissions();
+	const { can, isLoading: permissionsLoading } = usePermissions();
 	const tenantId = activeTenant?.id ?? null;
 	const canRead = can(PermissionCodes.TENANT_MEMBERSHIP_READ);
 
@@ -108,6 +109,14 @@ export function MembersPage() {
 			<Alert>
 				<AlertDescription>Create an organization first to manage members.</AlertDescription>
 			</Alert>
+		);
+	}
+
+	if (permissionsLoading) {
+		return (
+			<div className="flex min-h-[240px] items-center justify-center">
+				<Spinner className="size-6" />
+			</div>
 		);
 	}
 
@@ -216,6 +225,9 @@ export function MembersPage() {
 				isSelf={selectedMember?.id === currentMembershipId}
 				onSave={async (id, input) => {
 					await actions.update(id, input);
+				}}
+				onAddRole={async (id, role, email) => {
+					await actions.addRole(id, role, email);
 				}}
 				onResendInvite={async (id, email) => {
 					await actions.resendInvite(id, email);

@@ -1,29 +1,12 @@
 "use client";
 
 import {
-	BubbleChatIcon,
-	Building03Icon,
-	Calendar03Icon,
-	ClipboardIcon,
-	DashboardSquare01Icon,
-	File01Icon,
-	HelpCircleIcon,
-	Invoice01Icon,
 	Logout01Icon,
-	Megaphone01Icon,
-	Mortarboard01Icon,
-	PuzzleIcon,
 	SecurityIcon,
-	Settings02Icon,
 	SidebarLeftIcon,
-	StudentIcon,
-	TeacherIcon,
 	Tick02Icon,
 	UnfoldMoreIcon,
-	UserAdd01Icon,
 	UserCircle02Icon,
-	UserMultiple02Icon,
-	UserSettings01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -42,74 +25,13 @@ import {
 	TooltipTrigger,
 } from "@school-os/ui/components/tooltip";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { type ComponentProps, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { userInitials } from "@/lib/user-display";
 import { cn } from "@/lib/utils";
 import { useTenantContext } from "@/modules/tenants";
-
-type IconType = ComponentProps<typeof HugeiconsIcon>["icon"];
-type NavItem = { id: string; label: string; icon: IconType; href?: string };
-type NavSection = { heading: string; items: NavItem[] };
-
-const sections: NavSection[] = [
-	{
-		heading: "Main Menu",
-		items: [
-			{ id: "dashboard", label: "Dashboard", icon: DashboardSquare01Icon, href: "/admin" },
-			{ id: "ai-assist", label: "AI Assist", icon: BubbleChatIcon, href: "/admin/ai" },
-			{ id: "attendance", label: "Attendance", icon: ClipboardIcon, href: "/admin/attendance" },
-			{ id: "timetable", label: "Timetable", icon: Calendar03Icon },
-			{ id: "exams", label: "Exams", icon: File01Icon },
-			{ id: "announcements", label: "Announcements", icon: Megaphone01Icon },
-		],
-	},
-	{
-		heading: "People",
-		items: [
-			{ id: "students", label: "Students", icon: StudentIcon, href: "/admin/students" },
-			{ id: "members", label: "Members", icon: UserMultiple02Icon, href: "/admin/members" },
-			{ id: "teachers", label: "Teachers", icon: TeacherIcon },
-			{ id: "guardians", label: "Guardians", icon: UserMultiple02Icon },
-		],
-	},
-	{
-		heading: "Management",
-		items: [
-			{ id: "admissions", label: "Admissions", icon: UserAdd01Icon },
-			{ id: "fees", label: "Fees & Invoices", icon: Invoice01Icon },
-			{ id: "academics", label: "Academics", icon: Mortarboard01Icon, href: "/admin/academics" },
-			{ id: "roles", label: "Roles & Permissions", icon: UserSettings01Icon },
-			{ id: "integrations", label: "Integrations", icon: PuzzleIcon },
-		],
-	},
-	{
-		heading: "Settings",
-		items: [
-			{ id: "help", label: "Help Center", icon: HelpCircleIcon },
-			{ id: "system", label: "System Settings", icon: Settings02Icon },
-			{
-				id: "organization",
-				label: "Organization",
-				icon: Building03Icon,
-				href: "/admin/organization",
-			},
-			{
-				id: "account-profile",
-				label: "Profile",
-				icon: UserCircle02Icon,
-				href: "/admin/account/profile",
-			},
-			{
-				id: "account-security",
-				label: "Account Security",
-				icon: SecurityIcon,
-				href: "/admin/account/security",
-			},
-		],
-	},
-];
+import { AdminNavigationMenu } from "./admin-navigation-menu";
 
 type School = { id: string; name: string; kind: string; mark: string };
 
@@ -125,36 +47,7 @@ type AdminSidebarProps = {
 	onNavigate?: () => void;
 };
 
-function activeNavId(pathname: string): string {
-	if (pathname.startsWith("/admin/tenants/") || pathname.startsWith("/admin/organization")) {
-		return "organization";
-	}
-	if (pathname.startsWith("/admin/account/profile")) {
-		return "account-profile";
-	}
-	if (pathname.startsWith("/admin/account/security")) {
-		return "account-security";
-	}
-	if (pathname.startsWith("/admin/ai")) {
-		return "ai-assist";
-	}
-	if (pathname.startsWith("/admin/attendance")) {
-		return "attendance";
-	}
-	if (pathname.startsWith("/admin/students")) {
-		return "students";
-	}
-	if (pathname.startsWith("/admin/members")) {
-		return "members";
-	}
-	if (pathname === "/admin" || pathname === "/admin/") {
-		return "dashboard";
-	}
-	return "dashboard";
-}
-
 export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSidebarProps) {
-	const pathname = usePathname();
 	const router = useRouter();
 	const { user, logout } = useAuth();
 	const { activeTenant, activeCampus, campuses, setActiveCampusId, setActiveTenantId } =
@@ -172,7 +65,6 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 	const tenantLabel = activeTenant?.name ?? "Organization";
 	const isCollapsed = !mobile && collapsed;
 	const width = mobile ? "w-full" : isCollapsed ? "w-[76px]" : "w-[260px]";
-	const activeId = activeNavId(pathname);
 	const displayName = user?.username ?? "Account";
 	const displayEmail = user?.email ?? "";
 	const initials = userInitials(displayName);
@@ -327,80 +219,7 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 						"[&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-dashboard-border [&::-webkit-scrollbar-track]:bg-transparent",
 					)}
 				>
-					{sections.map((section, idx) => (
-						<div
-							key={section.heading}
-							className={cn(idx > 0 && "mt-3 border-dashboard-border-subtle border-t pt-3")}
-						>
-							{!isCollapsed ? (
-								<div className="px-2 pt-1 pb-1.5 font-medium text-[11px] text-dashboard-text-dim uppercase tracking-[0.06em]">
-									{section.heading}
-								</div>
-							) : (
-								idx > 0 && <div className="h-1" />
-							)}
-							<ul className="space-y-0.5">
-								{section.items.map((item) => {
-									const active = item.id === activeId;
-									const className = cn(
-										"group/item relative flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-[13px] transition-all duration-150",
-										isCollapsed && "justify-center px-0",
-										active
-											? "bg-dashboard-accent-soft font-medium text-dashboard-accent hover:bg-dashboard-accent-soft"
-											: "font-normal text-dashboard-text-muted hover:bg-dashboard-hover hover:text-dashboard-text-secondary active:scale-[0.985]",
-									);
-									const indicator = active ? (
-										<span
-											aria-hidden
-											className="absolute top-1/2 left-0.5 h-4 w-0.5 -translate-y-1/2 rounded-full bg-dashboard-accent"
-										/>
-									) : null;
-									const icon = (
-										<HugeiconsIcon
-											icon={item.icon}
-											size={18}
-											strokeWidth={active ? 2 : 1.7}
-											className={cn(
-												"shrink-0 transition-colors",
-												active
-													? "text-dashboard-accent"
-													: "text-dashboard-text-dim group-hover/item:text-dashboard-text-secondary",
-											)}
-										/>
-									);
-									const label = !isCollapsed ? (
-										<span className="truncate">{item.label}</span>
-									) : null;
-									const button = item.href ? (
-										<Link href={item.href} className={className} onClick={onNavigate}>
-											{indicator}
-											{icon}
-											{label}
-										</Link>
-									) : (
-										<button type="button" className={className}>
-											{indicator}
-											{icon}
-											{label}
-										</button>
-									);
-
-									return (
-										<li key={item.id}>
-											{isCollapsed ? (
-												<Tooltip>
-													<TooltipTrigger render={() => button} />
-													<TooltipContent side="right">{item.label}</TooltipContent>
-												</Tooltip>
-											) : (
-												button
-											)}
-										</li>
-									);
-								})}
-							</ul>
-						</div>
-					))}
+					<AdminNavigationMenu isCollapsed={isCollapsed} mobile={mobile} onNavigate={onNavigate} />
 				</nav>
 
 				{/* User card */}

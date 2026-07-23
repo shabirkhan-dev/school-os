@@ -30,6 +30,18 @@ export function useStudentsQuery(tenantId: string | null, campusId: string | nul
 	});
 }
 
+export function useStudentQuery(tenantId: string | null, studentId: string | null, enabled = true) {
+	const { token } = useAuth();
+	return useQuery({
+		queryKey: studentQueryKeys.detail(tenantId ?? "", studentId ?? ""),
+		queryFn: () => {
+			if (!tenantId || !studentId) throw new Error("Tenant and student id required");
+			return studentsService.get(requireToken(token), tenantId, studentId);
+		},
+		enabled: enabled && Boolean(token && tenantId && studentId),
+	});
+}
+
 export function useStudentEnrollmentsQuery(
 	tenantId: string | null,
 	studentId: string | null,

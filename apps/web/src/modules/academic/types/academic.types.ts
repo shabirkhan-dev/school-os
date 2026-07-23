@@ -52,3 +52,21 @@ export type CreateSectionInput = {
 	academicYearId: string;
 	name: string;
 };
+
+export type UpdateAcademicYearInput = {
+	name?: string;
+	startsOn?: string;
+	endsOn?: string;
+	status?: AcademicYearStatus;
+};
+
+export type UpdateClassInput = {
+	name?: string;
+	sortOrder?: number;
+};
+
+export type UpdateSectionInput = {
+	name?: string;
+	status?: SectionStatus;
+	homeroomTeacherMembershipId?: string | null;
+};
