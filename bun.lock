@@ -22,6 +22,7 @@
         "@ai-sdk/react": "^3.0.232",
         "@openrouter/ai-sdk-provider": "^2.10.0",
         "@radix-ui/react-presence": "^1.1.5",
+        "@school-os/ui": "workspace:*",
         "ai": "^6.0.230",
         "class-variance-authority": "^0.7.1",
         "flexsearch": "^0.8.212",
