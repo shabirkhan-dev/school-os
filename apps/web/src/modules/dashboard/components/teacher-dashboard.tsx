@@ -1,25 +1,40 @@
 "use client";
 
-import { Calendar03Icon, TeacherIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { TeacherIcon } from "@hugeicons/core-free-icons";
 import { Alert, AlertDescription } from "@school-os/ui/components/alert";
-import { Badge } from "@school-os/ui/components/badge";
-import { Button } from "@school-os/ui/components/button";
 import { Spinner } from "@school-os/ui/components/spinner";
 import Link from "next/link";
 import { useMemo } from "react";
 import { FadeIn } from "@/app/admin/_components/dashboard/fade-in";
+import { AdminPageShell } from "@/components/admin";
 import { useClassesQuery } from "@/modules/academic";
 import { formatSectionLabel } from "@/modules/academic/utils/format-section-label";
-import { useAuth } from "@/modules/auth/context/auth-context";
-import { useMyTeacherProfileQuery } from "@/modules/staff/hooks/use-staff-queries";
+import { TeacherClassCard } from "@/modules/staff/components/teacher-class-card";
+import { TeacherDashboardAlerts } from "@/modules/staff/components/teacher-dashboard-alerts";
+import { TeacherPriorityActions } from "@/modules/staff/components/teacher-priority-actions";
+import { TeacherQuickActions } from "@/modules/staff/components/teacher-quick-actions";
+import { TeacherTodayOverview } from "@/modules/staff/components/teacher-today-overview";
+import { useMyTeacherDashboardQuery } from "@/modules/staff/hooks/use-staff-queries";
 import { useTenantContext } from "@/modules/tenants";
+import { TeacherTodaySchedule } from "@/modules/timetable";
+import { useSessionStore } from "@/store";
+
+function localSessionDate(): string {
+	return new Date().toLocaleDateString("en-CA");
+}
+
+function greetingForHour(hour: number): string {
+	if (hour < 12) return "Good morning";
+	if (hour < 17) return "Good afternoon";
+	return "Good evening";
+}
 
 export function TeacherDashboard() {
-	const { user } = useAuth();
+	const user = useSessionStore((state) => state.user);
 	const { activeTenant, campuses } = useTenantContext();
 	const tenantId = activeTenant?.id ?? null;
-	const profileQuery = useMyTeacherProfileQuery(tenantId);
+	const sessionDate = localSessionDate();
+	const dashboardQuery = useMyTeacherDashboardQuery(tenantId, sessionDate);
 	const classesQuery = useClassesQuery(tenantId, Boolean(tenantId));
 
 	const classNameById = useMemo(
@@ -31,6 +46,15 @@ export function TeacherDashboard() {
 		[campuses],
 	);
 
+	const sectionMetricsByKey = useMemo(() => {
+		const map = new Map<string, NonNullable<typeof dashboardQuery.data>["sections"][number]>();
+		for (const item of dashboardQuery.data?.sections ?? []) {
+			const key = `${item.section.id}-${item.section.subjectId ?? "homeroom"}`;
+			map.set(key, item);
+		}
+		return map;
+	}, [dashboardQuery.data?.sections]);
+
 	if (!tenantId) {
 		return (
 			<Alert>
@@ -39,7 +63,7 @@ export function TeacherDashboard() {
 		);
 	}
 
-	if (profileQuery.isLoading || classesQuery.isLoading) {
+	if (dashboardQuery.isLoading || classesQuery.isLoading) {
 		return (
 			<div className="flex min-h-[320px] items-center justify-center">
 				<Spinner className="size-8" />
@@ -47,7 +71,7 @@ export function TeacherDashboard() {
 		);
 	}
 
-	if (profileQuery.isError || !profileQuery.data) {
+	if (dashboardQuery.isError || !dashboardQuery.data) {
 		return (
 			<Alert>
 				<AlertDescription>
@@ -58,139 +82,127 @@ export function TeacherDashboard() {
 		);
 	}
 
-	const { teacher, homeroomSections, subjectAssignments } = profileQuery.data;
-	const homeroomCount = homeroomSections.length;
-	const subjectCount = subjectAssignments.length;
+	const { teacher, stats, priorityActions, sections, todaySchedule, alerts } = dashboardQuery.data;
 	const greetingName = user?.username ?? teacher.email.split("@")[0] ?? "teacher";
+	const firstPending = priorityActions.find((action) => action.type === "mark_attendance");
+	const homeroomSections = sections.filter((item) => item.section.accessType === "homeroom");
 
 	return (
-		<div className="mx-auto w-full min-w-0 max-w-[1600px] space-y-4 px-3 py-3 sm:space-y-5 sm:px-6 sm:py-6 lg:space-y-6 lg:px-8">
-			<FadeIn>
-				<section className="border-dashboard-border border-b pb-4 sm:pb-5">
-					<div className="mb-1.5 flex items-center gap-2 text-[11px] text-dashboard-text-muted uppercase tracking-[0.08em]">
-						<span className="size-1.5 rounded-full bg-emerald-500" />
-						<span>Teacher home · {activeTenant?.name ?? "Organization"}</span>
-					</div>
-					<h1 className="font-semibold text-[22px] text-dashboard-text-primary tracking-tight sm:text-[24px]">
-						Welcome back, {greetingName}
-					</h1>
-					<p className="mt-1.5 text-[13px] text-dashboard-text-secondary">
-						{homeroomCount} homeroom section{homeroomCount === 1 ? "" : "s"} · {subjectCount}{" "}
-						subject assignment{subjectCount === 1 ? "" : "s"}
-					</p>
+		<AdminPageShell
+			title={`${greetingForHour(new Date().getHours())}, ${greetingName}`}
+			description={`Today · ${sessionDate} · ${activeTenant?.name ?? "Organization"}`}
+			icon={TeacherIcon}
+			maxWidth="7xl"
+			className="px-3 sm:px-6 lg:px-8"
+		>
+			<FadeIn delay={0.03}>
+				<section className="mb-6">
+					<h2 className="mb-3 font-medium text-[15px] text-foreground">Today</h2>
+					<TeacherTodayOverview stats={stats} />
 				</section>
 			</FadeIn>
 
-			<FadeIn delay={0.06}>
-				<div className="grid gap-3 sm:grid-cols-3">
-					<div className="rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4">
-						<p className="text-[11px] text-dashboard-text-muted uppercase tracking-wide">
-							Homeroom sections
-						</p>
-						<p className="mt-1 font-semibold text-[28px] text-dashboard-text-primary">
-							{homeroomCount}
-						</p>
-					</div>
-					<div className="rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4">
-						<p className="text-[11px] text-dashboard-text-muted uppercase tracking-wide">
-							Subject classes
-						</p>
-						<p className="mt-1 font-semibold text-[28px] text-dashboard-text-primary">
-							{subjectCount}
-						</p>
-					</div>
-					<div className="rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4">
-						<p className="text-[11px] text-dashboard-text-muted uppercase tracking-wide">
-							Quick action
-						</p>
-						<Button
-							variant="outline"
-							className="mt-2"
-							nativeButton={false}
-							render={<Link href="/admin/attendance" />}
-						>
-							<HugeiconsIcon icon={Calendar03Icon} size={16} className="mr-2" />
-							Mark attendance
-						</Button>
-					</div>
-				</div>
+			<FadeIn delay={0.05}>
+				<TeacherQuickActions
+					sessionDate={sessionDate}
+					firstPendingSectionId={firstPending?.sectionId}
+					homeroomCount={stats.homeroomCount}
+					className="mb-6"
+				/>
 			</FadeIn>
 
+			{alerts.length > 0 ? (
+				<FadeIn delay={0.07}>
+					<TeacherDashboardAlerts alerts={alerts} className="mb-6" />
+				</FadeIn>
+			) : null}
+
+			{priorityActions.length > 0 ? (
+				<FadeIn delay={0.08}>
+					<TeacherPriorityActions
+						actions={priorityActions}
+						sessionDate={sessionDate}
+						className="mb-6"
+					/>
+				</FadeIn>
+			) : null}
+
 			<FadeIn delay={0.1}>
-				<section className="rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4 sm:p-5">
-					<div className="mb-4 flex items-center gap-2">
-						<HugeiconsIcon icon={TeacherIcon} size={18} className="text-dashboard-accent" />
-						<h2 className="font-medium text-[16px]">Homeroom sections</h2>
+				<section className="mb-8">
+					<div className="mb-3 flex items-center justify-between gap-3">
+						<div>
+							<h2 className="font-medium text-[16px] text-foreground">Today&apos;s periods</h2>
+							<p className="mt-0.5 text-[13px] text-muted-foreground">
+								Scheduled classes with times, subjects, and rooms.
+							</p>
+						</div>
+						<Link href="/admin/timetable" className="text-[13px] text-primary hover:underline">
+							Full week
+						</Link>
 					</div>
-					{homeroomSections.length === 0 ? (
-						<p className="text-[13px] text-dashboard-text-muted">
-							No homeroom sections are assigned to you yet. Ask an administrator to assign you as
-							homeroom teacher.
+					<TeacherTodaySchedule schedule={todaySchedule} classNameById={classNameById} compact />
+				</section>
+			</FadeIn>
+
+			<FadeIn delay={0.12}>
+				<section>
+					<div className="mb-3 flex items-center justify-between gap-3">
+						<div>
+							<h2 className="font-medium text-[16px] text-foreground">Your classes</h2>
+							<p className="mt-0.5 text-[13px] text-muted-foreground">
+								Homeroom attendance and roster links for {sessionDate}.
+							</p>
+						</div>
+						<Link href="/admin/my-classes" className="text-[13px] text-primary hover:underline">
+							View all
+						</Link>
+					</div>
+
+					{sections.length === 0 ? (
+						<p className="rounded-xl border border-border border-dashed px-4 py-10 text-center text-[13px] text-muted-foreground">
+							No classes assigned yet. Contact your administrator to assign homeroom or subject
+							classes.
 						</p>
 					) : (
-						<div className="grid gap-3 sm:grid-cols-2">
-							{homeroomSections.map((section) => (
-								<div
-									key={section.id}
-									className="rounded-[12px] border border-dashboard-border-subtle bg-dashboard-surface-elevated p-4"
-								>
-									<p className="font-medium text-[14px]">
-										{formatSectionLabel(
-											section,
-											classNameById.get(section.classId),
-											campusNameById.get(section.campusId),
+						<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+							{homeroomSections.map((item) => {
+								const key = `${item.section.id}-${item.section.subjectId ?? "homeroom"}`;
+								return (
+									<TeacherClassCard
+										key={key}
+										section={item.section}
+										label={formatSectionLabel(
+											item.section,
+											classNameById.get(item.section.classId),
+											campusNameById.get(item.section.campusId),
 										)}
-									</p>
-									<Badge variant="outline" className="mt-2">
-										Homeroom
-									</Badge>
-									<Link
-										href="/admin/attendance"
-										className="mt-2 inline-block text-[13px] text-dashboard-accent underline-offset-2 hover:underline"
-									>
-										Open attendance
-									</Link>
-								</div>
-							))}
+										campusName={campusNameById.get(item.section.campusId)}
+										metrics={sectionMetricsByKey.get(key) ?? item}
+									/>
+								);
+							})}
+							{sections
+								.filter((item) => item.section.accessType === "subject")
+								.map((item) => {
+									const key = `${item.section.id}-${item.section.subjectId ?? "homeroom"}`;
+									return (
+										<TeacherClassCard
+											key={key}
+											section={item.section}
+											label={formatSectionLabel(
+												item.section,
+												classNameById.get(item.section.classId),
+												campusNameById.get(item.section.campusId),
+											)}
+											campusName={campusNameById.get(item.section.campusId)}
+											metrics={sectionMetricsByKey.get(key) ?? item}
+										/>
+									);
+								})}
 						</div>
 					)}
 				</section>
 			</FadeIn>
-
-			<FadeIn delay={0.14}>
-				<section className="overflow-hidden rounded-[14px] border border-dashboard-border bg-dashboard-surface">
-					<div className="border-dashboard-border-subtle border-b px-4 py-3 sm:px-5">
-						<h2 className="font-medium text-[16px]">Subject assignments</h2>
-					</div>
-					<table className="w-full text-[13px]">
-						<thead className="bg-dashboard-surface-strong text-left text-[11px] text-dashboard-text-muted uppercase">
-							<tr>
-								<th className="px-4 py-2.5 sm:px-5">Section</th>
-								<th className="px-4 py-2.5 sm:px-5">Subject</th>
-							</tr>
-						</thead>
-						<tbody>
-							{subjectAssignments.length === 0 ? (
-								<tr>
-									<td colSpan={2} className="px-4 py-6 text-dashboard-text-muted sm:px-5">
-										No subject assignments yet.
-									</td>
-								</tr>
-							) : (
-								subjectAssignments.map((item) => (
-									<tr key={item.id} className="border-dashboard-border-subtle border-t">
-										<td className="px-4 py-3 sm:px-5">{item.sectionName}</td>
-										<td className="px-4 py-3 sm:px-5">
-											{item.subjectName}{" "}
-											<span className="text-dashboard-text-muted">({item.subjectCode})</span>
-										</td>
-									</tr>
-								))
-							)}
-						</tbody>
-					</table>
-				</section>
-			</FadeIn>
-		</div>
+		</AdminPageShell>
 	);
 }

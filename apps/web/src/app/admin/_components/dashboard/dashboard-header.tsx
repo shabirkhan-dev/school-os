@@ -1,10 +1,10 @@
 "use client";
 
-import { useAuth } from "@/context/auth-context";
 import { userFirstName } from "@/lib/user-display";
 import { cn } from "@/lib/utils";
 import type { DashboardMetrics } from "@/modules/dashboard";
 import type { Campus } from "@/modules/tenants";
+import { useSessionStore } from "@/store";
 import { DatePill } from "./date-pill";
 import { ExportButton } from "./export-button";
 import { PeriodSelect } from "./period-select";
@@ -26,7 +26,7 @@ export function DashboardHeader({
 	className,
 	onExport,
 }: Props) {
-	const { user } = useAuth();
+	const user = useSessionStore((state) => state.user);
 	const greetingName = name ?? (user ? userFirstName(user.username) : "there");
 	const today = new Date().toLocaleDateString("en-US", {
 		weekday: "short",
