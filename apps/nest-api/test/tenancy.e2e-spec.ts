@@ -419,9 +419,9 @@ describe('Tenancy (e2e)', () => {
 			.expect(201);
 
 		expect(inviteResponse.body.data.invite.email).toBe(inviteeEmail);
-		const developmentInviteUrl = inviteResponse.body.data.developmentInviteUrl as string;
-		expect(developmentInviteUrl).toContain('token=');
-		const inviteToken = decodeURIComponent(developmentInviteUrl.split('token=')[1] ?? '');
+		expect(inviteResponse.body.data.developmentInviteUrl as string).toContain('token=');
+
+		const inviteId = inviteResponse.body.data.invite.id as string;
 
 		const listResponse = await request(app.getHttpServer())
 			.get(`/api/v1/tenants/${tenantId}/members`)
@@ -434,11 +434,18 @@ describe('Tenancy (e2e)', () => {
 					member.email === inviteeEmail && member.status === 'invited',
 			),
 		).toBe(true);
+		expect(listResponse.body.data.summary.total).toBeGreaterThan(0);
+		expect(listResponse.body.data.actor.canInvite).toBe(true);
+
+		await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/members/invites/${inviteId}/resend`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.expect(200);
 
 		const acceptResponse = await request(app.getHttpServer())
 			.post('/api/v1/auth/accept-invite')
 			.set('Authorization', `Bearer ${inviteeToken}`)
-			.send({ token: inviteToken })
+			.send({ inviteId })
 			.expect(200);
 
 		expect(acceptResponse.body.data.tenant.id).toBe(tenantId);

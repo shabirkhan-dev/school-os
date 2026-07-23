@@ -184,7 +184,10 @@ export class AuthController {
 	@HttpCode(HttpStatus.OK)
 	@ApiOperation({ summary: 'Accept a membership invite' })
 	acceptInvite(@CurrentUser() user: AccessTokenPayload, @Body() body: AcceptInviteDto) {
-		return this.authService.acceptInvite(user.sub, body.token);
+		return this.authService.acceptInvite(user.sub, {
+			token: body.token,
+			inviteId: body.inviteId,
+		});
 	}
 
 	@Post('forgot-password')

@@ -3,6 +3,8 @@ import {
 	Controller,
 	Delete,
 	Get,
+	HttpCode,
+	HttpStatus,
 	Param,
 	ParseUUIDPipe,
 	Patch,
@@ -74,5 +76,17 @@ export class MembersController {
 		@Param('inviteId', new ParseUUIDPipe({ version: '4' })) inviteId: string,
 	) {
 		return this.members.revokeInvite(user.sub, tenantId, inviteId);
+	}
+
+	@Post('invites/:inviteId/resend')
+	@HttpCode(HttpStatus.OK)
+	@RequirePermissions(PermissionCodes.TENANT_MEMBERSHIP_INVITE)
+	@ApiOperation({ summary: 'Resend a pending invite email' })
+	resendInvite(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Param('inviteId', new ParseUUIDPipe({ version: '4' })) inviteId: string,
+	) {
+		return this.members.resendInvite(user.sub, tenantId, inviteId);
 	}
 }

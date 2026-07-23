@@ -10,6 +10,7 @@ import {
 import { AppConfigService } from '@/config/app-config.service';
 import type { MembershipRecord } from '@/database/schema';
 import { PermissionCodes } from '@/modules/authorization/permission-codes';
+import { PermissionsService } from '@/modules/authorization/permissions.service';
 import { CampusesRepository } from '@/modules/campuses/campuses.repository';
 import { EmailService } from '@/modules/email/email.service';
 import { hashInviteToken } from '@/modules/memberships/membership-invites.service';
@@ -17,6 +18,7 @@ import { MembershipsRepository } from '@/modules/memberships/memberships.reposit
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { TenantsRepository } from '@/modules/tenants/tenants.repository';
 import { UsersService } from '@/modules/users/users.service';
+import { buildActorCapabilities, canManageTarget, getInvitableRoles } from './members.capabilities';
 import type { InviteMemberInput, UpdateMemberInput } from './members.dto';
 import { toPublicMember, toPublicPendingInvite } from './members.types';
 
@@ -28,6 +30,7 @@ export class MembersService {
 	constructor(
 		private readonly memberships: MembershipsRepository,
 		private readonly membershipAccess: MembershipsService,
+		private readonly permissions: PermissionsService,
 		private readonly users: UsersService,
 		private readonly tenants: TenantsRepository,
 		private readonly campuses: CampusesRepository,
@@ -38,15 +41,63 @@ export class MembersService {
 	async listMembers(userId: string, tenantId: string) {
 		await this.requireRead(userId, tenantId);
 		await this.memberships.expireStaleInvites();
-		const rows = await this.memberships.listMembersForTenant(tenantId);
-		const pendingInvites = await this.memberships.listPendingInvitesForTenant(tenantId);
-		const memberEmails = new Set(rows.map((row) => row.user.email.toLowerCase()));
+
+		const [rows, pendingInvites, campusRows, actorMembership] = await Promise.all([
+			this.memberships.listMembersForTenant(tenantId),
+			this.memberships.listPendingInvitesForTenant(tenantId),
+			this.campuses.listByTenant(tenantId),
+			this.memberships.findByTenantAndUser(tenantId, userId),
+		]);
+
+		const campusById = new Map(campusRows.map((campus) => [campus.id, campus]));
+		const inviteByMembershipId = new Map(
+			pendingInvites
+				.filter((invite) => invite.membershipId)
+				.map((invite) => [invite.membershipId as string, invite]),
+		);
+
+		const members = rows.map((row) => {
+			const campus = row.membership.campusId
+				? (campusById.get(row.membership.campusId) ?? null)
+				: null;
+			const pendingInvite = inviteByMembershipId.get(row.membership.id) ?? null;
+			return toPublicMember({
+				membership: row.membership,
+				user: row.user,
+				campus,
+				pendingInvite: pendingInvite
+					? { id: pendingInvite.id, expiresAt: pendingInvite.expiresAt }
+					: null,
+			});
+		});
+
+		const emailOnlyInvites = pendingInvites.filter((invite) => !invite.membershipId);
+
+		const actorRole = actorMembership?.role ?? 'student';
+		const canInvite = this.permissions.hasPermission(
+			actorRole,
+			PermissionCodes.TENANT_MEMBERSHIP_INVITE,
+		);
+		const canManage =
+			this.permissions.hasPermission(actorRole, PermissionCodes.TENANT_MEMBERSHIP_MANAGE) &&
+			managementRoles.has(actorRole);
 
 		return {
-			members: rows.map(toPublicMember),
-			pendingInvites: pendingInvites
-				.filter((invite) => !memberEmails.has(invite.email.toLowerCase()))
-				.map(toPublicPendingInvite),
+			members,
+			pendingInvites: emailOnlyInvites.map((invite) =>
+				toPublicPendingInvite(
+					invite,
+					invite.campusId ? (campusById.get(invite.campusId) ?? null) : null,
+				),
+			),
+			summary: {
+				total: members.length,
+				active: members.filter((member) => member.status === 'active').length,
+				invited: members.filter((member) => member.status === 'invited').length,
+				suspended: members.filter((member) => member.status === 'suspended').length,
+				pendingEmailInvites: emailOnlyInvites.length,
+			},
+			actor: buildActorCapabilities(actorRole, { canInvite, canManage }),
 		};
 	}
 
@@ -57,6 +108,22 @@ export class MembersService {
 		invitedByMembershipId: string,
 	) {
 		await this.requireInvite(userId, tenantId);
+		const actor = await this.memberships.findByTenantAndUser(tenantId, userId);
+		if (!actor) {
+			throw new ForbiddenException({
+				code: 'MEMBERSHIP_FORBIDDEN',
+				message: 'You are not a member of this organization',
+			});
+		}
+
+		const allowedRoles = getInvitableRoles(actor.role);
+		if (!allowedRoles.includes(input.role)) {
+			throw new ForbiddenException({
+				code: 'MEMBERSHIP_INVITE_FORBIDDEN',
+				message: 'You cannot invite members with this role',
+			});
+		}
+
 		const email = input.email.trim().toLowerCase();
 		const tenant = await this.requireTenant(tenantId);
 
@@ -118,8 +185,54 @@ export class MembersService {
 			acceptUrl,
 		});
 
+		const campus = input.campusId
+			? await this.campuses.findByIdForTenant(tenantId, input.campusId)
+			: null;
+
 		return {
-			invite: toPublicPendingInvite(invite),
+			invite: toPublicPendingInvite(invite, campus),
+			...(this.config.exposeAuthCodes ? { developmentInviteUrl: acceptUrl } : {}),
+		};
+	}
+
+	async resendInvite(userId: string, tenantId: string, inviteId: string) {
+		await this.requireInvite(userId, tenantId);
+		await this.memberships.expireStaleInvites();
+
+		const invite = await this.memberships.findPendingInviteById(tenantId, inviteId);
+		if (!invite) {
+			throw new NotFoundException({
+				code: 'INVITE_NOT_FOUND',
+				message: 'Pending invite not found',
+			});
+		}
+
+		const tenant = await this.requireTenant(tenantId);
+		const token = randomBytes(32).toString('hex');
+		const tokenHash = hashInviteToken(token);
+		const expiresAt = new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000);
+
+		const updated = await this.memberships.updateInvite(invite.id, { tokenHash, expiresAt });
+		if (!updated) {
+			throw new NotFoundException({
+				code: 'INVITE_NOT_FOUND',
+				message: 'Pending invite not found',
+			});
+		}
+
+		const acceptUrl = `${this.config.webAppUrl}/accept-invite?token=${encodeURIComponent(token)}`;
+		await this.email.sendMembershipInvite(invite.email, {
+			organizationName: tenant.name,
+			role: invite.role,
+			acceptUrl,
+		});
+
+		const campus = invite.campusId
+			? await this.campuses.findByIdForTenant(tenantId, invite.campusId)
+			: null;
+
+		return {
+			invite: toPublicPendingInvite(updated, campus),
 			...(this.config.exposeAuthCodes ? { developmentInviteUrl: acceptUrl } : {}),
 		};
 	}
@@ -141,6 +254,13 @@ export class MembersService {
 			});
 		}
 
+		if (!canManageTarget(actor.role, membership.role)) {
+			throw new ForbiddenException({
+				code: 'MEMBERSHIP_MANAGE_FORBIDDEN',
+				message: 'You cannot manage this member',
+			});
+		}
+
 		this.assertCanManageTarget(actor.role, membership.role, input.role);
 
 		if (input.role && input.role !== membership.role) {
@@ -159,7 +279,7 @@ export class MembersService {
 			}
 		}
 
-		if (input.campusId) {
+		if (input.campusId !== undefined && input.campusId !== null) {
 			await this.requireCampus(tenantId, input.campusId);
 		}
 
@@ -184,13 +304,29 @@ export class MembersService {
 			});
 		}
 
-		return { member: toPublicMember(row) };
+		const campus = updated.campusId
+			? await this.campuses.findByIdForTenant(tenantId, updated.campusId)
+			: null;
+		const pendingInvite = await this.memberships.findPendingInviteByTenantAndEmail(
+			tenantId,
+			row.user.email,
+		);
+
+		return {
+			member: toPublicMember({
+				membership: updated,
+				user: row.user,
+				campus,
+				pendingInvite: pendingInvite
+					? { id: pendingInvite.id, expiresAt: pendingInvite.expiresAt }
+					: null,
+			}),
+		};
 	}
 
 	async revokeInvite(userId: string, tenantId: string, inviteId: string) {
 		await this.requireInvite(userId, tenantId);
-		const invites = await this.memberships.listPendingInvitesForTenant(tenantId);
-		const invite = invites.find((row) => row.id === inviteId);
+		const invite = await this.memberships.findPendingInviteById(tenantId, inviteId);
 		if (!invite) {
 			throw new NotFoundException({
 				code: 'INVITE_NOT_FOUND',
@@ -222,6 +358,18 @@ export class MembersService {
 			throw new ForbiddenException({
 				code: 'MEMBERSHIP_MANAGE_FORBIDDEN',
 				message: 'Principals cannot manage other leadership roles',
+			});
+		}
+		if (nextRole && actorRole === 'principal' && ['principal', 'admin'].includes(nextRole)) {
+			throw new ForbiddenException({
+				code: 'MEMBERSHIP_MANAGE_FORBIDDEN',
+				message: 'Principals cannot assign leadership roles',
+			});
+		}
+		if (nextRole && actorRole === 'admin' && ['owner', 'principal', 'admin'].includes(nextRole)) {
+			throw new ForbiddenException({
+				code: 'MEMBERSHIP_MANAGE_FORBIDDEN',
+				message: 'Admins cannot assign leadership roles',
 			});
 		}
 	}

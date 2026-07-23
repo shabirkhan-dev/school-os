@@ -63,6 +63,19 @@ export class MembershipInvitesService {
 	async acceptInvite(user: UserRecord, token: string) {
 		await this.memberships.expireStaleInvites();
 		const invite = await this.memberships.findPendingInviteByTokenHash(hashInviteToken(token));
+		return this.acceptInviteRecord(user, invite);
+	}
+
+	async acceptInviteById(user: UserRecord, inviteId: string) {
+		await this.memberships.expireStaleInvites();
+		const invite = await this.memberships.findPendingInviteByIdGlobal(inviteId);
+		return this.acceptInviteRecord(user, invite);
+	}
+
+	private async acceptInviteRecord(
+		user: UserRecord,
+		invite: Awaited<ReturnType<MembershipsRepository['findPendingInviteByIdGlobal']>>,
+	) {
 		if (!invite || invite.expiresAt <= new Date()) {
 			throw new NotFoundException({
 				code: 'INVITE_NOT_FOUND',

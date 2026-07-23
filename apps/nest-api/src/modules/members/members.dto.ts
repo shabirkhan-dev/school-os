@@ -36,11 +36,20 @@ export class UpdateMemberDto {
 	campusId?: string | null;
 }
 
-export const acceptInviteSchema = z.object({ token: z.string().min(20).max(512) }).strict();
+export const acceptInviteSchema = z
+	.object({
+		token: z.string().min(20).max(512).optional(),
+		inviteId: z.string().uuid().optional(),
+	})
+	.strict()
+	.refine((value) => Boolean(value.token ?? value.inviteId), {
+		message: 'Either token or inviteId is required',
+	});
 
 export class AcceptInviteDto {
 	static schema = acceptInviteSchema;
-	token!: string;
+	token?: string;
+	inviteId?: string;
 }
 
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;

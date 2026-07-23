@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import {
+	BadRequestException,
 	ForbiddenException,
 	HttpException,
 	HttpStatus,
@@ -315,7 +316,7 @@ export class AuthService {
 		return this.membershipInvites.listPendingInvitesForUser(user);
 	}
 
-	async acceptInvite(userId: string, token: string) {
+	async acceptInvite(userId: string, input: { token?: string; inviteId?: string }) {
 		const user = await this.usersService.findById(userId);
 		if (!user) {
 			throw new UnauthorizedException({
@@ -323,7 +324,16 @@ export class AuthService {
 				message: 'User not found',
 			});
 		}
-		return this.membershipInvites.acceptInvite(user, token);
+		if (input.inviteId) {
+			return this.membershipInvites.acceptInviteById(user, input.inviteId);
+		}
+		if (input.token) {
+			return this.membershipInvites.acceptInvite(user, input.token);
+		}
+		throw new BadRequestException({
+			code: 'VALIDATION_ERROR',
+			message: 'Either token or inviteId is required',
+		});
 	}
 
 	async forgotPassword(body: EmailBody): Promise<AuthChallengeResult> {

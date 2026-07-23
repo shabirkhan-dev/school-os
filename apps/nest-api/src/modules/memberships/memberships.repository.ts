@@ -153,6 +153,30 @@ export class MembershipsRepository {
 			.orderBy(asc(membershipInvites.email));
 	}
 
+	async findPendingInviteById(tenantId: string, inviteId: string) {
+		const [invite] = await this.database.db
+			.select()
+			.from(membershipInvites)
+			.where(
+				and(
+					eq(membershipInvites.id, inviteId),
+					eq(membershipInvites.tenantId, tenantId),
+					eq(membershipInvites.status, 'pending'),
+				),
+			)
+			.limit(1);
+		return invite ?? null;
+	}
+
+	async findPendingInviteByIdGlobal(inviteId: string) {
+		const [invite] = await this.database.db
+			.select()
+			.from(membershipInvites)
+			.where(and(eq(membershipInvites.id, inviteId), eq(membershipInvites.status, 'pending')))
+			.limit(1);
+		return invite ?? null;
+	}
+
 	async listPendingInvitesForEmail(email: string) {
 		return this.database.db
 			.select()

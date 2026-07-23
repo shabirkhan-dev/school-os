@@ -10,6 +10,9 @@ export type PublicMember = {
 	role: MembershipRecord['role'];
 	status: MembershipRecord['status'];
 	campusId: string | null;
+	campusName: string | null;
+	pendingInviteId: string | null;
+	inviteExpiresAt: string | null;
 	createdAt: string;
 	updatedAt: string;
 };
@@ -20,6 +23,8 @@ export type PublicPendingInvite = {
 	email: string;
 	role: MembershipRecord['role'];
 	campusId: string | null;
+	campusName: string | null;
+	membershipId: string | null;
 	status: MembershipInviteRecord['status'];
 	expiresAt: string;
 	createdAt: string;
@@ -34,9 +39,29 @@ export type PublicInvitePreview = {
 	expiresAt: string;
 };
 
+export type MemberListSummary = {
+	total: number;
+	active: number;
+	invited: number;
+	suspended: number;
+	pendingEmailInvites: number;
+};
+
+export type ActorCapabilities = {
+	role: MembershipRecord['role'];
+	canInvite: boolean;
+	canManage: boolean;
+	assignableRoles: MembershipRecord['role'][];
+	invitableRoles: Array<Exclude<MembershipRecord['role'], 'owner'>>;
+};
+
+type CampusInfo = { name: string; code: string };
+
 export function toPublicMember(input: {
 	membership: MembershipRecord;
 	user: { id: string; email: string; username: string; emailVerified: Date | null };
+	campus?: CampusInfo | null;
+	pendingInvite?: { id: string; expiresAt: Date } | null;
 }): PublicMember {
 	return {
 		id: input.membership.id,
@@ -48,18 +73,26 @@ export function toPublicMember(input: {
 		role: input.membership.role,
 		status: input.membership.status,
 		campusId: input.membership.campusId,
+		campusName: input.campus?.name ?? null,
+		pendingInviteId: input.pendingInvite?.id ?? null,
+		inviteExpiresAt: input.pendingInvite?.expiresAt.toISOString() ?? null,
 		createdAt: input.membership.createdAt.toISOString(),
 		updatedAt: input.membership.updatedAt.toISOString(),
 	};
 }
 
-export function toPublicPendingInvite(invite: MembershipInviteRecord): PublicPendingInvite {
+export function toPublicPendingInvite(
+	invite: MembershipInviteRecord,
+	campus?: CampusInfo | null,
+): PublicPendingInvite {
 	return {
 		id: invite.id,
 		tenantId: invite.tenantId,
 		email: invite.email,
 		role: invite.role,
 		campusId: invite.campusId,
+		campusName: campus?.name ?? null,
+		membershipId: invite.membershipId,
 		status: invite.status,
 		expiresAt: invite.expiresAt.toISOString(),
 		createdAt: invite.createdAt.toISOString(),
