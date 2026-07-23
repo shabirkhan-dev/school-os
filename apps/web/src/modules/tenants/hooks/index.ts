@@ -3,6 +3,12 @@ export { useTenantMembershipQuery } from "./use-tenant-membership-query";
 export {
 	useCreateCampusMutation,
 	useCreateTenantMutation,
+	useUpdateOrganizationConfigMutation,
 	useUpdateTenantMutation,
 } from "./use-tenant-mutations";
-export { useCampusesQuery, useTenantQuery, useTenantsQuery } from "./use-tenant-queries";
+export {
+	useCampusesQuery,
+	useOrganizationConfigQuery,
+	useTenantQuery,
+	useTenantsQuery,
+} from "./use-tenant-queries";

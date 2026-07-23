@@ -10,8 +10,10 @@ import {
 	CampusList,
 	membershipRoleLabels,
 	PermissionCodes,
+	TenantOrganizationConfigForm,
 	TenantSettingsForm,
 	useCampusesQuery,
+	useOrganizationConfigQuery,
 	usePermissions,
 	useTenantContext,
 	useTenantQuery,
@@ -25,10 +27,15 @@ export default function TenantCampusesPage() {
 	const { can, role } = usePermissions();
 	const tenantQuery = useTenantQuery(tenantId);
 	const campusesQuery = useCampusesQuery(tenantId);
+	const configQuery = useOrganizationConfigQuery(
+		tenantId,
+		can(PermissionCodes.TENANT_SETTINGS_READ),
+	);
 
 	const tenant = tenantQuery.data;
 	const campuses = campusesQuery.data ?? [];
 	const canManageSettings = can(PermissionCodes.TENANT_SETTINGS_WRITE);
+	const canViewConfig = can(PermissionCodes.TENANT_SETTINGS_READ);
 
 	return (
 		<div className="mx-auto w-full max-w-[1080px] space-y-6 px-3 py-6 sm:px-6 lg:px-8">
@@ -73,6 +80,10 @@ export default function TenantCampusesPage() {
 					</div>
 
 					{tenant && canManageSettings ? <TenantSettingsForm tenant={tenant} /> : null}
+
+					{canViewConfig && configQuery.data && canManageSettings ? (
+						<TenantOrganizationConfigForm tenantId={tenantId} config={configQuery.data} />
+					) : null}
 				</section>
 
 				<CampusCreateForm

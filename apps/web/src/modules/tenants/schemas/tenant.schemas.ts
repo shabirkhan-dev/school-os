@@ -41,3 +41,55 @@ export const updateTenantSchema = z
 	});
 
 export type UpdateTenantFormValues = z.infer<typeof updateTenantSchema>;
+
+const timeSchema = z
+	.string()
+	.trim()
+	.regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM (24-hour)");
+
+const hexColorSchema = z
+	.string()
+	.trim()
+	.regex(/^#[0-9A-Fa-f]{6}$/, "Use a hex color like #1A2B3C");
+
+export const updateOrganizationConfigSchema = z
+	.object({
+		settings: z
+			.object({
+				academicYearStartMonth: z.number().int().min(1).max(12),
+				attendanceGraceMinutes: z.number().int().min(0).max(120),
+				quietHoursStart: timeSchema,
+				quietHoursEnd: timeSchema,
+			})
+			.partial()
+			.optional(),
+		branding: z
+			.object({
+				displayNameEn: z.string().trim().min(1).max(200).nullable(),
+				displayNameUr: z.string().trim().max(200).nullable(),
+				logoUrl: z.string().trim().url().max(2048).nullable(),
+				primaryColor: hexColorSchema.nullable(),
+				accentColor: hexColorSchema.nullable(),
+			})
+			.partial()
+			.optional(),
+		communicationPolicy: z
+			.object({
+				whatsappEnabled: z.boolean(),
+				smsFallbackEnabled: z.boolean(),
+				emailFallbackEnabled: z.boolean(),
+				notifyAllGuardians: z.boolean(),
+				sickReportRequiresNote: z.boolean(),
+			})
+			.partial()
+			.optional(),
+	})
+	.refine(
+		(value) =>
+			value.settings !== undefined ||
+			value.branding !== undefined ||
+			value.communicationPolicy !== undefined,
+		{ message: "Change at least one field" },
+	);
+
+export type UpdateOrganizationConfigFormValues = z.infer<typeof updateOrganizationConfigSchema>;

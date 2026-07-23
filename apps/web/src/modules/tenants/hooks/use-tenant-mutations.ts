@@ -5,12 +5,15 @@ import { useAuth } from "@/modules/auth/context/auth-context";
 import { tenantQueryKeys } from "../queries/tenant-query-keys";
 import { createCampusSchema, createTenantSchema } from "../schemas/tenant.schemas";
 import { campusesService } from "../services/campuses.service";
+import { organizationConfigService } from "../services/organization-config.service";
 import { tenantsService } from "../services/tenants.service";
 import type {
 	Campus,
 	CreateCampusInput,
 	CreateTenantInput,
+	OrganizationConfig,
 	Tenant,
+	UpdateOrganizationConfigInput,
 	UpdateTenantInput,
 } from "../types/tenant.types";
 
@@ -92,6 +95,24 @@ export function useUpdateTenantMutation(tenantId: string) {
 			});
 			await queryClient.invalidateQueries({ queryKey: tenantQueryKeys.detail(tenantId) });
 			await queryClient.invalidateQueries({ queryKey: tenantQueryKeys.list() });
+		},
+	});
+}
+
+export function useUpdateOrganizationConfigMutation(tenantId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (input: UpdateOrganizationConfigInput) =>
+			organizationConfigService.update(requireToken(token), tenantId, input),
+		onSuccess: async (data) => {
+			queryClient.setQueryData<OrganizationConfig>(
+				tenantQueryKeys.organizationConfig(tenantId),
+				data.config,
+			);
+			await queryClient.invalidateQueries({
+				queryKey: tenantQueryKeys.organizationConfig(tenantId),
+			});
 		},
 	});
 }

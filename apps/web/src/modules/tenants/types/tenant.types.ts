@@ -53,6 +53,41 @@ export type UpdateTenantInput = {
 	status?: TenantStatus;
 };
 
+export type TenantSettingsConfig = {
+	academicYearStartMonth: number;
+	attendanceGraceMinutes: number;
+	quietHoursStart: string;
+	quietHoursEnd: string;
+};
+
+export type TenantBrandingConfig = {
+	displayNameEn: string | null;
+	displayNameUr: string | null;
+	logoUrl: string | null;
+	primaryColor: string | null;
+	accentColor: string | null;
+};
+
+export type TenantCommunicationPolicyConfig = {
+	whatsappEnabled: boolean;
+	smsFallbackEnabled: boolean;
+	emailFallbackEnabled: boolean;
+	notifyAllGuardians: boolean;
+	sickReportRequiresNote: boolean;
+};
+
+export type OrganizationConfig = {
+	settings: TenantSettingsConfig;
+	branding: TenantBrandingConfig;
+	communicationPolicy: TenantCommunicationPolicyConfig;
+};
+
+export type UpdateOrganizationConfigInput = {
+	settings?: Partial<TenantSettingsConfig>;
+	branding?: Partial<TenantBrandingConfig>;
+	communicationPolicy?: Partial<TenantCommunicationPolicyConfig>;
+};
+
 export type CreateCampusInput = {
 	name: string;
 	code: string;
