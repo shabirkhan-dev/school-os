@@ -85,6 +85,15 @@ export {
 } from "./components/input-group";
 export { Label } from "./components/label";
 export {
+	Pagination,
+	PaginationContent,
+	PaginationEllipsis,
+	PaginationItem,
+	PaginationLink,
+	PaginationNext,
+	PaginationPrevious,
+} from "./components/pagination";
+export {
 	Popover,
 	PopoverContent,
 	PopoverDescription,
