@@ -11,6 +11,8 @@ import { AuthRepository } from '@/modules/auth/auth.repository';
 import { AuthService } from '@/modules/auth/auth.service';
 import { AuthCryptoService } from '@/modules/auth/auth-crypto.service';
 import { EmailService } from '@/modules/email/email.service';
+import { MembershipsRepository } from '@/modules/memberships/memberships.repository';
+import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { MfaService } from '@/modules/mfa/mfa.service';
 import { PasskeysService } from '@/modules/passkeys/passkeys.service';
 import { SocialAuthService } from '@/modules/social-auth/social-auth.service';
@@ -27,12 +29,16 @@ describe('database-backed authentication', () => {
 		sendVerificationCode: vi.fn().mockResolvedValue(undefined),
 		sendPasswordResetCode: vi.fn().mockResolvedValue(undefined),
 	} as unknown as EmailService;
+	const membershipsRepository = new MembershipsRepository(database);
+	const membershipsService = new MembershipsService(membershipsRepository);
 	const auth = new AuthService(
 		config,
 		crypto,
 		email,
 		authRepository,
 		usersService,
+		membershipsService,
+		membershipsRepository,
 		{ isTotpEnabled: vi.fn().mockResolvedValue(false) } as unknown as MfaService,
 		{} as PasskeysService,
 		{} as SocialAuthService,

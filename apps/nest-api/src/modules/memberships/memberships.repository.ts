@@ -27,6 +27,20 @@ export class MembershipsRepository {
 		return membership ?? null;
 	}
 
+	async findActiveById(membershipId: string) {
+		const [membership] = await this.database.db
+			.select()
+			.from(memberships)
+			.where(and(eq(memberships.id, membershipId), eq(memberships.status, 'active')))
+			.limit(1);
+		return membership ?? null;
+	}
+
+	async countActiveForUser(userId: string) {
+		const rows = await this.listActiveTenantIdsForUser(userId);
+		return rows.length;
+	}
+
 	async listActiveTenantIdsForUser(userId: string) {
 		const rows = await this.database.db
 			.select({ tenantId: memberships.tenantId })

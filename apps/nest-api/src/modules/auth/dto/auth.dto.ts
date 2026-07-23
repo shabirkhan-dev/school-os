@@ -74,6 +74,8 @@ export const refreshBodySchema = z.preprocess(
 		.strict(),
 );
 
+export const switchTenantBodySchema = z.object({ tenantId: z.uuid() }).strict();
+
 export class RegisterBodyDto {
 	static schema = registerBodySchema;
 	email!: string;
@@ -141,6 +143,10 @@ export class RefreshBodyDto {
 	static schema = refreshBodySchema;
 	refreshToken?: string;
 }
+export class SwitchTenantBodyDto {
+	static schema = switchTenantBodySchema;
+	tenantId!: string;
+}
 
 export type RegisterBody = z.infer<typeof registerBodySchema>;
 export type LoginBody = z.infer<typeof loginBodySchema>;
@@ -151,3 +157,4 @@ export type ChangePasswordBody = z.infer<typeof changePasswordBodySchema>;
 export type ChallengeTokenBody = z.infer<typeof challengeTokenBodySchema>;
 export type MagicLinkBody = z.infer<typeof magicLinkBodySchema>;
 export type RefreshBody = z.infer<typeof refreshBodySchema>;
+export type SwitchTenantBody = z.infer<typeof switchTenantBodySchema>;

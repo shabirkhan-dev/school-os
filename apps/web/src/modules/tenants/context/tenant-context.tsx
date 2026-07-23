@@ -10,6 +10,7 @@ import {
 	useState,
 } from "react";
 import { useAuth } from "@/modules/auth/context/auth-context";
+import { authService } from "@/modules/auth/services/auth.service";
 import { useCampusesQuery, useTenantsQuery } from "../hooks/use-tenant-queries";
 import type { Campus, Tenant } from "../types/tenant.types";
 
@@ -31,7 +32,7 @@ type TenantContextValue = {
 const TenantContext = createContext<TenantContextValue | null>(null);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
-	const { token, user } = useAuth();
+	const { token, user, establishSession } = useAuth();
 	const tenantsQuery = useTenantsQuery(Boolean(token && user));
 	const [activeTenantId, setActiveTenantIdState] = useState<string | null>(null);
 	const [activeCampusId, setActiveCampusIdState] = useState<string | null>(null);
@@ -69,6 +70,26 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 		setActiveCampusIdState(null);
 		writeStoredId(CAMPUS_STORAGE_KEY, null);
 	}, []);
+
+	useEffect(() => {
+		if (!token || !activeTenantId || !tenants.some((tenant) => tenant.id === activeTenantId)) {
+			return;
+		}
+
+		let cancelled = false;
+		void authService
+			.switchTenant(token, activeTenantId)
+			.then((session) => {
+				if (!cancelled) establishSession(session);
+			})
+			.catch(() => {
+				// Keep local selection; token may lack tenant context until user retries.
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [activeTenantId, establishSession, tenants, token]);
 
 	const setActiveCampusId = useCallback((campusId: string) => {
 		setActiveCampusIdState(campusId);

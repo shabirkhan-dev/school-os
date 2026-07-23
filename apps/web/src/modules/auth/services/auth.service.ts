@@ -31,6 +31,8 @@ export const authService = {
 	verifyTwoFactor: (input: TwoFactorInput) =>
 		apiClient.post<AuthSession>("/auth/methods/two-factor/verify", input),
 	refresh: () => apiClient.post<AuthSession>("/auth/refresh"),
+	switchTenant: (accessToken: string, tenantId: string) =>
+		apiClient.post<AuthSession>("/auth/switch-tenant", { tenantId }, { accessToken }),
 	logout: () => apiClient.post<void>("/auth/logout"),
 	logoutAll: (accessToken: string) =>
 		apiClient.post<void>("/auth/logout-all", undefined, { accessToken }),

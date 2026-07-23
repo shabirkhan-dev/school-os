@@ -124,7 +124,11 @@ export class AuthCryptoService {
 		expiresAt: Date;
 	}> {
 		const expiresAt = new Date(Date.now() + parseDurationMs(this.config.jwtAccessExpiresIn));
-		const token = await new SignJWT({ sid: payload.sid })
+		const claims: Record<string, string> = { sid: payload.sid };
+		if (payload.tid) claims.tid = payload.tid;
+		if (payload.mid) claims.mid = payload.mid;
+
+		const token = await new SignJWT(claims)
 			.setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
 			.setSubject(payload.sub)
 			.setIssuedAt()
@@ -140,10 +144,15 @@ export class AuthCryptoService {
 			});
 			const sub = typeof payload.sub === 'string' ? payload.sub : null;
 			const sid = typeof payload.sid === 'string' ? payload.sid : null;
+			const tid = typeof payload.tid === 'string' ? payload.tid : undefined;
+			const mid = typeof payload.mid === 'string' ? payload.mid : undefined;
 			if (!sub || !sid) {
 				throw new Error('Missing token claims');
 			}
-			return { sub, sid };
+			if ((tid && !mid) || (!tid && mid)) {
+				throw new Error('Tenant claims must appear together');
+			}
+			return { sub, sid, ...(tid && mid ? { tid, mid } : {}) };
 		} catch {
 			throw new UnauthorizedException({
 				code: 'AUTH_ACCESS_TOKEN_INVALID',

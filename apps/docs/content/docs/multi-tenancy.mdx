@@ -18,8 +18,9 @@ roles, permissions, and policies work — and what engineers must enforce in eve
 | `tenants`, `campuses`, `memberships` schema + migration | **Shipped** (`0004_tenant_foundation.sql`) |
 | Nest API — create/list/update tenants and campuses | **Shipped** (`/api/v1/tenants`, scoped membership checks) |
 | Web admin — org onboarding + campus setup | **Shipped** (`/admin/onboarding/tenant`, campus switcher) |
-| JWT `tenant_id` / `membership_id` claims | **Planned** (Nest Phase 3) |
-| Roles, permissions, `TenantGuard` | **Planned** (Nest Phase 4) |
+| JWT `tenant_id` / `membership_id` claims (`tid` / `mid`) | **Shipped** (`POST /auth/switch-tenant`, session-backed) |
+| `TenantGuard` + membership resolution on tenant routes | **Shipped** (Phase 3) |
+| Roles, permissions, `PermissionsGuard` | **Planned** (Nest Phase 4) |
 | `tenant_settings`, branding, communication policies | **Planned** (later Wave 0 tables) |
 | RLS on business tables | **Planned** (before pilot) |
 

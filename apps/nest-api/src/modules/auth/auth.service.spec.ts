@@ -53,6 +53,14 @@ describe('AuthService', () => {
 			email,
 			authRepository,
 			usersService,
+			{
+				requireActiveMembership: vi.fn(),
+			} as unknown as import('@/modules/memberships/memberships.service').MembershipsService,
+			{
+				listActiveTenantIdsForUser: vi.fn().mockResolvedValue([]),
+				findActiveByTenantAndUser: vi.fn(),
+				findActiveById: vi.fn(),
+			} as unknown as import('@/modules/memberships/memberships.repository').MembershipsRepository,
 			{ isTotpEnabled: vi.fn().mockResolvedValue(false) } as unknown as MfaService,
 			{} as PasskeysService,
 			{} as SocialAuthService,

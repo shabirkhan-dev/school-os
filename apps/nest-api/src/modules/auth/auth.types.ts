@@ -1,6 +1,11 @@
 import type { PublicUser } from '@/modules/users/users.types';
 
-export type AccessTokenPayload = { sub: string; sid: string };
+export type AccessTokenPayload = {
+	sub: string;
+	sid: string;
+	tid?: string;
+	mid?: string;
+};
 
 export type RequestMetadata = {
 	ipAddress: string | null;

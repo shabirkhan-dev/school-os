@@ -15,6 +15,8 @@ import type {
 	UserRecord,
 } from '@/database/schema';
 import { EmailService } from '@/modules/email/email.service';
+import { MembershipsRepository } from '@/modules/memberships/memberships.repository';
+import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { MfaService } from '@/modules/mfa/mfa.service';
 import { PasskeysService } from '@/modules/passkeys/passkeys.service';
 import { SocialAuthService } from '@/modules/social-auth/social-auth.service';
@@ -53,6 +55,8 @@ export class AuthService {
 		private readonly email: EmailService,
 		private readonly authRepository: AuthRepository,
 		private readonly usersService: UsersService,
+		private readonly memberships: MembershipsService,
+		private readonly membershipsRepository: MembershipsRepository,
 		private readonly mfa: MfaService,
 		private readonly passkeys: PasskeysService,
 		private readonly socialAuth: SocialAuthService,
@@ -244,7 +248,28 @@ export class AuthService {
 			throw invalidRefreshTokenException();
 		}
 
-		return this.buildSessionResult(user, rotated.id, nextRefreshToken);
+		const activeSession = await this.reconcileSessionTenantContext(rotated);
+		return this.buildSessionResult(user, activeSession, nextRefreshToken);
+	}
+
+	async switchTenant(user: AccessTokenPayload, tenantId: string): Promise<PublicAuthSession> {
+		const membership = await this.memberships.requireActiveMembership(user.sub, tenantId);
+		const session = await this.authRepository.findSessionById(user.sid);
+		if (!isSessionActive(session) || session.userId !== user.sub) {
+			throw invalidRefreshTokenException();
+		}
+
+		const updated = await this.authRepository.updateActiveTenantContext({
+			sessionId: user.sid,
+			userId: user.sub,
+			activeTenantId: membership.tenantId,
+			activeMembershipId: membership.id,
+		});
+		if (!updated) {
+			throw invalidRefreshTokenException();
+		}
+
+		return this.buildAccessSession(user.sub, updated);
 	}
 
 	async logout(refreshToken: string | null): Promise<void> {
@@ -331,6 +356,20 @@ export class AuthService {
 				message: 'Session is no longer active',
 			});
 		}
+
+		if (!payload.tid || !payload.mid) {
+			return payload;
+		}
+
+		if (session.activeTenantId !== payload.tid || session.activeMembershipId !== payload.mid) {
+			throw invalidTenantContextException();
+		}
+
+		const membership = await this.membershipsRepository.findActiveById(payload.mid);
+		if (!membership || membership.userId !== payload.sub || membership.tenantId !== payload.tid) {
+			throw invalidTenantContextException();
+		}
+
 		return payload;
 	}
 
@@ -380,14 +419,17 @@ export class AuthService {
 	): Promise<AuthSessionResult> {
 		const sessionId = randomUUID();
 		const refreshToken = this.crypto.createRefreshToken(sessionId);
-		await this.authRepository.createSession({
+		const defaultTenant = await this.resolveDefaultTenantContext(user.id);
+		const session = await this.authRepository.createSession({
 			id: sessionId,
 			userId: user.id,
 			refreshTokenHash: this.crypto.hashRefreshToken(refreshToken),
 			expiresAt: this.getSessionExpiry(),
 			metadata,
+			activeTenantId: defaultTenant?.tenantId ?? null,
+			activeMembershipId: defaultTenant?.membershipId ?? null,
 		});
-		return this.buildSessionResult(user, sessionId, refreshToken);
+		return this.buildSessionResult(user, session, refreshToken);
 	}
 
 	private async createMfaChallenge(user: UserRecord): Promise<MfaLoginChallenge> {
@@ -440,16 +482,70 @@ export class AuthService {
 
 	private async buildSessionResult(
 		user: UserRecord,
-		sessionId: string,
+		session: SessionRecord,
 		refreshToken: string,
 	): Promise<AuthSessionResult> {
-		const accessToken = await this.crypto.signAccessToken({ sub: user.id, sid: sessionId });
+		const accessSession = await this.buildAccessSession(user.id, session);
 		return {
-			accessToken: accessToken.token,
-			accessTokenExpiresAt: accessToken.expiresAt.toISOString(),
+			...accessSession,
 			refreshToken,
 			user: toPublicUser(user),
 		};
+	}
+
+	private async buildAccessSession(
+		userId: string,
+		session: SessionRecord,
+	): Promise<PublicAuthSession> {
+		const payload: AccessTokenPayload = { sub: userId, sid: session.id };
+		if (session.activeTenantId && session.activeMembershipId) {
+			payload.tid = session.activeTenantId;
+			payload.mid = session.activeMembershipId;
+		}
+		const accessToken = await this.crypto.signAccessToken(payload);
+		const user = await this.usersService.findById(userId);
+		if (!user) {
+			throw new Error('User could not be loaded for session');
+		}
+		return {
+			accessToken: accessToken.token,
+			accessTokenExpiresAt: accessToken.expiresAt.toISOString(),
+			user: toPublicUser(user),
+		};
+	}
+
+	private async resolveDefaultTenantContext(userId: string) {
+		const tenantIds = await this.membershipsRepository.listActiveTenantIdsForUser(userId);
+		if (tenantIds.length !== 1) {
+			return null;
+		}
+		const tenantId = tenantIds[0];
+		if (!tenantId) {
+			return null;
+		}
+		const membership = await this.membershipsRepository.findActiveByTenantAndUser(tenantId, userId);
+		if (!membership) {
+			return null;
+		}
+		return { tenantId: membership.tenantId, membershipId: membership.id };
+	}
+
+	private async reconcileSessionTenantContext(session: SessionRecord): Promise<SessionRecord> {
+		if (!session.activeTenantId || !session.activeMembershipId) {
+			return session;
+		}
+
+		const membership = await this.membershipsRepository.findActiveById(session.activeMembershipId);
+		if (
+			!membership ||
+			membership.userId !== session.userId ||
+			membership.tenantId !== session.activeTenantId
+		) {
+			await this.authRepository.clearActiveTenantContext(session.id);
+			return { ...session, activeTenantId: null, activeMembershipId: null };
+		}
+
+		return session;
 	}
 
 	private async issueChallenge(
@@ -550,5 +646,12 @@ function invalidMagicLink(): UnauthorizedException {
 	return new UnauthorizedException({
 		code: 'MAGIC_LINK_INVALID',
 		message: 'The sign-in link is invalid or expired',
+	});
+}
+
+function invalidTenantContextException(): UnauthorizedException {
+	return new UnauthorizedException({
+		code: 'AUTH_TENANT_CONTEXT_INVALID',
+		message: 'Active organization context is no longer valid',
 	});
 }

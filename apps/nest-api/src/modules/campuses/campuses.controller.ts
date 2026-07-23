@@ -13,12 +13,13 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AccessTokenPayload } from '@/modules/auth/auth.types';
 import { CurrentUser } from '@/modules/auth/current-user.decorator';
 import { JwtAuthGuard } from '@/modules/auth/jwt-auth.guard';
+import { TenantGuard } from '@/modules/tenants/tenant.guard';
 import { CreateCampusDto, UpdateCampusDto } from './campuses.dto';
 import { CampusesService } from './campuses.service';
 
 @ApiTags('Campuses')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
 @Controller({ path: 'tenants/:tenantId/campuses', version: '1' })
 export class CampusesController {
 	constructor(private readonly campuses: CampusesService) {}

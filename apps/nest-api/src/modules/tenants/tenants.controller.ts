@@ -13,6 +13,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AccessTokenPayload } from '@/modules/auth/auth.types';
 import { CurrentUser } from '@/modules/auth/current-user.decorator';
 import { JwtAuthGuard } from '@/modules/auth/jwt-auth.guard';
+import { TenantGuard } from '@/modules/tenants/tenant.guard';
 import { CreateTenantDto, UpdateTenantDto } from './tenants.dto';
 import { TenantsService } from './tenants.service';
 
@@ -36,6 +37,7 @@ export class TenantsController {
 	}
 
 	@Get(':tenantId')
+	@UseGuards(TenantGuard)
 	@ApiOperation({ summary: 'Get a tenant by id (members only)' })
 	get(
 		@CurrentUser() user: AccessTokenPayload,
@@ -45,6 +47,7 @@ export class TenantsController {
 	}
 
 	@Patch(':tenantId')
+	@UseGuards(TenantGuard)
 	@ApiOperation({ summary: 'Update tenant settings (owner, principal, or admin)' })
 	update(
 		@CurrentUser() user: AccessTokenPayload,

@@ -22,6 +22,7 @@ import type {
 	AuthChallengeResult,
 	ClientAuthSession,
 	ClientLoginResult,
+	PublicAuthSession,
 	RegistrationResult,
 	SessionView,
 } from './auth.types';
@@ -34,6 +35,7 @@ import {
 	RefreshBodyDto,
 	RegisterBodyDto,
 	ResetPasswordBodyDto,
+	SwitchTenantBodyDto,
 	VerifyEmailBodyDto,
 } from './dto/auth.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -141,6 +143,22 @@ export class AuthController {
 	@ApiOperation({ summary: 'Get the authenticated user' })
 	me(@CurrentUser() user: AccessTokenPayload): Promise<PublicUser> {
 		return this.authService.me(user.sub);
+	}
+
+	@Post('switch-tenant')
+	@UseGuards(JwtAuthGuard)
+	@ApiBearerAuth()
+	@HttpCode(HttpStatus.OK)
+	@ApiOperation({
+		summary: 'Switch the active organization for the current session',
+		description:
+			'Updates session tenant context and returns a new access token with tid/mid claims.',
+	})
+	switchTenant(
+		@CurrentUser() user: AccessTokenPayload,
+		@Body() body: SwitchTenantBodyDto,
+	): Promise<PublicAuthSession> {
+		return this.authService.switchTenant(user, body.tenantId);
 	}
 
 	@Post('forgot-password')

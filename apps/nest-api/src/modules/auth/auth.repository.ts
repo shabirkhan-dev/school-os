@@ -169,6 +169,8 @@ export class AuthRepository {
 		refreshTokenHash: string;
 		expiresAt: Date;
 		metadata: RequestMetadata;
+		activeTenantId?: string | null;
+		activeMembershipId?: string | null;
 	}): Promise<SessionRecord> {
 		const [session] = await this.database.db
 			.insert(sessions)
@@ -179,12 +181,45 @@ export class AuthRepository {
 				expiresAt: input.expiresAt,
 				userAgent: input.metadata.userAgent,
 				ipAddress: input.metadata.ipAddress,
+				activeTenantId: input.activeTenantId ?? null,
+				activeMembershipId: input.activeMembershipId ?? null,
 			})
 			.returning();
 		if (!session) {
 			throw new Error('Session insert did not return a record');
 		}
 		return session;
+	}
+
+	async updateActiveTenantContext(input: {
+		sessionId: string;
+		userId: string;
+		activeTenantId: string | null;
+		activeMembershipId: string | null;
+	}): Promise<SessionRecord | null> {
+		const [session] = await this.database.db
+			.update(sessions)
+			.set({
+				activeTenantId: input.activeTenantId,
+				activeMembershipId: input.activeMembershipId,
+				lastUsedAt: new Date(),
+			})
+			.where(
+				and(
+					eq(sessions.id, input.sessionId),
+					eq(sessions.userId, input.userId),
+					isNull(sessions.revokedAt),
+				),
+			)
+			.returning();
+		return session ?? null;
+	}
+
+	async clearActiveTenantContext(sessionId: string): Promise<void> {
+		await this.database.db
+			.update(sessions)
+			.set({ activeTenantId: null, activeMembershipId: null })
+			.where(eq(sessions.id, sessionId));
 	}
 
 	async findSessionById(sessionId: string): Promise<SessionRecord | null> {
