@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 
 import { DatabaseService } from '@/database/database.service';
-import { memberships } from '@/database/schema';
+import { type MembershipRecord, membershipInvites, memberships, users } from '@/database/schema';
 
 @Injectable()
 export class MembershipsRepository {
@@ -19,6 +19,24 @@ export class MembershipsRepository {
 					eq(memberships.status, 'active'),
 				),
 			)
+			.limit(1);
+		return membership ?? null;
+	}
+
+	async findByTenantAndUser(tenantId: string, userId: string) {
+		const [membership] = await this.database.db
+			.select()
+			.from(memberships)
+			.where(and(eq(memberships.tenantId, tenantId), eq(memberships.userId, userId)))
+			.limit(1);
+		return membership ?? null;
+	}
+
+	async findById(tenantId: string, membershipId: string) {
+		const [membership] = await this.database.db
+			.select()
+			.from(memberships)
+			.where(and(eq(memberships.id, membershipId), eq(memberships.tenantId, tenantId)))
 			.limit(1);
 		return membership ?? null;
 	}
@@ -45,9 +63,123 @@ export class MembershipsRepository {
 		return rows.map((row) => row.tenantId);
 	}
 
+	async listMembersForTenant(tenantId: string) {
+		return this.database.db
+			.select({
+				membership: memberships,
+				user: {
+					id: users.id,
+					email: users.email,
+					username: users.username,
+					emailVerified: users.emailVerifiedAt,
+				},
+			})
+			.from(memberships)
+			.innerJoin(users, eq(memberships.userId, users.id))
+			.where(eq(memberships.tenantId, tenantId))
+			.orderBy(asc(users.email));
+	}
+
+	async countActiveOwners(tenantId: string, excludeMembershipId?: string) {
+		const conditions = [
+			eq(memberships.tenantId, tenantId),
+			eq(memberships.role, 'owner'),
+			eq(memberships.status, 'active'),
+		];
+		const rows = await this.database.db
+			.select({ id: memberships.id })
+			.from(memberships)
+			.where(and(...conditions));
+		if (!excludeMembershipId) return rows.length;
+		return rows.filter((row) => row.id !== excludeMembershipId).length;
+	}
+
 	async create(input: typeof memberships.$inferInsert) {
 		const [membership] = await this.database.db.insert(memberships).values(input).returning();
 		if (!membership) throw new Error('Membership insert did not return a record');
 		return membership;
 	}
+
+	async update(
+		tenantId: string,
+		membershipId: string,
+		input: Partial<typeof memberships.$inferInsert>,
+	) {
+		const [membership] = await this.database.db
+			.update(memberships)
+			.set({ ...input, updatedAt: new Date() })
+			.where(and(eq(memberships.id, membershipId), eq(memberships.tenantId, tenantId)))
+			.returning();
+		return membership ?? null;
+	}
+
+	async createInvite(input: typeof membershipInvites.$inferInsert) {
+		const [invite] = await this.database.db.insert(membershipInvites).values(input).returning();
+		if (!invite) throw new Error('Membership invite insert did not return a record');
+		return invite;
+	}
+
+	async findPendingInviteByTokenHash(tokenHash: string) {
+		const [invite] = await this.database.db
+			.select()
+			.from(membershipInvites)
+			.where(
+				and(eq(membershipInvites.tokenHash, tokenHash), eq(membershipInvites.status, 'pending')),
+			)
+			.limit(1);
+		return invite ?? null;
+	}
+
+	async findPendingInviteByTenantAndEmail(tenantId: string, email: string) {
+		const [invite] = await this.database.db
+			.select()
+			.from(membershipInvites)
+			.where(
+				and(
+					eq(membershipInvites.tenantId, tenantId),
+					eq(membershipInvites.email, email),
+					eq(membershipInvites.status, 'pending'),
+				),
+			)
+			.limit(1);
+		return invite ?? null;
+	}
+
+	async listPendingInvitesForTenant(tenantId: string) {
+		return this.database.db
+			.select()
+			.from(membershipInvites)
+			.where(and(eq(membershipInvites.tenantId, tenantId), eq(membershipInvites.status, 'pending')))
+			.orderBy(asc(membershipInvites.email));
+	}
+
+	async listPendingInvitesForEmail(email: string) {
+		return this.database.db
+			.select()
+			.from(membershipInvites)
+			.where(and(eq(membershipInvites.email, email), eq(membershipInvites.status, 'pending')))
+			.orderBy(asc(membershipInvites.createdAt));
+	}
+
+	async updateInvite(inviteId: string, input: Partial<typeof membershipInvites.$inferInsert>) {
+		const [invite] = await this.database.db
+			.update(membershipInvites)
+			.set({ ...input, updatedAt: new Date() })
+			.where(eq(membershipInvites.id, inviteId))
+			.returning();
+		return invite ?? null;
+	}
+
+	async expireStaleInvites() {
+		await this.database.db
+			.update(membershipInvites)
+			.set({ status: 'expired', updatedAt: new Date() })
+			.where(
+				and(eq(membershipInvites.status, 'pending'), sql`${membershipInvites.expiresAt} < now()`),
+			);
+	}
 }
+
+export type TenantMemberRow = MembershipRecord & {
+	user: { id: string; email: string; username: string; emailVerified: Date | null };
+};

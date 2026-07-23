@@ -389,6 +389,81 @@ describe('Tenancy (e2e)', () => {
 		expect(historyResponse.body.data.history).toHaveLength(1);
 	});
 
+	it('invites, lists, and accepts organization members', async () => {
+		const inviteeEmail = `member-e2e-${randomUUID()}@example.com`;
+		const inviteeUsername = `inv_${randomUUID().replaceAll('-', '').slice(0, 10)}`;
+		const inviteePassword = 'InviteeE2ePass1';
+
+		const inviteeRegister = await request(app.getHttpServer())
+			.post('/api/v1/auth/register')
+			.send({ email: inviteeEmail, username: inviteeUsername, password: inviteePassword })
+			.expect(201);
+
+		const inviteeCode = inviteeRegister.body.data.developmentCode as string;
+		await request(app.getHttpServer())
+			.post('/api/v1/auth/verify-email')
+			.send({ email: inviteeEmail, code: inviteeCode })
+			.expect(200);
+
+		const inviteeLogin = await request(app.getHttpServer())
+			.post('/api/v1/auth/login')
+			.send({ email: inviteeEmail, password: inviteePassword })
+			.expect(200);
+
+		const inviteeToken = inviteeLogin.body.data.accessToken as string;
+
+		const inviteResponse = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/members/invite`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({ email: inviteeEmail, role: 'teacher' })
+			.expect(201);
+
+		expect(inviteResponse.body.data.invite.email).toBe(inviteeEmail);
+		const developmentInviteUrl = inviteResponse.body.data.developmentInviteUrl as string;
+		expect(developmentInviteUrl).toContain('token=');
+		const inviteToken = decodeURIComponent(developmentInviteUrl.split('token=')[1] ?? '');
+
+		const listResponse = await request(app.getHttpServer())
+			.get(`/api/v1/tenants/${tenantId}/members`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.expect(200);
+
+		expect(
+			listResponse.body.data.members.some(
+				(member: { email: string; status: string }) =>
+					member.email === inviteeEmail && member.status === 'invited',
+			),
+		).toBe(true);
+
+		const acceptResponse = await request(app.getHttpServer())
+			.post('/api/v1/auth/accept-invite')
+			.set('Authorization', `Bearer ${inviteeToken}`)
+			.send({ token: inviteToken })
+			.expect(200);
+
+		expect(acceptResponse.body.data.tenant.id).toBe(tenantId);
+		expect(acceptResponse.body.data.membership.role).toBe('teacher');
+
+		const membersAfterAccept = await request(app.getHttpServer())
+			.get(`/api/v1/tenants/${tenantId}/members`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.expect(200);
+
+		const acceptedMember = membersAfterAccept.body.data.members.find(
+			(member: { email: string }) => member.email === inviteeEmail,
+		);
+		expect(acceptedMember?.status).toBe('active');
+		expect(acceptedMember?.role).toBe('teacher');
+
+		const updateResponse = await request(app.getHttpServer())
+			.patch(`/api/v1/tenants/${tenantId}/members/${acceptedMember.id}`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({ role: 'admin', status: 'active' })
+			.expect(200);
+
+		expect(updateResponse.body.data.member.role).toBe('admin');
+	});
+
 	it('returns validation errors for invalid tenant input', async () => {
 		const response = await request(app.getHttpServer())
 			.post('/api/v1/tenants')

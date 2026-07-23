@@ -16,6 +16,7 @@ import type {
 } from '@/database/schema';
 import { PermissionsService } from '@/modules/authorization/permissions.service';
 import { EmailService } from '@/modules/email/email.service';
+import { MembershipInvitesService } from '@/modules/memberships/membership-invites.service';
 import { MembershipsRepository } from '@/modules/memberships/memberships.repository';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { MfaService } from '@/modules/mfa/mfa.service';
@@ -63,6 +64,7 @@ export class AuthService {
 		private readonly mfa: MfaService,
 		private readonly passkeys: PasskeysService,
 		private readonly socialAuth: SocialAuthService,
+		private readonly membershipInvites: MembershipInvitesService,
 	) {}
 
 	async register(body: RegisterBody): Promise<RegistrationResult> {
@@ -91,6 +93,7 @@ export class AuthService {
 		if (!verifiedUser) {
 			throw new Error('Verified user could not be loaded');
 		}
+		await this.membershipInvites.applyPendingInvitesForUser(verifiedUser);
 		return toPublicUser(verifiedUser);
 	}
 
@@ -297,6 +300,32 @@ export class AuthService {
 		return this.usersService.getCurrentUser(userId);
 	}
 
+	async previewInvite(token: string) {
+		return this.membershipInvites.previewInvite(token);
+	}
+
+	async listPendingInvites(userId: string) {
+		const user = await this.usersService.findById(userId);
+		if (!user) {
+			throw new UnauthorizedException({
+				code: 'AUTH_USER_NOT_FOUND',
+				message: 'User not found',
+			});
+		}
+		return this.membershipInvites.listPendingInvitesForUser(user);
+	}
+
+	async acceptInvite(userId: string, token: string) {
+		const user = await this.usersService.findById(userId);
+		if (!user) {
+			throw new UnauthorizedException({
+				code: 'AUTH_USER_NOT_FOUND',
+				message: 'User not found',
+			});
+		}
+		return this.membershipInvites.acceptInvite(user, token);
+	}
+
 	async forgotPassword(body: EmailBody): Promise<AuthChallengeResult> {
 		const user = await this.usersService.findByEmail(body.email);
 		if (!user?.isActive) {
@@ -420,6 +449,7 @@ export class AuthService {
 		user: UserRecord,
 		metadata: RequestMetadata,
 	): Promise<AuthSessionResult> {
+		await this.membershipInvites.applyPendingInvitesForUser(user);
 		const sessionId = randomUUID();
 		const refreshToken = this.crypto.createRefreshToken(sessionId);
 		const defaultTenant = await this.resolveDefaultTenantContext(user.id);

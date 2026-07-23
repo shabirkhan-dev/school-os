@@ -19,6 +19,23 @@ export function magicLinkEmail(url: string): EmailTemplate {
 	};
 }
 
+export function membershipInviteEmail(input: {
+	organizationName: string;
+	role: string;
+	acceptUrl: string;
+}): EmailTemplate {
+	const safeUrl = escapeHtml(input.acceptUrl);
+	const org = escapeHtml(input.organizationName);
+	const role = escapeHtml(input.role.replaceAll('_', ' '));
+	return {
+		subject: `You're invited to join ${input.organizationName} on School OS`,
+		html: layout(
+			`Join ${org}`,
+			`<p>You have been invited to join <strong>${org}</strong> as <strong>${role}</strong>.</p><p><a href="${safeUrl}" style="display:inline-block;padding:12px 18px;border-radius:8px;background:#171717;color:#fff;text-decoration:none">Accept invitation</a></p><p>If you do not yet have an account, create one with this email address first, then open the invite link again.</p><p style="font-size:12px;color:#737373;word-break:break-all">${safeUrl}</p>`,
+		),
+	};
+}
+
 function codeEmail(subject: string, heading: string, purpose: string, code: string): EmailTemplate {
 	return {
 		subject,
