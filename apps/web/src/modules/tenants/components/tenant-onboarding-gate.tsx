@@ -3,7 +3,7 @@
 import { Spinner } from "@school-os/ui/components/spinner";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
-import { useTenantContext } from "../context/tenant-context";
+import { PermissionCodes, usePermissions, useTenantContext } from "@/modules/tenants";
 
 const ONBOARDING_PREFIX = "/admin/onboarding";
 
@@ -11,6 +11,8 @@ export function TenantOnboardingGate({ children }: { children: ReactNode }) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const { tenants, tenantsLoading, campuses, campusesLoading, activeTenant } = useTenantContext();
+	const { can } = usePermissions();
+	const canCreateCampus = can(PermissionCodes.TENANT_CAMPUS_CREATE);
 
 	const onOnboarding = pathname.startsWith(ONBOARDING_PREFIX);
 	const onCampuses = pathname.includes("/campuses") || pathname.startsWith("/admin/tenants/");
@@ -35,13 +37,14 @@ export function TenantOnboardingGate({ children }: { children: ReactNode }) {
 
 	useEffect(() => {
 		if (tenantsLoading || campusesLoading || onOnboarding || onCampuses) return;
-		if (tenants.length > 0 && campuses.length === 0 && activeTenant) {
+		if (tenants.length > 0 && campuses.length === 0 && activeTenant && canCreateCampus) {
 			router.replace(`/admin/tenants/${activeTenant.id}/campuses`);
 		}
 	}, [
 		activeTenant,
 		campuses.length,
 		campusesLoading,
+		canCreateCampus,
 		onCampuses,
 		onOnboarding,
 		router,

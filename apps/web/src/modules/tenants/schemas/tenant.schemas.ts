@@ -28,3 +28,16 @@ export const createCampusSchema = z.object({
 
 export type CreateTenantFormValues = z.infer<typeof createTenantSchema>;
 export type CreateCampusFormValues = z.infer<typeof createCampusSchema>;
+
+export const updateTenantSchema = z
+	.object({
+		name: z.string().trim().min(2, "Name must be at least 2 characters").max(200).optional(),
+		mission: z.string().trim().max(2000).nullable().optional(),
+		timezone: z.string().trim().min(1).max(64).optional(),
+		defaultLocale: z.string().trim().min(2).max(16).optional(),
+	})
+	.refine((value) => Object.keys(value).length > 0, {
+		message: "Change at least one field",
+	});
+
+export type UpdateTenantFormValues = z.infer<typeof updateTenantSchema>;

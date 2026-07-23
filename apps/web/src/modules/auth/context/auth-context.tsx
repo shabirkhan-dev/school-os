@@ -2,6 +2,7 @@
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { ApiError } from "@/lib/api/client";
+import type { TenantMembership } from "@/modules/tenants";
 import { usersService } from "@/modules/users/services/users.service";
 import type { User } from "@/modules/users/types/user.types";
 import { authService } from "../services/auth.service";
@@ -17,6 +18,7 @@ import type {
 interface AuthContextValue {
 	token: string | null;
 	user: User | null;
+	tenantContext: TenantMembership | null;
 	loading: boolean;
 	error: string | null;
 	login: (input: LoginInput) => Promise<LoginResult>;
@@ -37,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [token, setToken] = useState<string | null>(null);
 	const [tokenExpiresAt, setTokenExpiresAt] = useState<string | null>(null);
 	const [user, setUser] = useState<User | null>(null);
+	const [tenantContext, setTenantContext] = useState<TenantMembership | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
@@ -44,12 +47,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setToken(null);
 		setTokenExpiresAt(null);
 		setUser(null);
+		setTenantContext(null);
 	}, []);
 
 	const establishSession = useCallback((session: AuthSession) => {
 		setToken(session.accessToken);
 		setTokenExpiresAt(session.accessTokenExpiresAt);
 		setUser(session.user);
+		setTenantContext(session.tenantContext ?? null);
 	}, []);
 
 	const refreshSession = useCallback(async () => {
@@ -135,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			value={{
 				token,
 				user,
+				tenantContext,
 				loading,
 				error,
 				login,

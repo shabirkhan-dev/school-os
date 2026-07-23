@@ -6,7 +6,13 @@ import { tenantQueryKeys } from "../queries/tenant-query-keys";
 import { createCampusSchema, createTenantSchema } from "../schemas/tenant.schemas";
 import { campusesService } from "../services/campuses.service";
 import { tenantsService } from "../services/tenants.service";
-import type { Campus, CreateCampusInput, CreateTenantInput, Tenant } from "../types/tenant.types";
+import type {
+	Campus,
+	CreateCampusInput,
+	CreateTenantInput,
+	Tenant,
+	UpdateTenantInput,
+} from "../types/tenant.types";
 
 function requireToken(token: string | null): string {
 	if (!token) throw new Error("Authentication required");
@@ -68,6 +74,24 @@ export function useCreateCampusMutation(tenantId: string) {
 				return [...campuses, data.campus];
 			});
 			await queryClient.invalidateQueries({ queryKey: tenantQueryKeys.campuses(tenantId) });
+		},
+	});
+}
+
+export function useUpdateTenantMutation(tenantId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (input: UpdateTenantInput) =>
+			tenantsService.update(requireToken(token), tenantId, input),
+		onSuccess: async (data) => {
+			queryClient.setQueryData<Tenant>(tenantQueryKeys.detail(tenantId), data.tenant);
+			queryClient.setQueryData<Tenant[]>(tenantQueryKeys.list(), (current) => {
+				const tenants = current ?? [];
+				return tenants.map((tenant) => (tenant.id === data.tenant.id ? data.tenant : tenant));
+			});
+			await queryClient.invalidateQueries({ queryKey: tenantQueryKeys.detail(tenantId) });
+			await queryClient.invalidateQueries({ queryKey: tenantQueryKeys.list() });
 		},
 	});
 }

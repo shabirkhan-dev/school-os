@@ -8,7 +8,11 @@ import { useParams, useRouter } from "next/navigation";
 import {
 	CampusCreateForm,
 	CampusList,
+	membershipRoleLabels,
+	PermissionCodes,
+	TenantSettingsForm,
 	useCampusesQuery,
+	usePermissions,
 	useTenantContext,
 	useTenantQuery,
 } from "@/modules/tenants";
@@ -18,11 +22,13 @@ export default function TenantCampusesPage() {
 	const router = useRouter();
 	const tenantId = params.tenantId;
 	const { setActiveTenantId, setActiveCampusId, activeCampus } = useTenantContext();
+	const { can, role } = usePermissions();
 	const tenantQuery = useTenantQuery(tenantId);
 	const campusesQuery = useCampusesQuery(tenantId);
 
 	const tenant = tenantQuery.data;
 	const campuses = campusesQuery.data ?? [];
+	const canManageSettings = can(PermissionCodes.TENANT_SETTINGS_WRITE);
 
 	return (
 		<div className="mx-auto w-full max-w-[1080px] space-y-6 px-3 py-6 sm:px-6 lg:px-8">
@@ -35,8 +41,12 @@ export default function TenantCampusesPage() {
 						{tenant?.name ?? "Campuses"}
 					</h1>
 					<p className="mt-1 max-w-2xl text-[13px] text-dashboard-text-muted">
-						Add each physical school site under this tenant. Campus codes must be unique within your
-						organization.
+						Manage campuses and organization settings for your school network.
+						{role ? (
+							<span className="mt-1 block text-dashboard-text-secondary">
+								Signed in as {membershipRoleLabels[role]}.
+							</span>
+						) : null}
 					</p>
 				</div>
 				{campuses.length > 0 ? (
@@ -48,18 +58,23 @@ export default function TenantCampusesPage() {
 			</header>
 
 			<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-				<section className="min-w-0 space-y-3">
-					<h2 className="font-medium text-[14px] text-dashboard-text-secondary">Your campuses</h2>
-					<CampusList
-						campuses={campuses}
-						loading={campusesQuery.isLoading}
-						activeCampusId={activeCampus?.id}
-						onSelect={(campusId) => {
-							setActiveTenantId(tenantId);
-							setActiveCampusId(campusId);
-						}}
-					/>
+				<section className="min-w-0 space-y-6">
+					<div className="space-y-3">
+						<h2 className="font-medium text-[14px] text-dashboard-text-secondary">Your campuses</h2>
+						<CampusList
+							campuses={campuses}
+							loading={campusesQuery.isLoading}
+							activeCampusId={activeCampus?.id}
+							onSelect={(campusId) => {
+								setActiveTenantId(tenantId);
+								setActiveCampusId(campusId);
+							}}
+						/>
+					</div>
+
+					{tenant && canManageSettings ? <TenantSettingsForm tenant={tenant} /> : null}
 				</section>
+
 				<CampusCreateForm
 					tenantId={tenantId}
 					onCreated={() => {

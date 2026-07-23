@@ -15,6 +15,8 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from "@school-os/ui/c
 import { Input } from "@school-os/ui/components/input";
 import { Spinner } from "@school-os/ui/components/spinner";
 import { useState } from "react";
+import { PermissionCodes } from "../constants/permission-codes";
+import { usePermissions } from "../hooks/use-permissions";
 import { useCreateCampusMutation } from "../hooks/use-tenant-mutations";
 import type { CreateCampusFormValues } from "../schemas/tenant.schemas";
 import { createCampusSchema } from "../schemas/tenant.schemas";
@@ -31,6 +33,8 @@ const defaultValues: CreateCampusFormValues = {
 };
 
 export function CampusCreateForm({ tenantId, onCreated }: CampusCreateFormProps) {
+	const { can, isLoading: permissionsLoading } = usePermissions();
+	const canCreateCampus = can(PermissionCodes.TENANT_CAMPUS_CREATE);
 	const createCampus = useCreateCampusMutation(tenantId);
 	const [values, setValues] = useState(defaultValues);
 	const [fieldError, setFieldError] = useState<string | null>(null);
@@ -55,6 +59,33 @@ export function CampusCreateForm({ tenantId, onCreated }: CampusCreateFormProps)
 		} catch (error) {
 			setFieldError(error instanceof Error ? error.message : "Could not create campus");
 		}
+	}
+
+	if (permissionsLoading) {
+		return (
+			<Card className="rounded-[16px] border border-dashboard-border bg-dashboard-surface">
+				<CardContent className="flex min-h-[220px] items-center justify-center py-8">
+					<Spinner className="size-6 text-dashboard-accent" />
+				</CardContent>
+			</Card>
+		);
+	}
+
+	if (!canCreateCampus) {
+		return (
+			<Card className="rounded-[16px] border border-dashboard-border bg-dashboard-surface">
+				<CardHeader>
+					<div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-dashboard-accent-soft text-dashboard-accent">
+						<HugeiconsIcon icon={Location01Icon} size={20} strokeWidth={1.8} />
+					</div>
+					<CardTitle className="text-lg">Campus management</CardTitle>
+					<CardDescription>
+						Your role can view campuses but cannot create new ones. Contact an organization admin if
+						you need a campus added.
+					</CardDescription>
+				</CardHeader>
+			</Card>
+		);
 	}
 
 	return (
