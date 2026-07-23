@@ -2,6 +2,7 @@
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { ApiError } from "@/lib/api/client";
+import { normalizeTenantContext } from "@/modules/auth/lib/normalize-tenant-context";
 import type { TenantMembership } from "@/modules/tenants";
 import { usersService } from "@/modules/users/services/users.service";
 import type { User } from "@/modules/users/types/user.types";
@@ -54,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setToken(session.accessToken);
 		setTokenExpiresAt(session.accessTokenExpiresAt);
 		setUser(session.user);
-		setTenantContext(session.tenantContext ?? null);
+		setTenantContext(normalizeTenantContext(session.tenantContext ?? undefined));
 	}, []);
 
 	const refreshSession = useCallback(async () => {

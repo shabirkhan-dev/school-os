@@ -438,6 +438,7 @@ export class AuthService {
 			accessToken: result.accessToken,
 			accessTokenExpiresAt: result.accessTokenExpiresAt,
 			user: result.user,
+			tenantContext: result.tenantContext ?? null,
 		};
 	}
 
@@ -576,11 +577,14 @@ export class AuthService {
 			return null;
 		}
 
+		const roles = await this.memberships.listRoleCodes(membership.id, membership.role);
+
 		return {
+			id: membership.id,
 			tenantId: membership.tenantId,
 			membershipId: membership.id,
 			role: membership.role,
-			permissions: [...this.permissions.getPermissionsForRole(membership.role)],
+			permissions: [...this.permissions.getPermissionsForRoles(roles)],
 		};
 	}
 

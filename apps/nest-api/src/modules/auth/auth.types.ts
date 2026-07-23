@@ -4,6 +4,8 @@ import type { PermissionCode } from '@/modules/authorization/permission-codes';
 import type { PublicUser } from '@/modules/users/users.types';
 
 export type PublicTenantContext = {
+	/** Membership id (same value as membershipId; included for web clients). */
+	id: string;
 	tenantId: string;
 	membershipId: string;
 	role: MembershipRecord['role'];
@@ -27,11 +29,10 @@ export type AuthSessionResult = {
 	accessTokenExpiresAt: string;
 	refreshToken: string;
 	user: PublicUser;
-};
-
-export type PublicAuthSession = Omit<AuthSessionResult, 'refreshToken'> & {
 	tenantContext?: PublicTenantContext | null;
 };
+
+export type PublicAuthSession = Omit<AuthSessionResult, 'refreshToken'>;
 
 /** Web omits refreshToken (cookie); native includes it for SecureStore. */
 export type ClientAuthSession = PublicAuthSession | AuthSessionResult;

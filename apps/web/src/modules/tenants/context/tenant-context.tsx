@@ -10,6 +10,7 @@ import {
 	useState,
 } from "react";
 import { useAuth } from "@/modules/auth/context/auth-context";
+import { normalizeTenantContext } from "@/modules/auth/lib/normalize-tenant-context";
 import { authService } from "@/modules/auth/services/auth.service";
 import { useCampusesQuery, useTenantsQuery } from "../hooks/use-tenant-queries";
 import type { Campus, Tenant } from "../types/tenant.types";
@@ -24,6 +25,7 @@ type TenantContextValue = {
 	activeCampus: Campus | null;
 	campuses: Campus[];
 	campusesLoading: boolean;
+	tenantSwitching: boolean;
 	setActiveTenantId: (tenantId: string) => void;
 	setActiveCampusId: (campusId: string) => void;
 	refreshTenants: () => void;
@@ -32,10 +34,11 @@ type TenantContextValue = {
 const TenantContext = createContext<TenantContextValue | null>(null);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
-	const { token, user, establishSession } = useAuth();
+	const { token, user, tenantContext, establishSession } = useAuth();
 	const tenantsQuery = useTenantsQuery(Boolean(token && user));
 	const [activeTenantId, setActiveTenantIdState] = useState<string | null>(null);
 	const [activeCampusId, setActiveCampusIdState] = useState<string | null>(null);
+	const [tenantSwitching, setTenantSwitching] = useState(false);
 
 	const tenants = tenantsQuery.data ?? [];
 	const campusesQuery = useCampusesQuery(activeTenantId, Boolean(token && activeTenantId));
@@ -73,23 +76,34 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
 	useEffect(() => {
 		if (!token || !activeTenantId || !tenants.some((tenant) => tenant.id === activeTenantId)) {
+			setTenantSwitching(false);
+			return;
+		}
+
+		const sessionTenantId = normalizeTenantContext(tenantContext ?? undefined)?.tenantId ?? null;
+		if (sessionTenantId === activeTenantId) {
+			setTenantSwitching(false);
 			return;
 		}
 
 		let cancelled = false;
+		setTenantSwitching(true);
 		void authService
 			.switchTenant(token, activeTenantId)
 			.then((session) => {
 				if (!cancelled) establishSession(session);
 			})
 			.catch(() => {
-				// Keep local selection; token may lack tenant context until user retries.
+				// Keep local selection; membership queries may still resolve permissions.
+			})
+			.finally(() => {
+				if (!cancelled) setTenantSwitching(false);
 			});
 
 		return () => {
 			cancelled = true;
 		};
-	}, [activeTenantId, establishSession, tenants, token]);
+	}, [activeTenantId, establishSession, tenantContext, tenants, token]);
 
 	const setActiveCampusId = useCallback((campusId: string) => {
 		setActiveCampusIdState(campusId);
@@ -108,6 +122,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 			activeCampus: campuses.find((c) => c.id === activeCampusId) ?? null,
 			campuses,
 			campusesLoading: campusesQuery.isLoading,
+			tenantSwitching,
 			setActiveTenantId,
 			setActiveCampusId,
 			refreshTenants,
@@ -117,6 +132,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 			activeTenantId,
 			campuses,
 			campusesQuery.isLoading,
+			tenantSwitching,
 			refreshTenants,
 			setActiveCampusId,
 			setActiveTenantId,

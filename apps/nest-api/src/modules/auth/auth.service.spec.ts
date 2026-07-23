@@ -55,6 +55,7 @@ describe('AuthService', () => {
 			usersService,
 			{
 				requireActiveMembership: vi.fn(),
+				listRoleCodes: vi.fn().mockResolvedValue(['owner']),
 			} as unknown as import('@/modules/memberships/memberships.service').MembershipsService,
 			{
 				listActiveTenantIdsForUser: vi.fn().mockResolvedValue([]),
@@ -63,6 +64,7 @@ describe('AuthService', () => {
 			} as unknown as import('@/modules/memberships/memberships.repository').MembershipsRepository,
 			{
 				getPermissionsForRole: vi.fn().mockReturnValue([]),
+				getPermissionsForRoles: vi.fn().mockReturnValue([]),
 			} as unknown as import('@/modules/authorization/permissions.service').PermissionsService,
 			{ isTotpEnabled: vi.fn().mockResolvedValue(false) } as unknown as MfaService,
 			{} as PasskeysService,
