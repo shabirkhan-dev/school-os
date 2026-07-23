@@ -1,6 +1,8 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createMockPermissionsService } from '@/modules/authorization/testing/mock-permissions.service';
+
 import { MembershipsRepository } from './memberships.repository';
 import { MembershipsService } from './memberships.service';
 
@@ -8,15 +10,16 @@ describe('MembershipsService', () => {
 	let service: MembershipsService;
 	let repository: {
 		findActiveByTenantAndUser: ReturnType<typeof vi.fn>;
-		canManageTenant: MembershipsRepository['canManageTenant'];
 	};
 
 	beforeEach(() => {
 		repository = {
 			findActiveByTenantAndUser: vi.fn(),
-			canManageTenant: (role) => role === 'owner' || role === 'principal' || role === 'admin',
 		};
-		service = new MembershipsService(repository as unknown as MembershipsRepository);
+		service = new MembershipsService(
+			repository as unknown as MembershipsRepository,
+			createMockPermissionsService(),
+		);
 	});
 
 	it('returns membership when user belongs to tenant', async () => {
@@ -71,7 +74,7 @@ describe('MembershipsService', () => {
 		});
 
 		await expect(service.requireManagementAccess('user-1', 'tenant-1')).rejects.toMatchObject({
-			response: { code: 'TENANT_ACCESS_DENIED' },
+			response: { code: 'PERMISSION_DENIED' },
 		});
 		await expect(service.requireManagementAccess('user-1', 'tenant-1')).rejects.toBeInstanceOf(
 			ForbiddenException,

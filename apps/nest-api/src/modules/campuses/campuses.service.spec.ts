@@ -1,6 +1,6 @@
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
+import { createMockPermissionsService } from '@/modules/authorization/testing/mock-permissions.service';
 import { MembershipsRepository } from '@/modules/memberships/memberships.repository';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { CampusesRepository } from './campuses.repository';
@@ -31,7 +31,6 @@ describe('CampusesService', () => {
 	};
 	let membershipsRepository: {
 		findActiveByTenantAndUser: ReturnType<typeof vi.fn>;
-		canManageTenant: MembershipsRepository['canManageTenant'];
 	};
 
 	beforeEach(() => {
@@ -44,12 +43,14 @@ describe('CampusesService', () => {
 		};
 		membershipsRepository = {
 			findActiveByTenantAndUser: vi.fn(),
-			canManageTenant: (role) => role === 'owner' || role === 'principal' || role === 'admin',
 		};
 
 		service = new CampusesService(
 			campusesRepository as unknown as CampusesRepository,
-			new MembershipsService(membershipsRepository as unknown as MembershipsRepository),
+			new MembershipsService(
+				membershipsRepository as unknown as MembershipsRepository,
+				createMockPermissionsService(),
+			),
 		);
 	});
 

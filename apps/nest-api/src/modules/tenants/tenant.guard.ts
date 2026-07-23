@@ -6,6 +6,7 @@ import {
 	UnauthorizedException,
 } from '@nestjs/common';
 import type { AuthenticatedRequest } from '@/modules/auth/jwt-auth.guard';
+import { PermissionsService } from '@/modules/authorization/permissions.service';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 
 import type { TenantContext } from './tenant-context.types';
@@ -14,7 +15,10 @@ export type TenantScopedRequest = AuthenticatedRequest & { tenant?: TenantContex
 
 @Injectable()
 export class TenantGuard implements CanActivate {
-	constructor(private readonly memberships: MembershipsService) {}
+	constructor(
+		private readonly memberships: MembershipsService,
+		private readonly permissions: PermissionsService,
+	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const request = context.switchToHttp().getRequest<TenantScopedRequest>();
@@ -44,6 +48,7 @@ export class TenantGuard implements CanActivate {
 			userId: request.user.sub,
 			role: membership.role,
 			campusId: membership.campusId,
+			permissions: this.permissions.getPermissionsForRole(membership.role),
 		};
 		return true;
 	}

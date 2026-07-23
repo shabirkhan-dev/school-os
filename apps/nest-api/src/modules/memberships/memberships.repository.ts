@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 
 import { DatabaseService } from '@/database/database.service';
-import { type MembershipRecord, memberships } from '@/database/schema';
-
-type MembershipRole = MembershipRecord['role'];
-
-const MANAGEMENT_ROLES = new Set<MembershipRole>(['owner', 'principal', 'admin']);
+import { memberships } from '@/database/schema';
 
 @Injectable()
 export class MembershipsRepository {
@@ -53,9 +49,5 @@ export class MembershipsRepository {
 		const [membership] = await this.database.db.insert(memberships).values(input).returning();
 		if (!membership) throw new Error('Membership insert did not return a record');
 		return membership;
-	}
-
-	canManageTenant(role: MembershipRole) {
-		return MANAGEMENT_ROLES.has(role);
 	}
 }

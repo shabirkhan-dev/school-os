@@ -13,18 +13,22 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AccessTokenPayload } from '@/modules/auth/auth.types';
 import { CurrentUser } from '@/modules/auth/current-user.decorator';
 import { JwtAuthGuard } from '@/modules/auth/jwt-auth.guard';
+import { PermissionCodes } from '@/modules/authorization/permission-codes';
+import { PermissionsGuard } from '@/modules/authorization/permissions.guard';
+import { RequirePermissions } from '@/modules/authorization/require-permissions.decorator';
 import { TenantGuard } from '@/modules/tenants/tenant.guard';
 import { CreateCampusDto, UpdateCampusDto } from './campuses.dto';
 import { CampusesService } from './campuses.service';
 
 @ApiTags('Campuses')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, TenantGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, PermissionsGuard)
 @Controller({ path: 'tenants/:tenantId/campuses', version: '1' })
 export class CampusesController {
 	constructor(private readonly campuses: CampusesService) {}
 
 	@Post()
+	@RequirePermissions(PermissionCodes.TENANT_CAMPUS_CREATE)
 	@ApiOperation({ summary: 'Create a campus under a tenant' })
 	create(
 		@CurrentUser() user: AccessTokenPayload,
@@ -54,7 +58,8 @@ export class CampusesController {
 	}
 
 	@Patch(':campusId')
-	@ApiOperation({ summary: 'Update a campus (owner, principal, or admin)' })
+	@RequirePermissions(PermissionCodes.TENANT_CAMPUS_UPDATE)
+	@ApiOperation({ summary: 'Update a campus (requires tenant.campus.update)' })
 	update(
 		@CurrentUser() user: AccessTokenPayload,
 		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,

@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, type Mocked, vi } from 'vitest';
 
 import type { AccessTokenPayload } from '@/modules/auth/auth.types';
 import type { AuthenticatedRequest } from '@/modules/auth/jwt-auth.guard';
+import { PermissionCodes } from '@/modules/authorization/permission-codes';
+import { createMockPermissionsService } from '@/modules/authorization/testing/mock-permissions.service';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { TenantGuard } from './tenant.guard';
 
@@ -14,7 +16,7 @@ describe('TenantGuard', () => {
 		memberships = {
 			requireActiveMembership: vi.fn(),
 		} as unknown as Mocked<MembershipsService>;
-		guard = new TenantGuard(memberships);
+		guard = new TenantGuard(memberships, createMockPermissionsService());
 	});
 
 	it('returns 404 when jwt tenant does not match route tenant', async () => {
@@ -65,6 +67,7 @@ describe('TenantGuard', () => {
 			userId: 'user-id',
 			role: 'owner',
 			campusId: null,
+			permissions: expect.arrayContaining(Object.values(PermissionCodes)),
 		});
 	});
 });

@@ -1,5 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 
+import { PermissionCodes } from '@/modules/authorization/permission-codes';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import type { CreateCampusInput, UpdateCampusInput } from './campuses.dto';
 import { CampusesRepository } from './campuses.repository';
@@ -13,7 +14,11 @@ export class CampusesService {
 	) {}
 
 	async create(userId: string, tenantId: string, input: CreateCampusInput) {
-		await this.membershipAccess.requireManagementAccess(userId, tenantId);
+		await this.membershipAccess.requirePermission(
+			userId,
+			tenantId,
+			PermissionCodes.TENANT_CAMPUS_CREATE,
+		);
 
 		const code = input.code.trim().toUpperCase();
 		if (await this.campuses.findByCodeForTenant(tenantId, code)) {
@@ -47,7 +52,11 @@ export class CampusesService {
 	}
 
 	async update(userId: string, tenantId: string, campusId: string, input: UpdateCampusInput) {
-		await this.membershipAccess.requireManagementAccess(userId, tenantId);
+		await this.membershipAccess.requirePermission(
+			userId,
+			tenantId,
+			PermissionCodes.TENANT_CAMPUS_UPDATE,
+		);
 
 		const campus = await this.campuses.update(tenantId, campusId, {
 			name: input.name?.trim(),

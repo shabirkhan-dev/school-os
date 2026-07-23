@@ -7,6 +7,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppConfigService } from '@/config/app-config.service';
 import { DatabaseService } from '@/database/database.service';
 import { memberships, tenants, users } from '@/database/schema';
+import { PermissionsRepository } from '@/modules/authorization/permissions.repository';
+import { PermissionsService } from '@/modules/authorization/permissions.service';
 import { CampusesRepository } from '@/modules/campuses/campuses.repository';
 import { CampusesService } from '@/modules/campuses/campuses.service';
 import { MembershipsRepository } from '@/modules/memberships/memberships.repository';
@@ -19,8 +21,10 @@ import { UsersService } from '@/modules/users/users.service';
 describe('database-backed tenancy', () => {
 	const config = new AppConfigService();
 	const database = new DatabaseService(config);
+	const permissionsRepository = new PermissionsRepository(database);
+	const permissionsService = new PermissionsService(permissionsRepository);
 	const membershipsRepository = new MembershipsRepository(database);
-	const membershipsService = new MembershipsService(membershipsRepository);
+	const membershipsService = new MembershipsService(membershipsRepository, permissionsService);
 	const tenantsService = new TenantsService(
 		new TenantsRepository(database),
 		membershipsRepository,
@@ -37,6 +41,8 @@ describe('database-backed tenancy', () => {
 	const slug = `integration-${randomUUID().slice(0, 8)}`;
 
 	beforeAll(async () => {
+		await permissionsService.refreshCache();
+
 		const owner = await usersService.createUser({
 			email: ownerEmail,
 			username: `owner_${randomUUID().replaceAll('-', '').slice(0, 10)}`,
@@ -96,6 +102,32 @@ describe('database-backed tenancy', () => {
 		).rejects.toMatchObject({
 			response: { code: 'CAMPUS_CODE_ALREADY_EXISTS' },
 		});
+	});
+
+	it('denies teacher from creating campuses', async () => {
+		const teacher = await usersService.createUser({
+			email: `tenancy-teacher-${randomUUID()}@example.com`,
+			username: `teacher_${randomUUID().replaceAll('-', '').slice(0, 10)}`,
+			passwordHash: 'hash',
+		});
+
+		await membershipsRepository.create({
+			tenantId,
+			userId: teacher.id,
+			role: 'teacher',
+			status: 'active',
+		});
+
+		await expect(
+			campusesService.create(teacher.id, tenantId, {
+				name: 'Teacher Campus',
+				code: 'tch-01',
+			}),
+		).rejects.toMatchObject({
+			response: { code: 'PERMISSION_DENIED' },
+		});
+
+		await database.db.delete(users).where(eq(users.id, teacher.id));
 	});
 
 	afterAll(async () => {

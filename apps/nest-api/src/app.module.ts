@@ -6,6 +6,7 @@ import { ConfigModule } from '@/config/config.module';
 import { DatabaseModule } from '@/database/database.module';
 import { AiModule } from '@/modules/ai/ai.module';
 import { AuthModule } from '@/modules/auth/auth.module';
+import { AuthorizationModule } from '@/modules/authorization/authorization.module';
 import { BillingModule } from '@/modules/billing/billing.module';
 import { CampusesModule } from '@/modules/campuses/campuses.module';
 import { HealthModule } from '@/modules/health/health.module';
@@ -25,6 +26,7 @@ import { UsersModule } from '@/modules/users/users.module';
 		BillingModule,
 		TenantsModule,
 		CampusesModule,
+		AuthorizationModule,
 		AiModule,
 	],
 	providers: [
