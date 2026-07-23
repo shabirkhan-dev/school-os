@@ -18,6 +18,7 @@ export {
 	BreadcrumbSeparator,
 } from "./components/breadcrumb";
 export { Button, buttonVariants } from "./components/button";
+export { Calendar, CalendarDayButton } from "./components/calendar";
 export {
 	Card,
 	CardAction,
@@ -36,6 +37,7 @@ export {
 	ChartTooltipContent,
 } from "./components/chart";
 export { Checkbox } from "./components/checkbox";
+export { DatePicker, type DatePickerProps } from "./components/date-picker";
 export {
 	Drawer,
 	DrawerClose,
@@ -82,8 +84,17 @@ export {
 	InputGroupTextarea,
 } from "./components/input-group";
 export { Label } from "./components/label";
+export {
+	Popover,
+	PopoverContent,
+	PopoverDescription,
+	PopoverHeader,
+	PopoverTitle,
+	PopoverTrigger,
+} from "./components/popover";
 export { SchoolOsBrand } from "./components/school-os-brand";
 export { SchoolOsMark } from "./components/school-os-mark";
+export { SearchInput, type SearchInputProps } from "./components/search-input";
 export {
 	Select,
 	SelectContent,
@@ -96,6 +107,11 @@ export {
 	SelectTrigger,
 	SelectValue,
 } from "./components/select";
+export {
+	SelectField,
+	type SelectFieldItem,
+	type SelectFieldProps,
+} from "./components/select-field";
 export { Separator } from "./components/separator";
 export {
 	Sheet,
