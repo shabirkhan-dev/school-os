@@ -2,11 +2,11 @@
 
 import { ArrowDown01Icon, Cancel01Icon, Menu01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { SchoolOsMark } from "@school-os/ui";
+import { SchoolOsLogo } from "@school-os/ui";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useId, useState } from "react";
-import { NAV_ITEMS, type NavItem, type NavSubItem, SITE } from "../data/landing.data";
+import { NAV_ITEMS, type NavItem, type NavSubItem } from "../data/landing.data";
 import { ATLAS_EASE, menuItemVariants, springSnappy, springSoft } from "../lib/motion";
 import { useAtlasTheme } from "../lib/theme";
 import { cn } from "../lib/utils";
@@ -33,10 +33,9 @@ export function SiteHeader() {
 				>
 					<Link
 						href="/"
-						className="flex shrink-0 items-center gap-2 rounded-lg px-1 font-semibold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
+						className="flex shrink-0 items-center rounded-lg px-1 outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
 					>
-						<SchoolOsMark />
-						{SITE.name}
+						<SchoolOsLogo className="h-6 sm:h-7" />
 					</Link>
 
 					<nav className="-translate-x-1/2 absolute left-1/2 hidden items-center gap-0.5 lg:flex">

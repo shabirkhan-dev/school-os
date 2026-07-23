@@ -1,5 +1,6 @@
 "use client";
 
+import { SchoolOsLogo } from "@school-os/ui";
 import Link from "next/link";
 import type { FormEvent } from "react";
 import { useState } from "react";
@@ -34,9 +35,7 @@ export function SiteFooter() {
 			<div className="mx-auto w-full max-w-6xl px-4 pt-16 pb-8 sm:px-8">
 				<div className="grid gap-12 lg:grid-cols-[1.4fr_2fr]">
 					<div className="flex flex-col">
-						<span className="text-foreground font-semibold text-xl tracking-tight">
-							{SITE.name}
-						</span>
+						<SchoolOsLogo className="h-7" />
 						<p className="mt-3 max-w-xs text-muted-foreground text-sm leading-6">
 							{SITE.description}
 						</p>
