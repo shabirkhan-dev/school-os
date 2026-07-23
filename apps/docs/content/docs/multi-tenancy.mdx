@@ -1,0 +1,462 @@
+---
+title: Multi-Tenancy
+description: Tenants, campuses, roles, permissions, policies, and isolation — how School OS keeps every school separate and safe.
+full: true
+---
+
+School OS is **multi-tenant from day one**. Every school network is a **tenant** with its own
+mission, campuses, policies, users, and data. This page is the canonical reference for how tenancy,
+roles, permissions, and policies work — and what engineers must enforce in every module.
+
+> **Related:** [Master Plan](/docs/master-plan) · [Product System Design](/docs/product-system-design) ·
+> [Production Roadmap](/docs/production-roadmap) · [Architecture](/docs/architecture)
+
+**Implementation status:** Tenancy schema and guards are **planned** (Wave 0 / Nest Phases 2–4).
+Today’s monorepo has auth and users; `tenant_id` scoping lands before Product Milestone 1.
+
+---
+
+## 1. What is a tenant?
+
+A **tenant** is one school **organization** — a single private school or a **network** (e.g. AKES
+with Karachi, Lahore, Islamabad campuses).
+
+| Concept | Meaning | Example |
+| --- | --- | --- |
+| **Tenant** | Legal/org boundary, billing, policies, branding | `AKES Network` |
+| **Campus** | Physical school site under a tenant | `AKES Karachi` |
+| **Academic year** | Time boundary for enrollments and attendance | `2026–27` |
+| **Section** | Class group within a campus/year | `7-B` |
+
+A tenant is **not** just a `tenant_id` column. It carries **identity and operating rules**:
+
+| Field / table | Purpose |
+| --- | --- |
+| `tenants.name`, `slug`, **mission** | Org identity |
+| `tenant_branding` | Logo, colors, Urdu/English display name |
+| `tenant_settings` | Timezone, academic calendar, grace windows, quiet hours |
+| `tenant_communication_policies` | WhatsApp waterfall, sick-report rules, notify-all vs primary-only |
+| `campuses` | Sites, addresses, optional geo |
+
+<Mermaid
+  title="Tenant hierarchy"
+  chart={`
+flowchart TB
+  T[Tenant organization]
+  T --> TB[tenant_branding]
+  T --> TS[tenant_settings]
+  T --> TCP[tenant_communication_policies]
+  T --> C1[Campus A]
+  T --> C2[Campus B]
+  C1 --> AY[Academic year]
+  AY --> SEC[Sections classes]
+  SEC --> STU[Students enrollments]
+  STU --> GUA[Guardians consents]
+`}
+/>
+
+---
+
+## 2. How a request knows its tenant
+
+**Rule:** The active tenant comes from the **authenticated session / JWT** — never from an
+untrusted client body.
+
+<Mermaid
+  title="Request tenant context"
+  chart={`
+sequenceDiagram
+  participant Client as Web or mobile
+  participant API as Nest API
+  participant Guard as Tenant plus RBAC guards
+  participant Repo as Repository
+  participant DB as Postgres
+
+  Client->>API: Request plus Bearer token
+  API->>Guard: Validate JWT
+  Guard->>Guard: Resolve tenant_id membership campus_id roles
+  Guard->>Repo: Call with scoped params
+  Note over Repo: Ignore tenant_id in JSON body
+  Repo->>DB: WHERE tenant_id equals context
+  DB-->>Client: Response or 404 if wrong tenant
+`}
+/>
+
+### Tenant context object (every handler)
+
+After auth, the API attaches a **tenant context** to the request:
+
+```ts
+type TenantContext = {
+  tenantId: string;
+  campusId?: string; // optional scope for principal/teacher
+  membershipId: string;
+  userId: string;
+  roles: RoleCode[];
+  permissions: PermissionCode[];
+};
+```
+
+| Source | Trusted? | Use |
+| --- | --- | --- |
+| JWT claims (`tenant_id`, `membership_id`) | **Yes** | Default scope |
+| `@CurrentTenant()` decorator | **Yes** | Controllers and services |
+| Request body `tenantId` | **No** | Strip / ignore on writes |
+| Query `tenantId` from client | **No** | Only for platform super-admin routes |
+
+### Cross-tenant access
+
+| Situation | HTTP response | Why |
+| --- | --- | --- |
+| User A requests Tenant B’s student by ID | **404 Not Found** | Do not reveal resource exists |
+| User lacks permission in own tenant | **403 Forbidden** | Authorized tenant, denied action |
+| Platform ops cross-tenant (support) | **200** with audit | Explicit `platform_admin` role only |
+
+---
+
+## 3. Users, memberships, and roles
+
+One **user** (login) can belong to **multiple tenants** with different roles — e.g. a consultant
+who helps two schools.
+
+```text
+users (global login)
+  └── memberships (user + tenant + optional campus)
+        └── membership_roles (owner | principal | admin | teacher | parent | student)
+```
+
+<Mermaid
+  title="Identity to authorization"
+  chart={`
+flowchart LR
+  U[User login]
+  U --> M1[Membership tenant A]
+  U --> M2[Membership tenant B]
+  M1 --> R1[Roles teacher parent]
+  M2 --> R2[Roles owner]
+  R1 --> P1[Permissions attendance.read homework.read]
+  R2 --> P2[Permissions all tenant scoped]
+`}
+/>
+
+### Product roles (default seed)
+
+| Role | Scope | Primary surfaces |
+| --- | --- | --- |
+| **owner** | Whole tenant, all campuses | Web owner dashboard |
+| **principal** | One or more campuses | Web principal dashboard |
+| **admin** | Campus or tenant (configurable) | Web admin — records, fees, admissions |
+| **teacher** | Assigned sections only | Mobile first, web for grades/planning |
+| **parent** | Linked students (guardian graph) | Parent mobile + WhatsApp |
+| **student** | Self only | Student mobile |
+| **platform_admin** | Cross-tenant (School OS ops) | Internal only, fully audited |
+
+Roles are **tenant-scoped** except `platform_admin`. Custom roles per tenant (e.g. `bursar`,
+`nurse`) extend the default set via `roles` + `role_permissions`.
+
+---
+
+## 4. Permissions (RBAC catalog)
+
+Permissions are **stable codes** grouped by module. Roles grant bundles of permissions;
+**membership_roles** links a user’s membership to roles.
+
+### Naming convention
+
+```text
+{module}.{resource}.{action}
+
+Examples:
+  attendance.session.mark
+  attendance.report.read
+  student.record.read
+  student.record.write
+  guardian.consent.manage
+  notification.send.whatsapp
+  finance.invoice.read
+  finance.invoice.write
+  academics.homework.assign
+  academics.grade.write
+  tenant.settings.write
+  tenant.membership.invite
+```
+
+### Default role → permission matrix (summary)
+
+| Permission area | owner | principal | admin | teacher | parent | student |
+| --- | :---: | :---: | :---: | :---: | :---: | :---: |
+| Tenant settings / billing | ✓ | read | — | — | — | — |
+| Campus-wide dashboards | ✓ | ✓ | read | — | — | — |
+| Student records (all campus) | ✓ | ✓ | ✓ | section | linked | self |
+| Mark attendance | ✓ | ✓ | ✓ | ✓ assigned | — | — |
+| Report sick / leave | — | — | — | — | ✓ linked | — |
+| Send class announcements | ✓ | ✓ | ✓ | ✓ assigned | — | — |
+| WhatsApp transactional send | system | system | — | — | — | — |
+| Fee invoices / payments | ✓ | read | ✓ | — | ✓ linked | — |
+| Homework assign / grade | ✓ | read | read | ✓ assigned | read linked | read self |
+| Audit logs | ✓ | ✓ | read | — | — | — |
+| Invite users / change roles | ✓ | ✓ campus | ✓ | — | — | — |
+
+**Note:** WhatsApp **utility alerts** (attendance) run through the **notification worker** with
+policy checks — not by granting every teacher a BSP API key.
+
+### NestJS enforcement
+
+```text
+@UseGuards(JwtAuthGuard, TenantGuard, PermissionsGuard)
+@RequirePermissions('attendance.session.mark')
+markAttendance(@CurrentTenant() ctx: TenantContext, @Body() dto: MarkDto) { ... }
+```
+
+Every module ships a `{module}.policy.ts` for **ABAC** rules RBAC cannot express alone.
+
+---
+
+## 5. ABAC — record-level rules (who sees which row)
+
+RBAC answers *“can this role mark attendance?”*
+ABAC answers *“can this teacher mark **7-B** and only students enrolled there?”*
+
+| Persona | ABAC rule (examples) |
+| --- | --- |
+| **Teacher** | `section_id IN assigned_sections(membership)` |
+| **Parent** | `student_id IN guardian_linked_students(user)` |
+| **Student** | `student_id = self(user)` |
+| **Principal** | `campus_id IN principal_campuses(membership)` |
+| **Owner** | `tenant_id = membership.tenant_id` (all campuses) |
+| **Admin** | Campus or tenant per membership config |
+
+Policies live beside modules:
+
+```text
+apps/nest-api/src/modules/attendance/attendance.policy.ts
+apps/nest-api/src/modules/students/students.policy.ts
+apps/nest-api/src/modules/finance/finance.policy.ts
+```
+
+**Tests required:** cross-tenant ID returns 404; teacher cannot read other section; parent cannot
+read unrelated child.
+
+---
+
+## 6. Tenant policies (business rules, not RBAC)
+
+**Policies** are tenant-configurable **rules the system executes automatically**. Stored in DB,
+versioned, auditable.
+
+### 6.1 Communication policy
+
+| Setting | Example | Effect |
+| --- | --- | --- |
+| `quiet_hours_start` / `end` | 21:00–07:00 | Non-critical messages queued |
+| `safety_override_quiet_hours` | true | Attendance alerts still send |
+| `notify_guardians` | `all` \| `primary_only` \| `primary_then_secondary` | Waterfall behavior |
+| `whatsapp_enabled` | true | Primary channel |
+| `sms_fallback_enabled` | true | After WhatsApp failure |
+| `max_alerts_per_student_per_day` | 10 | Fatigue limit |
+
+<Mermaid
+  title="Notification policy waterfall"
+  chart={`
+flowchart TD
+  E[Attendance event] --> P{Tenant policy allows channel?}
+  P -->|no| Q[Queue or skip with audit]
+  P -->|yes| W[WhatsApp primary guardian]
+  W -->|ok| Done[Log delivered]
+  W -->|fail| S[SMS fallback]
+  S -->|fail| M[Email push]
+  M -->|fail| T[Create task Call guardian]
+  T --> PR[Principal unreachable list]
+`}
+/>
+
+### 6.2 Attendance policy
+
+| Setting | Example | Effect |
+| --- | --- | --- |
+| `grace_minutes_before_absent` | 15 | Auto follow-up after 8:45 |
+| `parent_sick_report_cutoff` | 08:00 | Late sick reports need admin approval |
+| `require_excuse_for_absent` | true | Unverified absent escalates |
+| `attendance_capture_modes` | `roster`, `qr_batch`, `nfc` | Enabled methods per tenant |
+
+### 6.3 Academic & finance policy (later waves)
+
+| Setting | Example |
+| --- | --- |
+| `grade_publish_requires_principal` | false |
+| `homework_visible_to_parents_default` | true |
+| `fee_reminder_days_before_due` | 7, 3, 1 |
+| `late_fee_percent` | tenant-specific |
+
+### Policy engine flow (smart OS)
+
+```text
+Event occurs (attendance marked, fee due, absence detected)
+  → Load tenant_policies for tenant_id
+  → Evaluate rules (policy engine)
+  → If auto allowed: enqueue outbox job
+  → If approval required: create approval task for principal/admin
+  → Human can override any time (audited)
+```
+
+---
+
+## 7. How each app uses tenancy
+
+| App | Tenant resolution | UX |
+| --- | --- | --- |
+| **Web** (`apps/web`) | Session cookie / BFF; user picks tenant if multiple memberships | Role-based dashboard routes |
+| **Mobile** (`apps/mobile`) | SecureStore token; tenant fixed at login or switcher for multi-school parents | Parent / student / teacher stacks |
+| **Nest API** | JWT + guards; `TenantContext` on every route | All queries scoped |
+| **Workers** | `tenant_id` on outbox payload | Idempotent per tenant policies |
+| **AI** | Never global; `tenant_id` + `student_id` in tool context only | Draft-only; approval for impact |
+
+### Web dashboard routes (target)
+
+```text
+/dashboard/owner      → tenant-wide
+/dashboard/principal  → campus-scoped
+/dashboard/admin      → campus or tenant
+/dashboard/teacher    → assigned sections
+```
+
+### Mobile role gates
+
+```text
+/parent/*   → guardian-linked students only
+/student/*  → self profile only
+/teacher/*  → assigned sections only
+```
+
+**No guard app persona** — attendance runs under **teacher** (or admin kiosk) permissions.
+
+---
+
+## 8. Data isolation in Postgres
+
+### Shared database, shared tables
+
+```text
+All tenant-owned rows include tenant_id (+ campus_id where relevant)
+```
+
+| Layer | Enforcement |
+| --- | --- |
+| **Repository** | Every query filters `tenant_id = ctx.tenantId` |
+| **Service** | Never pass client `tenantId` into writes |
+| **RLS (Postgres)** | Enabled on `students`, `guardians`, `attendance_*`, `fees_*` before pilot |
+| **Migrations** | Global; one schema for all tenants |
+
+### Standard columns (every business table)
+
+| Column | Notes |
+| --- | --- |
+| `id` | UUID or stable text ID |
+| `tenant_id` | Required FK |
+| `created_at`, `updated_at` | Audit timestamps |
+| `created_by`, `updated_by` | User FK nullable |
+| `deleted_at` | Soft delete |
+
+### What is NOT tenant-scoped
+
+| Data | Scope |
+| --- | --- |
+| `permissions` catalog | Global |
+| Platform config | Global |
+| `users` login row | Global (memberships tie to tenant) |
+
+---
+
+## 9. Consent and minors (tenant + guardian)
+
+School OS handles **minors**. Communication policies intersect with tenancy:
+
+| Record | Scope |
+| --- | --- |
+| `guardian_consents` | `tenant_id` + guardian + purpose + channel |
+| `student_guardians` | Primary vs secondary, pickup rights |
+| WhatsApp opt-in | Required before first alert |
+| Audit | Log delivery status — not message body with child PII |
+
+Parents act **only** on linked students. Teachers never see unrelated families.
+
+---
+
+## 10. Multi-campus and network owners
+
+| Role | Campus scope |
+| --- | --- |
+| **owner** | All campuses in tenant — roll-up dashboards |
+| **principal** | Assigned campus(es) |
+| **teacher** | Sections on assigned campus |
+| **parent** | Children may enroll at one campus (membership still tenant-scoped) |
+
+```text
+GET /api/v1/tenants/current/campuses     → list for switcher
+GET /api/v1/campuses/:id/attendance/live → principal campus scope
+```
+
+Network operations lead (AKES HQ) uses **owner** + cross-campus reports without separate product.
+
+---
+
+## 11. Enterprise options (later)
+
+| Tier | Isolation |
+| --- | --- |
+| **Standard** | Shared DB + RLS + app guards |
+| **Enterprise** | Dedicated schema or DB per tenant |
+| **Data residency** | Region pin (Pakistan / GCC) per contract |
+
+Start standard; design APIs so enterprise isolation is a **deploy config**, not a rewrite.
+
+---
+
+## 12. Implementation checklist (every new module)
+
+Before merging any feature module:
+
+- [ ] All new tables include `tenant_id` (and `campus_id` if campus-owned)
+- [ ] Repository methods accept `TenantContext` or explicit `tenantId`
+- [ ] Client body cannot set `tenantId` on create/update
+- [ ] `{module}.policy.ts` for ABAC rules
+- [ ] Permissions registered in seed catalog
+- [ ] Unit test: wrong tenant → 404
+- [ ] Unit test: wrong role → 403
+- [ ] Audit log for sensitive writes
+- [ ] Outbox events include `tenant_id` for workers
+
+---
+
+## 13. Engineering phases (when this lands)
+
+| Phase | Deliverable |
+| --- | --- |
+| Nest Phase 2 | `tenants`, `campuses` modules |
+| Nest Phase 3 | JWT includes `membership_id`, `tenant_id` |
+| Nest Phase 4 | Roles, permissions, guards, seed matrix |
+| Nest Phase 5+ | Students, guardians — ABAC policies |
+| Wave 1 product | Attendance + notifications respect tenant policies |
+
+See [Production Roadmap](/docs/production-roadmap) §12 Multi-Tenant Rule and §15 Product Milestone 1.
+
+---
+
+## 14. Glossary
+
+| Term | Definition |
+| --- | --- |
+| **Tenant** | School organization (network or single campus) |
+| **Campus** | Physical site under a tenant |
+| **Membership** | User’s access grant to a tenant (optional campus) |
+| **RBAC** | Role → permission codes |
+| **ABAC** | Record-level rules (section, guardian link) |
+| **Policy** | Tenant-configurable automation rules |
+| **Tenant context** | Resolved auth scope on each API request |
+| **RLS** | Postgres row-level security backup layer |
+
+---
+
+**Principle:** One codebase serves many schools. **Tenant boundaries are sacred** — mission,
+policies, roles, and data never leak across organizations unless a audited platform admin acts
+deliberately.
