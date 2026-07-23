@@ -44,18 +44,18 @@ export function useAtlasTheme(): {
 	theme: AtlasTheme;
 	setTheme: (theme: AtlasTheme) => void;
 	toggleTheme: () => void;
+	/** False until client storage has been read — use to avoid hydration mismatches. */
+	mounted: boolean;
 } {
-	const [theme, setThemeState] = useState<AtlasTheme>(() => {
-		if (typeof window === "undefined") {
-			return ATLAS_DEFAULT_THEME;
-		}
-		return getStoredAtlasTheme();
-	});
+	// Must match SSR output; localStorage is applied in useEffect only.
+	const [theme, setThemeState] = useState<AtlasTheme>(ATLAS_DEFAULT_THEME);
+	const [mounted, setMounted] = useState(false);
 
 	useEffect(() => {
 		const initial = getStoredAtlasTheme();
 		setThemeState(initial);
 		applyAtlasTheme(initial);
+		setMounted(true);
 	}, []);
 
 	const setTheme = useCallback((next: AtlasTheme) => {
@@ -81,5 +81,5 @@ export function useAtlasTheme(): {
 		});
 	}, []);
 
-	return { theme, setTheme, toggleTheme };
+	return { theme, setTheme, toggleTheme, mounted };
 }

@@ -12,7 +12,7 @@ type AgentShellProps = {
 };
 
 export function AgentShell({ children }: AgentShellProps) {
-	const { theme, toggleTheme } = useAtlasTheme();
+	const { theme, toggleTheme, mounted } = useAtlasTheme();
 
 	return (
 		<div data-landing className="relative min-h-screen bg-background text-foreground antialiased">
@@ -29,7 +29,7 @@ export function AgentShell({ children }: AgentShellProps) {
 					<p className="text-xs text-muted-foreground">
 						© 2026 {SITE.name}. Built for schools that earn parent trust.
 					</p>
-					<ThemeToggle theme={theme} onToggle={toggleTheme} />
+					<ThemeToggle theme={theme} onToggle={toggleTheme} mounted={mounted} />
 				</div>
 			</div>
 		</div>
