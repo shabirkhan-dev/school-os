@@ -6,7 +6,11 @@ export {
 	TenantOrganizationConfigForm,
 	TenantSettingsForm,
 } from "./components";
-export { membershipRoleLabels, PermissionCodes } from "./constants/permission-codes";
+export {
+	membershipRoleDescriptions,
+	membershipRoleLabels,
+	PermissionCodes,
+} from "./constants/permission-codes";
 export { TenantProvider, useTenantContext } from "./context";
 export {
 	useCampusesQuery,

@@ -1,4 +1,5 @@
 import { RequireAuth } from "@/modules/auth/components";
+import { PendingInvitesBanner } from "@/modules/members";
 import { TenantOnboardingGate, TenantProvider } from "@/modules/tenants";
 import { AdminScrollLock } from "./_components/admin-scroll-lock";
 import { AdminSidebar } from "./_components/admin-sidebar";
@@ -18,6 +19,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
 						<AdminSidebar className="hidden lg:flex" />
 						<div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 							<AdminTopbar />
+							<PendingInvitesBanner />
 							<main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain">
 								{children}
 							</main>

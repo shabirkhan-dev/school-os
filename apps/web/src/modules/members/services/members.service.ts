@@ -3,17 +3,15 @@ import type {
 	AcceptInviteResult,
 	InviteMemberInput,
 	InvitePreview,
-	Member,
+	MembersListResponse,
 	PendingInvite,
 	UpdateMemberInput,
+	UserPendingInvite,
 } from "../types/member.types";
 
 export const membersService = {
 	list: (accessToken: string, tenantId: string) =>
-		apiClient.get<{ members: Member[]; pendingInvites: PendingInvite[] }>(
-			`/tenants/${tenantId}/members`,
-			{ accessToken },
-		),
+		apiClient.get<MembersListResponse>(`/tenants/${tenantId}/members`, { accessToken }),
 	invite: (accessToken: string, tenantId: string, input: InviteMemberInput) =>
 		apiClient.post<{ invite: PendingInvite; developmentInviteUrl?: string }>(
 			`/tenants/${tenantId}/members/invite`,
@@ -21,28 +19,27 @@ export const membersService = {
 			{ accessToken },
 		),
 	update: (accessToken: string, tenantId: string, membershipId: string, input: UpdateMemberInput) =>
-		apiClient.patch<{ member: Member }>(`/tenants/${tenantId}/members/${membershipId}`, input, {
-			accessToken,
-		}),
+		apiClient.patch<{ member: MembersListResponse["members"][number] }>(
+			`/tenants/${tenantId}/members/${membershipId}`,
+			input,
+			{ accessToken },
+		),
 	revokeInvite: (accessToken: string, tenantId: string, inviteId: string) =>
 		apiClient.delete<{ revoked: true }>(`/tenants/${tenantId}/members/invites/${inviteId}`, {
 			accessToken,
 		}),
+	resendInvite: (accessToken: string, tenantId: string, inviteId: string) =>
+		apiClient.post<{ invite: PendingInvite; developmentInviteUrl?: string }>(
+			`/tenants/${tenantId}/members/invites/${inviteId}/resend`,
+			{},
+			{ accessToken },
+		),
 	previewInvite: (token: string) =>
 		apiClient.get<{ invite: InvitePreview }>(
 			`/auth/invites/preview?token=${encodeURIComponent(token)}`,
 		),
 	listPendingInvites: (accessToken: string) =>
-		apiClient.get<{
-			invites: Array<{
-				inviteId: string;
-				tenantId: string;
-				tenantName: string;
-				email: string;
-				role: InvitePreview["role"];
-				expiresAt: string;
-			}>;
-		}>("/auth/pending-invites", { accessToken }),
-	acceptInvite: (accessToken: string, token: string) =>
-		apiClient.post<AcceptInviteResult>("/auth/accept-invite", { token }, { accessToken }),
+		apiClient.get<{ invites: UserPendingInvite[] }>("/auth/pending-invites", { accessToken }),
+	acceptInvite: (accessToken: string, input: { token?: string; inviteId?: string }) =>
+		apiClient.post<AcceptInviteResult>("/auth/accept-invite", input, { accessToken }),
 };

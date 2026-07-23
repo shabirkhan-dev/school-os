@@ -12,6 +12,9 @@ export type Member = {
 	role: MembershipRole;
 	status: MemberStatus;
 	campusId: string | null;
+	campusName: string | null;
+	pendingInviteId: string | null;
+	inviteExpiresAt: string | null;
 	createdAt: string;
 	updatedAt: string;
 };
@@ -22,9 +25,34 @@ export type PendingInvite = {
 	email: string;
 	role: MembershipRole;
 	campusId: string | null;
+	campusName: string | null;
+	membershipId: string | null;
 	status: "pending" | "accepted" | "revoked" | "expired";
 	expiresAt: string;
 	createdAt: string;
+};
+
+export type MemberListSummary = {
+	total: number;
+	active: number;
+	invited: number;
+	suspended: number;
+	pendingEmailInvites: number;
+};
+
+export type ActorCapabilities = {
+	role: MembershipRole;
+	canInvite: boolean;
+	canManage: boolean;
+	assignableRoles: MembershipRole[];
+	invitableRoles: Array<Exclude<MembershipRole, "owner">>;
+};
+
+export type MembersListResponse = {
+	members: Member[];
+	pendingInvites: PendingInvite[];
+	summary: MemberListSummary;
+	actor: ActorCapabilities;
 };
 
 export type InviteMemberInput = {
@@ -56,4 +84,13 @@ export type AcceptInviteResult = {
 		status: MemberStatus;
 	};
 	tenant: { id: string; name: string };
+};
+
+export type UserPendingInvite = {
+	inviteId: string;
+	tenantId: string;
+	tenantName: string;
+	email: string;
+	role: MembershipRole;
+	expiresAt: string;
 };

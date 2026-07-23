@@ -23,6 +23,15 @@ export function useMembersQuery(tenantId: string | null, enabled = true) {
 	});
 }
 
+export function usePendingInvitesQuery(enabled = true) {
+	const { token } = useAuth();
+	return useQuery({
+		queryKey: memberQueryKeys.pendingInvites(),
+		queryFn: () => membersService.listPendingInvites(requireToken(token)),
+		enabled: enabled && Boolean(token),
+	});
+}
+
 export function useInviteMemberMutation(tenantId: string) {
 	const { token } = useAuth();
 	const queryClient = useQueryClient();
@@ -53,6 +62,18 @@ export function useRevokeInviteMutation(tenantId: string) {
 	return useMutation({
 		mutationFn: (inviteId: string) =>
 			membersService.revokeInvite(requireToken(token), tenantId, inviteId),
+		onSuccess: () => {
+			void queryClient.invalidateQueries({ queryKey: memberQueryKeys.list(tenantId) });
+		},
+	});
+}
+
+export function useResendInviteMutation(tenantId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (inviteId: string) =>
+			membersService.resendInvite(requireToken(token), tenantId, inviteId),
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: memberQueryKeys.list(tenantId) });
 		},

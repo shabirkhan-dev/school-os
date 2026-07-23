@@ -20,6 +20,9 @@ type Props = {
 const defaultCrumbs: Crumb[] = [{ label: "Dashboard", href: "/admin" }, { label: "Overview" }];
 
 function crumbsForPath(pathname: string): Crumb[] {
+	if (pathname.startsWith("/admin/members")) {
+		return [{ label: "Dashboard", href: "/admin" }, { label: "Members" }];
+	}
 	if (pathname.startsWith("/admin/account/profile")) {
 		return [
 			{ label: "Dashboard", href: "/admin" },

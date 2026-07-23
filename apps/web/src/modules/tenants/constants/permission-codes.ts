@@ -26,3 +26,12 @@ export const membershipRoleLabels: Record<MembershipRole, string> = {
 	parent: "Parent",
 	student: "Student",
 };
+
+export const membershipRoleDescriptions: Record<MembershipRole, string> = {
+	owner: "Full organization control, billing, and ownership transfer",
+	principal: "School leadership — settings, staff, and academic oversight",
+	admin: "Day-to-day administration — members, campuses, and operations",
+	teacher: "Classroom access — attendance, grades, and student records",
+	parent: "Guardian portal — child progress, fees, and communication",
+	student: "Learner portal — assignments, timetable, and announcements",
+};
