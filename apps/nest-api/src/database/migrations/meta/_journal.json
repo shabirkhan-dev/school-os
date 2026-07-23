@@ -99,6 +99,27 @@
       "when": 1785700647371,
       "tag": "0013_staff_guardians_subjects",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1785800647371,
+      "tag": "0014_teacher_navigation_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1785900647371,
+      "tag": "0015_teacher_nav_section_order",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1786000647371,
+      "tag": "0016_timetable",
+      "breakpoints": true
     }
   ]
 }
