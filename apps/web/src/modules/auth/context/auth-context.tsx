@@ -1,172 +1,53 @@
 "use client";
 
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
-import { ApiError } from "@/lib/api/client";
-import { normalizeTenantContext } from "@/modules/auth/lib/normalize-tenant-context";
+import type { ReactNode } from "react";
 import type { TenantMembership } from "@/modules/tenants";
-import { usersService } from "@/modules/users/services/users.service";
 import type { User } from "@/modules/users/types/user.types";
-import { authService } from "../services/auth.service";
-import type {
-	AuthSession,
-	LoginInput,
-	LoginResult,
-	RegisterInput,
-	RegistrationResult,
-	TwoFactorInput,
-} from "../types/auth.types";
-
-interface AuthContextValue {
-	token: string | null;
-	user: User | null;
-	tenantContext: TenantMembership | null;
-	loading: boolean;
-	error: string | null;
-	login: (input: LoginInput) => Promise<LoginResult>;
-	verifyTwoFactor: (input: TwoFactorInput) => Promise<void>;
-	register: (input: RegisterInput) => Promise<RegistrationResult>;
-	googleLogin: (credential: string) => Promise<void>;
-	consumeMagicLink: (token: string) => Promise<void>;
-	establishSession: (session: AuthSession) => void;
-	logout: () => Promise<void>;
-	logoutAll: () => Promise<void>;
-	refreshUser: () => Promise<void>;
-	clearError: () => void;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+import {
+	SessionProvider,
+	selectPermissionsLoading,
+	useSessionAuthActions,
+	useSessionStore,
+} from "@/store";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-	const [token, setToken] = useState<string | null>(null);
-	const [tokenExpiresAt, setTokenExpiresAt] = useState<string | null>(null);
-	const [user, setUser] = useState<User | null>(null);
-	const [tenantContext, setTenantContext] = useState<TenantMembership | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-
-	const clearSession = useCallback(() => {
-		setToken(null);
-		setTokenExpiresAt(null);
-		setUser(null);
-		setTenantContext(null);
-	}, []);
-
-	const establishSession = useCallback((session: AuthSession) => {
-		setToken(session.accessToken);
-		setTokenExpiresAt(session.accessTokenExpiresAt);
-		setUser(session.user);
-		setTenantContext(normalizeTenantContext(session.tenantContext ?? undefined));
-	}, []);
-
-	const refreshSession = useCallback(async () => {
-		const session = await authService.refresh();
-		establishSession(session);
-		return session;
-	}, [establishSession]);
-
-	useEffect(() => {
-		refreshSession()
-			.catch(clearSession)
-			.finally(() => setLoading(false));
-	}, [clearSession, refreshSession]);
-
-	useEffect(() => {
-		if (!tokenExpiresAt) return;
-		const delay = Math.max(1_000, new Date(tokenExpiresAt).getTime() - Date.now() - 60_000);
-		const timer = window.setTimeout(() => refreshSession().catch(clearSession), delay);
-		return () => window.clearTimeout(timer);
-	}, [clearSession, refreshSession, tokenExpiresAt]);
-
-	const login = useCallback(
-		async (input: LoginInput) => {
-			setError(null);
-			try {
-				const result = await authService.login(input);
-				if (!("requiresTwoFactor" in result)) establishSession(result);
-				return result;
-			} catch (caught) {
-				setError(toMessage(caught, "Login failed"));
-				throw caught;
-			}
-		},
-		[establishSession],
-	);
-
-	const verifyTwoFactor = useCallback(
-		async (input: TwoFactorInput) => establishSession(await authService.verifyTwoFactor(input)),
-		[establishSession],
-	);
-
-	const register = useCallback(async (input: RegisterInput) => authService.register(input), []);
-	const googleLogin = useCallback(
-		async (credential: string) => establishSession(await authService.googleLogin(credential)),
-		[establishSession],
-	);
-	const consumeMagicLink = useCallback(
-		async (magicToken: string) => establishSession(await authService.consumeMagicLink(magicToken)),
-		[establishSession],
-	);
-
-	const logout = useCallback(async () => {
-		try {
-			await authService.logout();
-		} finally {
-			clearSession();
-		}
-	}, [clearSession]);
-
-	const logoutAll = useCallback(async () => {
-		try {
-			if (token) await authService.logoutAll(token);
-		} finally {
-			clearSession();
-		}
-	}, [clearSession, token]);
-
-	const refreshUser = useCallback(async () => {
-		if (!token) return;
-		try {
-			setUser(await usersService.getCurrent(token));
-		} catch (caught) {
-			if (caught instanceof ApiError && caught.statusCode === 401) {
-				await refreshSession();
-				return;
-			}
-			throw caught;
-		}
-	}, [refreshSession, token]);
-
-	return (
-		<AuthContext.Provider
-			value={{
-				token,
-				user,
-				tenantContext,
-				loading,
-				error,
-				login,
-				verifyTwoFactor,
-				register,
-				googleLogin,
-				consumeMagicLink,
-				establishSession,
-				logout,
-				logoutAll,
-				refreshUser,
-				clearError: () => setError(null),
-			}}
-		>
-			{children}
-		</AuthContext.Provider>
-	);
+	return <SessionProvider>{children}</SessionProvider>;
 }
 
-export function useAuth(): AuthContextValue {
-	const context = useContext(AuthContext);
-	if (!context) throw new Error("useAuth must be used within AuthProvider");
-	return context;
+export function useAuth() {
+	const token = useSessionStore((state) => state.token);
+	const user = useSessionStore((state) => state.user);
+	const tenantContext = useSessionStore((state) => state.tenantContext);
+	const loading = useSessionStore((state) => state.authLoading);
+	const error = useSessionStore((state) => state.authError);
+	const actions = useSessionAuthActions();
+
+	return {
+		token,
+		user,
+		tenantContext,
+		loading,
+		error,
+		...actions,
+	};
 }
 
-function toMessage(error: unknown, fallback: string): string {
-	return error instanceof Error ? error.message : fallback;
+export function useAuthUser(): User | null {
+	return useSessionStore((state) => state.user);
+}
+
+export function useAuthToken(): string | null {
+	return useSessionStore((state) => state.token);
+}
+
+export function useTenantMembership(): TenantMembership | null {
+	return useSessionStore((state) => state.membership);
+}
+
+export function useAuthLoading(): boolean {
+	return useSessionStore((state) => state.authLoading);
+}
+
+export function usePermissionsLoading(): boolean {
+	return useSessionStore(selectPermissionsLoading);
 }
