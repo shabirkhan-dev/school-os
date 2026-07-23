@@ -1,4 +1,14 @@
+import type { MembershipRecord } from '@/database/schema';
+
+import type { PermissionCode } from '@/modules/authorization/permission-codes';
 import type { PublicUser } from '@/modules/users/users.types';
+
+export type PublicTenantContext = {
+	tenantId: string;
+	membershipId: string;
+	role: MembershipRecord['role'];
+	permissions: PermissionCode[];
+};
 
 export type AccessTokenPayload = {
 	sub: string;
@@ -19,7 +29,9 @@ export type AuthSessionResult = {
 	user: PublicUser;
 };
 
-export type PublicAuthSession = Omit<AuthSessionResult, 'refreshToken'>;
+export type PublicAuthSession = Omit<AuthSessionResult, 'refreshToken'> & {
+	tenantContext?: PublicTenantContext | null;
+};
 
 /** Web omits refreshToken (cookie); native includes it for SecureStore. */
 export type ClientAuthSession = PublicAuthSession | AuthSessionResult;

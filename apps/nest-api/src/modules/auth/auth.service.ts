@@ -14,6 +14,7 @@ import type {
 	SessionRecord,
 	UserRecord,
 } from '@/database/schema';
+import { PermissionsService } from '@/modules/authorization/permissions.service';
 import { EmailService } from '@/modules/email/email.service';
 import { MembershipsRepository } from '@/modules/memberships/memberships.repository';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
@@ -32,6 +33,7 @@ import type {
 	LoginResult,
 	MfaLoginChallenge,
 	PublicAuthSession,
+	PublicTenantContext,
 	RegistrationResult,
 	RequestMetadata,
 	SessionView,
@@ -57,6 +59,7 @@ export class AuthService {
 		private readonly usersService: UsersService,
 		private readonly memberships: MembershipsService,
 		private readonly membershipsRepository: MembershipsRepository,
+		private readonly permissions: PermissionsService,
 		private readonly mfa: MfaService,
 		private readonly passkeys: PasskeysService,
 		private readonly socialAuth: SocialAuthService,
@@ -507,10 +510,37 @@ export class AuthService {
 		if (!user) {
 			throw new Error('User could not be loaded for session');
 		}
+		const tenantContext = await this.resolvePublicTenantContext(userId, session);
 		return {
 			accessToken: accessToken.token,
 			accessTokenExpiresAt: accessToken.expiresAt.toISOString(),
 			user: toPublicUser(user),
+			tenantContext,
+		};
+	}
+
+	private async resolvePublicTenantContext(
+		userId: string,
+		session: SessionRecord,
+	): Promise<PublicTenantContext | null> {
+		if (!session.activeTenantId || !session.activeMembershipId) {
+			return null;
+		}
+
+		const membership = await this.membershipsRepository.findActiveById(session.activeMembershipId);
+		if (
+			!membership ||
+			membership.userId !== userId ||
+			membership.tenantId !== session.activeTenantId
+		) {
+			return null;
+		}
+
+		return {
+			tenantId: membership.tenantId,
+			membershipId: membership.id,
+			role: membership.role,
+			permissions: [...this.permissions.getPermissionsForRole(membership.role)],
 		};
 	}
 

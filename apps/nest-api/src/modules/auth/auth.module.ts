@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { PermissionsModule } from '@/modules/authorization/permissions.module';
 import { EmailModule } from '@/modules/email/email.module';
 import { MembershipsModule } from '@/modules/memberships/memberships.module';
 import { MfaModule } from '@/modules/mfa/mfa.module';
@@ -24,6 +25,7 @@ import { RefreshCookieService } from './refresh-cookie.service';
 		PasskeysModule,
 		SocialAuthModule,
 		MembershipsModule,
+		PermissionsModule,
 	],
 	controllers: [AuthController, AuthMethodsController, AuthSecurityController],
 	providers: [AuthRepository, AuthService, CsrfGuard, JwtAuthGuard, RefreshCookieService],

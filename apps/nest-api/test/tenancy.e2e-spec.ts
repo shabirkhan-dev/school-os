@@ -116,6 +116,42 @@ describe('Tenancy (e2e)', () => {
 		expect(response.body.code).toBe('TENANT_NOT_FOUND');
 	});
 
+	it('lists the permission catalog for authenticated users', async () => {
+		const response = await request(app.getHttpServer())
+			.get('/api/v1/permissions')
+			.set('Authorization', `Bearer ${accessToken}`)
+			.expect(200);
+
+		expect(response.body.data.permissions.length).toBeGreaterThanOrEqual(4);
+		expect(
+			response.body.data.permissions.some(
+				(permission: { code: string }) => permission.code === 'tenant.campus.create',
+			),
+		).toBe(true);
+	});
+
+	it('returns membership and permissions for tenant members', async () => {
+		const response = await request(app.getHttpServer())
+			.get(`/api/v1/tenants/${tenantId}/membership`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.expect(200);
+
+		expect(response.body.data.membership.role).toBe('owner');
+		expect(response.body.data.membership.permissions).toContain('tenant.campus.create');
+	});
+
+	it('includes tenant context on switch-tenant session', async () => {
+		const response = await request(app.getHttpServer())
+			.post('/api/v1/auth/switch-tenant')
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({ tenantId })
+			.expect(200);
+
+		expect(response.body.data.tenantContext?.tenantId).toBe(tenantId);
+		expect(response.body.data.tenantContext?.role).toBe('owner');
+		expect(response.body.data.tenantContext?.permissions).toContain('tenant.settings.write');
+	});
+
 	it('returns validation errors for invalid tenant input', async () => {
 		const response = await request(app.getHttpServer())
 			.post('/api/v1/tenants')
