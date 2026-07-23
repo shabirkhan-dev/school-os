@@ -3,8 +3,10 @@ import type {
 	AssignSectionSubjectInput,
 	CreateSubjectInput,
 	Subject,
+	TeacherDashboard,
 	TeacherDetail,
 	TeacherProfile,
+	TeacherSectionStudent,
 	TeacherSummary,
 	UpsertStaffProfileInput,
 } from "../types/staff.types";
@@ -20,6 +22,22 @@ export const staffService = {
 		}),
 	getMyTeacherProfile: (accessToken: string, tenantId: string) =>
 		apiClient.get<TeacherDetail>(`/tenants/${tenantId}/teachers/me`, { accessToken }),
+	getMyTeacherDashboard: (accessToken: string, tenantId: string, sessionDate: string) =>
+		apiClient.get<TeacherDashboard>(
+			`/tenants/${tenantId}/teachers/me/dashboard?sessionDate=${encodeURIComponent(sessionDate)}`,
+			{ accessToken },
+		),
+	getMySectionStudents: (accessToken: string, tenantId: string, sectionId: string) =>
+		apiClient.get<{ students: TeacherSectionStudent[] }>(
+			`/tenants/${tenantId}/teachers/me/sections/${sectionId}/students`,
+			{ accessToken },
+		),
+	upsertMyProfile: (accessToken: string, tenantId: string, input: UpsertStaffProfileInput) =>
+		apiClient.patch<{ profile: TeacherProfile }>(
+			`/tenants/${tenantId}/teachers/me/profile`,
+			input,
+			{ accessToken },
+		),
 	upsertProfile: (
 		accessToken: string,
 		tenantId: string,

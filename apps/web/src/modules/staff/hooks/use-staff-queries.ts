@@ -8,6 +8,7 @@ import type {
 	CreateSubjectInput,
 	Subject,
 	TeacherDetail,
+	TeacherSectionStudent,
 	TeacherSummary,
 	UpsertStaffProfileInput,
 } from "../types/staff.types";
@@ -40,6 +41,22 @@ export function useTeacherQuery(
 	});
 }
 
+export function useMyTeacherDashboardQuery(
+	tenantId: string | null,
+	sessionDate: string,
+	enabled = true,
+) {
+	const { token } = useAuth();
+	return useQuery({
+		queryKey: ["staff", tenantId, "me", "dashboard", sessionDate],
+		queryFn: () => {
+			if (!tenantId || !token) throw new Error("Auth required");
+			return staffService.getMyTeacherDashboard(token, tenantId, sessionDate);
+		},
+		enabled: enabled && Boolean(token && tenantId && sessionDate),
+	});
+}
+
 export function useMyTeacherProfileQuery(tenantId: string | null, enabled = true) {
 	const { token } = useAuth();
 	return useQuery({
@@ -49,6 +66,38 @@ export function useMyTeacherProfileQuery(tenantId: string | null, enabled = true
 			return staffService.getMyTeacherProfile(token, tenantId) as Promise<TeacherDetail>;
 		},
 		enabled: enabled && Boolean(token && tenantId),
+	});
+}
+
+export function useMySectionStudentsQuery(
+	tenantId: string | null,
+	sectionId: string | null,
+	enabled = true,
+) {
+	const { token } = useAuth();
+	return useQuery({
+		queryKey: ["staff", tenantId, "me", "sections", sectionId, "students"],
+		queryFn: () => {
+			if (!tenantId || !token || !sectionId) throw new Error("Auth required");
+			return staffService
+				.getMySectionStudents(token, tenantId, sectionId)
+				.then((response) => response.students as TeacherSectionStudent[]);
+		},
+		enabled: enabled && Boolean(token && tenantId && sectionId),
+	});
+}
+
+export function useUpsertMyTeacherProfileMutation(tenantId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (input: UpsertStaffProfileInput) => {
+			if (!token) throw new Error("Auth required");
+			return staffService.upsertMyProfile(token, tenantId, input);
+		},
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: ["staff", tenantId, "me"] });
+		},
 	});
 }
 

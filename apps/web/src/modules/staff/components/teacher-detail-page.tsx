@@ -34,8 +34,8 @@ export function TeacherDetailPage({ membershipId }: Props) {
 
 	const query = useTeacherQuery(tenantId, membershipId, canRead);
 	const upsertProfile = useUpsertTeacherProfileMutation(tenantId ?? "", membershipId);
-	const sectionsQuery = useSectionsQuery(tenantId, campusId, canRead);
-	const subjectsQuery = useSubjectsQuery(tenantId, canRead);
+	const sectionsQuery = useSectionsQuery(tenantId, campusId, canWrite);
+	const subjectsQuery = useSubjectsQuery(tenantId, canWrite);
 	const assignSubject = useAssignSectionSubjectMutation(tenantId ?? "");
 
 	const sectionItems = useMemo(
