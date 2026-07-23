@@ -18,6 +18,7 @@ type Props = {
 	trend?: Trend;
 	bars: number[];
 	activeIndex?: number;
+	unavailable?: boolean;
 	className?: string;
 };
 
@@ -49,9 +50,10 @@ export function StatCard({
 	trend = "up",
 	bars,
 	activeIndex,
+	unavailable = false,
 	className,
 }: Props) {
-	const animated = useCountUp(value);
+	const animated = useCountUp(unavailable ? 0 : value);
 	const spec = trendSpec[trend];
 
 	return (
@@ -68,7 +70,7 @@ export function StatCard({
 					</div>
 					<div className="mt-2.5 flex items-baseline gap-2 sm:mt-3">
 						<span className="font-semibold text-[24px] text-dashboard-text-primary leading-none tracking-tight tabular-nums sm:text-[26px]">
-							{formatValue(animated)}
+							{unavailable ? formatValue(value) : formatValue(animated)}
 						</span>
 					</div>
 					{detail ? (

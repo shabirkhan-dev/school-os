@@ -2,34 +2,15 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-
-const MONTHS = [
-	"JAN",
-	"FEB",
-	"MAR",
-	"APR",
-	"MAY",
-	"JUN",
-	"JUL",
-	"AUG",
-	"SEP",
-	"OCT",
-	"NOV",
-	"DEC",
-] as const;
+import type { DashboardMetrics } from "@/modules/dashboard";
 
 const COLS_PER_MONTH = 6;
-const COLS = MONTHS.length * COLS_PER_MONTH; // 72
 const ROWS = 26;
-const MAX_VALUE = 60000;
-const PER_ROW = MAX_VALUE / ROWS;
 const CELL = 10;
 const GAP = 2;
 const STEP = CELL + GAP;
 const PAD_X = 2;
 const PAD_Y = 2;
-const CHART_W = COLS * STEP - GAP + PAD_X * 2;
-const CHART_H = ROWS * STEP - GAP + PAD_Y * 2;
 
 const COLOR_GRID = "var(--dashboard-chart-grid)";
 const COLOR_NEW = "var(--dashboard-accent)";
@@ -43,84 +24,95 @@ type Col = {
 	existingCells: number;
 };
 
-function mulberry32(seed: number) {
-	let s = seed;
-	return () => {
-		s = (s + 0x6d2b79f5) | 0;
-		let t = Math.imul(s ^ (s >>> 15), 1 | s);
-		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-	};
-}
-
-function buildColumns(): Col[] {
-	const rand = mulberry32(7);
-	const cols: Col[] = [];
-	for (let i = 0; i < COLS; i++) {
-		const monthIdx = Math.floor(i / COLS_PER_MONTH);
-		const inner = i % COLS_PER_MONTH;
-		const innerPhase = Math.sin(((inner + 0.5) / COLS_PER_MONTH) * Math.PI);
-		const exBase = 2.5 + innerPhase * 5 + rand() * 1.5;
-		const existingCells = Math.max(1, Math.round(exBase));
-		const nuBase = 0.8 + innerPhase * 2.2 + rand();
-		const newCells = Math.max(0, Math.round(nuBase));
-		cols.push({
-			idx: i,
-			monthIdx,
-			month: MONTHS[monthIdx],
-			existingCells,
-			newCells,
-		});
-	}
-	return cols;
-}
-
-const Y_TICKS = [0, 10000, 20000, 30000, 40000, 50000, 60000];
-
 type Props = {
-	highlightMonth?: (typeof MONTHS)[number];
+	months: DashboardMetrics["enrollmentMonths"];
+	highlightMonth?: string;
 	className?: string;
 };
 
-export function PixelGridChart({ highlightMonth = "JUL", className }: Props) {
-	const cols = useMemo(buildColumns, []);
+function cellsForCount(count: number, maxCount: number): number {
+	if (count <= 0 || maxCount <= 0) return 0;
+	return Math.max(1, Math.round((count / maxCount) * (ROWS - 2)));
+}
+
+function buildColumns(months: DashboardMetrics["enrollmentMonths"]): Col[] {
+	const maxNew = Math.max(...months.map((month) => month.newAdmissions), 1);
+	const maxReturning = Math.max(...months.map((month) => month.returning), 1);
+	const cols: Col[] = [];
+
+	for (let monthIdx = 0; monthIdx < months.length; monthIdx++) {
+		const month = months[monthIdx];
+		if (!month) continue;
+
+		for (let inner = 0; inner < COLS_PER_MONTH; inner++) {
+			const phase = inner / Math.max(COLS_PER_MONTH - 1, 1);
+			const newCells = Math.max(
+				0,
+				Math.round(cellsForCount(month.newAdmissions, maxNew) * (0.65 + phase * 0.35)),
+			);
+			const existingCells = Math.max(
+				1,
+				Math.round(cellsForCount(month.returning, maxReturning) * (0.75 + phase * 0.25)),
+			);
+
+			cols.push({
+				idx: cols.length,
+				monthIdx,
+				month: month.month,
+				newCells,
+				existingCells,
+			});
+		}
+	}
+
+	return cols;
+}
+
+export function PixelGridChart({ months, highlightMonth, className }: Props) {
+	const cols = useMemo(() => buildColumns(months), [months]);
 	const [hoverCol, setHoverCol] = useState<number | null>(null);
 
-	const highlightIdx = MONTHS.indexOf(highlightMonth);
+	const monthLabels = months.map((month) => month.month);
+	const highlightIdx = Math.max(0, monthLabels.indexOf(highlightMonth ?? monthLabels[0] ?? "JAN"));
 	const defaultIdx = Math.floor((highlightIdx + 0.5) * COLS_PER_MONTH);
 	const activeColIdx = hoverCol ?? defaultIdx;
 	const activeCol = cols[activeColIdx];
-	const activeMonth = activeCol?.month ?? highlightMonth;
+	const activeMonth = activeCol?.month ?? monthLabels[highlightIdx] ?? "JAN";
 
 	const monthTotals = useMemo(() => {
 		const map = new Map<string, { newAdmissions: number; returning: number }>();
-		for (const c of cols) {
-			const cur = map.get(c.month) ?? { newAdmissions: 0, returning: 0 };
-			cur.newAdmissions += c.newCells * PER_ROW;
-			cur.returning += c.existingCells * PER_ROW;
-			map.set(c.month, cur);
+		for (const month of months) {
+			map.set(month.month, {
+				newAdmissions: month.newAdmissions,
+				returning: month.returning,
+			});
 		}
 		return map;
-	}, [cols]);
+	}, [months]);
+
+	const maxTotal = Math.max(...months.map((month) => month.total), 1);
+	const yTicks = [0, 0.2, 0.4, 0.6, 0.8, 1].map((level) => Math.round(maxTotal * level));
 
 	const tip = monthTotals.get(activeMonth);
+	const COLS = cols.length;
+	const CHART_W = COLS * STEP - GAP + PAD_X * 2;
+	const CHART_H = ROWS * STEP - GAP + PAD_Y * 2;
 
 	const stackTopRow = ROWS - 1 - (activeCol?.existingCells ?? 0) - (activeCol?.newCells ?? 0);
 	const lineX = PAD_X + activeColIdx * STEP + CELL / 2;
 	const dotY = PAD_Y + Math.max(stackTopRow, 0) * STEP;
-	const lineXPct = (lineX / CHART_W) * 100;
+	const lineXPct = COLS > 0 ? (lineX / CHART_W) * 100 : 50;
 	const dotYPct = (dotY / CHART_H) * 100;
 	const tipOnRight = activeColIdx < COLS - 14;
 
 	return (
 		<div className={cn("flex flex-col", className)}>
 			<div className="flex">
-				{/* Y-axis labels with dotted leader lines */}
 				<div className="flex w-[68px] shrink-0 flex-col-reverse justify-between py-1">
-					{Y_TICKS.map((t) => (
-						<div key={t} className="flex items-center gap-1.5 leading-none">
+					{yTicks.map((tick) => (
+						<div key={tick} className="flex items-center gap-1.5 leading-none">
 							<span className="w-7 text-right font-medium text-[10.5px] text-dashboard-text-muted">
-								{t / 1000}k
+								{tick}
 							</span>
 							<span
 								aria-hidden
@@ -138,7 +130,6 @@ export function PixelGridChart({ highlightMonth = "JUL", className }: Props) {
 					))}
 				</div>
 
-				{/* Chart svg + overlay */}
 				<div className="relative min-w-0 flex-1">
 					<svg
 						viewBox={`0 0 ${CHART_W} ${CHART_H}`}
@@ -231,7 +222,7 @@ export function PixelGridChart({ highlightMonth = "JUL", className }: Props) {
 								}}
 							>
 								<div className="border-dashboard-border-subtle border-b px-3.5 py-2 font-medium text-[14px] text-dashboard-text-secondary">
-									{activeMonth.charAt(0) + activeMonth.slice(1).toLowerCase()} 2026
+									{activeMonth.charAt(0) + activeMonth.slice(1).toLowerCase()}
 								</div>
 								<div className="space-y-2.5 px-3.5 pt-3 pb-2">
 									<div className="flex items-center gap-2.5">
@@ -242,7 +233,7 @@ export function PixelGridChart({ highlightMonth = "JUL", className }: Props) {
 										/>
 										<span className="text-[13.5px] text-dashboard-text-muted">New admissions</span>
 										<span className="ml-auto font-semibold text-[15px] text-dashboard-text-primary tabular-nums">
-											{Math.round(tip.newAdmissions / 1000)}k
+											{tip.newAdmissions}
 										</span>
 									</div>
 									<div className="flex items-center gap-2.5">
@@ -253,7 +244,7 @@ export function PixelGridChart({ highlightMonth = "JUL", className }: Props) {
 										/>
 										<span className="text-[13.5px] text-dashboard-text-muted">Returning</span>
 										<span className="ml-auto font-semibold text-[15px] text-dashboard-text-primary tabular-nums">
-											{Math.round(tip.returning / 1000)}k
+											{tip.returning}
 										</span>
 									</div>
 								</div>
@@ -263,21 +254,23 @@ export function PixelGridChart({ highlightMonth = "JUL", className }: Props) {
 				</div>
 			</div>
 
-			{/* X-axis month labels — aligned with chart area only */}
-			<div className="mt-3 ml-[68px] grid grid-cols-12">
-				{MONTHS.map((m, i) => {
-					const isActive = i === highlightIdx;
+			<div
+				className="mt-3 ml-[68px] grid"
+				style={{ gridTemplateColumns: `repeat(${monthLabels.length}, minmax(0, 1fr))` }}
+			>
+				{monthLabels.map((month, index) => {
+					const isActive = index === highlightIdx;
 					return (
-						<div key={m} className="flex items-center justify-center gap-2">
+						<div key={month} className="flex items-center justify-center gap-2">
 							<span
 								className={cn(
 									"font-medium text-[11px]",
 									isActive ? "text-dashboard-text-primary" : "text-dashboard-text-muted",
 								)}
 							>
-								{m}
+								{month}
 							</span>
-							{i < MONTHS.length - 1 && (
+							{index < monthLabels.length - 1 && (
 								<span aria-hidden className="size-[3px] rounded-full bg-dashboard-text-faint" />
 							)}
 						</div>

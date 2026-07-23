@@ -3,16 +3,21 @@
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
+import type { DashboardMetrics } from "@/modules/dashboard";
 import { DashboardCardFooter, DashboardCardHeader, FooterSep, InsightStat } from "../card-chrome";
 import { AiInsightButton } from "./ai-insight-button";
 import { DateRangePill } from "./date-range-pill";
 import { GradeChart } from "./grade-chart";
 
 type Props = {
+	grades: DashboardMetrics["gradeRows"];
+	insights: DashboardMetrics["insights"];
 	className?: string;
 };
 
-export function GradeDistributionCard({ className }: Props) {
+export function GradeDistributionCard({ grades, insights, className }: Props) {
+	const watchGrade = [...grades].sort((a, b) => b.students - a.students)[0];
+
 	return (
 		<section
 			className={cn(
@@ -23,25 +28,27 @@ export function GradeDistributionCard({ className }: Props) {
 		>
 			<DashboardCardHeader
 				title="Students by Grade"
-				description="Headcount balance from G1–G12 for the active term."
-				meta="Term 1 · 2026 · all campuses"
-				info="Hover a bar for exact headcount. Lower grades carry more seats by design."
-				actions={<DateRangePill label="Term 1 · 2026" />}
+				description="Headcount balance by grade level for the active term."
+				meta={`${insights.activeYearLabel} · ${insights.campusCount} campus${insights.campusCount === 1 ? "" : "es"}`}
+				info="Counts come from active section enrollments grouped by class."
+				actions={<DateRangePill label={insights.activeYearLabel} />}
 			/>
 
 			<div className="p-3 sm:p-5">
 				<div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
 					<InsightStat
 						label="Enrolled this term"
-						value="2,847"
-						hint="Peak at G3 · softest at G12"
+						value={insights.enrolledThisTerm.toLocaleString("en-US")}
+						hint={`Peak at ${insights.peakGradeLabel} · softest at ${insights.softestGradeLabel}`}
 					/>
 					<div className="w-full rounded-[12px] border border-dashboard-border-subtle bg-dashboard-surface/70 px-3 py-2.5 text-[12px] text-dashboard-text-muted leading-4 sm:w-auto sm:max-w-[200px]">
 						<div className="font-medium text-[11px] text-dashboard-text-dim uppercase tracking-[0.05em]">
 							Watch
 						</div>
 						<p className="mt-1 text-dashboard-text-secondary">
-							G2 Riverside at 98% capacity — new offers route to waitlist.
+							{watchGrade && watchGrade.students > 0
+								? `${watchGrade.label} has ${watchGrade.students} enrolled students.`
+								: "Add section enrollments to populate grade counts."}
 						</p>
 					</div>
 				</div>
@@ -51,7 +58,7 @@ export function GradeDistributionCard({ className }: Props) {
 				</p>
 				<div className="min-w-0 overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
 					<div className="min-w-[300px]">
-						<GradeChart />
+						<GradeChart grades={grades} />
 					</div>
 				</div>
 
@@ -75,11 +82,19 @@ export function GradeDistributionCard({ className }: Props) {
 				}
 			>
 				<span>
-					Avg <span className="font-semibold text-dashboard-text-secondary">237</span>/grade
+					Avg{" "}
+					<span className="font-semibold text-dashboard-text-secondary">
+						{insights.avgPerGrade}
+					</span>
+					/grade
 				</span>
 				<FooterSep />
 				<span>
-					Spread <span className="font-semibold text-dashboard-text-secondary">71</span> seats
+					Spread{" "}
+					<span className="font-semibold text-dashboard-text-secondary">
+						{insights.gradeSpread}
+					</span>{" "}
+					seats
 				</span>
 			</DashboardCardFooter>
 		</section>

@@ -11,7 +11,7 @@ import {
 } from "@school-os/ui/components/dropdown-menu";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { type Admission, admissions as seedAdmissions } from "./admissions-data";
+import type { Admission } from "./admissions-data";
 import { StatusBadge } from "./status-badge";
 
 type SortKey = "id" | "student" | "grade" | "guardian" | "date" | "status" | "campus";
@@ -40,6 +40,7 @@ const SOURCE_LABEL: Record<Admission["source"], string> = {
 };
 
 type Props = {
+	admissions: Admission[];
 	className?: string;
 	query?: string;
 };
@@ -59,11 +60,16 @@ function initials(name: string): string {
 		.join("");
 }
 
-function useAdmissionRows(query: string, sortKey: SortKey, sortDir: "asc" | "desc") {
+function useAdmissionRows(
+	admissions: Admission[],
+	query: string,
+	sortKey: SortKey,
+	sortDir: "asc" | "desc",
+) {
 	return useMemo(() => {
 		const q = query.trim().toLowerCase();
 		const filtered = q
-			? seedAdmissions.filter((row) =>
+			? admissions.filter((row) =>
 					[
 						row.id,
 						row.student,
@@ -76,18 +82,18 @@ function useAdmissionRows(query: string, sortKey: SortKey, sortDir: "asc" | "des
 						row.note,
 					].some((field) => field.toLowerCase().includes(q)),
 				)
-			: seedAdmissions;
+			: admissions;
 
 		const sorted = [...filtered].sort((a, b) => compareAdmissions(a, b, sortKey));
 		if (sortDir === "desc") sorted.reverse();
 		return sorted;
-	}, [query, sortDir, sortKey]);
+	}, [admissions, query, sortDir, sortKey]);
 }
 
-export function AdmissionsTable({ className, query = "" }: Props) {
+export function AdmissionsTable({ admissions, className, query = "" }: Props) {
 	const [sortKey, setSortKey] = useState<SortKey>("date");
 	const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-	const rows = useAdmissionRows(query, sortKey, sortDir);
+	const rows = useAdmissionRows(admissions, query, sortKey, sortDir);
 
 	const toggleSort = (key: SortKey) => {
 		if (sortKey === key) {
