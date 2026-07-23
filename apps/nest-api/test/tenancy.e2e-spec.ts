@@ -304,6 +304,91 @@ describe('Tenancy (e2e)', () => {
 		).toBe(true);
 	});
 
+	it('marks attendance for enrolled students', async () => {
+		const campuses = await request(app.getHttpServer())
+			.get(`/api/v1/tenants/${tenantId}/campuses`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.expect(200);
+
+		const campusId = campuses.body.data.campuses[0].id as string;
+
+		const createYear = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/academic-years`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({
+				name: '2026–27 Attendance',
+				startsOn: '2026-04-01',
+				endsOn: '2027-03-31',
+				status: 'active',
+			})
+			.expect(201);
+
+		const academicYearId = createYear.body.data.academicYear.id as string;
+
+		const createClass = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/classes`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({ name: 'Grade 9', sortOrder: 9 })
+			.expect(201);
+
+		const classId = createClass.body.data.class.id as string;
+
+		const createSection = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/sections`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({
+				campusId,
+				classId,
+				academicYearId,
+				name: '9-A',
+			})
+			.expect(201);
+
+		const sectionId = createSection.body.data.section.id as string;
+
+		const createStudent = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/students`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({
+				campusId,
+				studentCode: 'E2E-ATT-001',
+				firstName: 'Zara',
+				lastName: 'Malik',
+			})
+			.expect(201);
+
+		const studentId = createStudent.body.data.student.id as string;
+
+		await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/students/${studentId}/enrollments`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({ sectionId, academicYearId })
+			.expect(201);
+
+		const sessionResponse = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/attendance/sessions`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({ sectionId, sessionDate: '2026-07-23' })
+			.expect(201);
+
+		const sessionId = sessionResponse.body.data.session.id as string;
+
+		const markResponse = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/attendance/sessions/${sessionId}/marks`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({ marks: [{ studentId, status: 'present' }] })
+			.expect(201);
+
+		expect(markResponse.body.data.summary.present).toBe(1);
+
+		const historyResponse = await request(app.getHttpServer())
+			.get(`/api/v1/tenants/${tenantId}/attendance/students/${studentId}/history`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.expect(200);
+
+		expect(historyResponse.body.data.history).toHaveLength(1);
+	});
+
 	it('returns validation errors for invalid tenant input', async () => {
 		const response = await request(app.getHttpServer())
 			.post('/api/v1/tenants')

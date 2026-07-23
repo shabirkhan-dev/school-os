@@ -8,13 +8,19 @@ const readOnlyTenantAccess = new Set<PermissionCode>([
 	PermissionCodes.TENANT_SETTINGS_READ,
 	PermissionCodes.ACADEMIC_READ,
 	PermissionCodes.STUDENTS_READ,
+	PermissionCodes.ATTENDANCE_READ,
+]);
+
+const teacherTenantAccess = new Set<PermissionCode>([
+	...readOnlyTenantAccess,
+	PermissionCodes.ATTENDANCE_MARK,
 ]);
 
 const roleMatrix: Record<MembershipRecord['role'], ReadonlySet<PermissionCode>> = {
 	owner: fullTenantAccess,
 	principal: fullTenantAccess,
 	admin: fullTenantAccess,
-	teacher: readOnlyTenantAccess,
+	teacher: teacherTenantAccess,
 	parent: readOnlyTenantAccess,
 	student: readOnlyTenantAccess,
 };

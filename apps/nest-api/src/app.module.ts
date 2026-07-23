@@ -6,6 +6,7 @@ import { ConfigModule } from '@/config/config.module';
 import { DatabaseModule } from '@/database/database.module';
 import { AcademicModule } from '@/modules/academic/academic.module';
 import { AiModule } from '@/modules/ai/ai.module';
+import { AttendanceModule } from '@/modules/attendance/attendance.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { AuthorizationModule } from '@/modules/authorization/authorization.module';
 import { BillingModule } from '@/modules/billing/billing.module';
@@ -30,6 +31,7 @@ import { UsersModule } from '@/modules/users/users.module';
 		CampusesModule,
 		AcademicModule,
 		StudentsModule,
+		AttendanceModule,
 		AuthorizationModule,
 		AiModule,
 	],

@@ -9,6 +9,8 @@ export const PermissionCodes = {
 	ACADEMIC_WRITE: 'academic.write',
 	STUDENTS_READ: 'students.read',
 	STUDENTS_WRITE: 'students.write',
+	ATTENDANCE_READ: 'attendance.read',
+	ATTENDANCE_MARK: 'attendance.mark',
 } as const;
 
 export type PermissionCode = (typeof PermissionCodes)[keyof typeof PermissionCodes];

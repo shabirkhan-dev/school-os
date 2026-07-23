@@ -1,0 +1,191 @@
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { AcademicRepository } from '@/modules/academic/academic.repository';
+import { createMockPermissionsService } from '@/modules/authorization/testing/mock-permissions.service';
+import { MembershipsRepository } from '@/modules/memberships/memberships.repository';
+import { MembershipsService } from '@/modules/memberships/memberships.service';
+import { StudentsRepository } from '@/modules/students/students.repository';
+import { AttendanceRepository } from './attendance.repository';
+import { AttendanceService } from './attendance.service';
+
+const sectionRecord = {
+	id: 'section-1',
+	tenantId: 'tenant-1',
+	campusId: 'campus-1',
+	classId: 'class-1',
+	academicYearId: 'year-1',
+	name: '7-B',
+	homeroomTeacherMembershipId: 'teacher-membership-1',
+	status: 'active' as const,
+	deletedAt: null,
+	createdAt: new Date('2026-07-23T00:00:00.000Z'),
+	updatedAt: new Date('2026-07-23T00:00:00.000Z'),
+};
+
+const sessionRecord = {
+	id: 'session-1',
+	tenantId: 'tenant-1',
+	campusId: 'campus-1',
+	sectionId: 'section-1',
+	sessionType: 'class' as const,
+	sessionDate: '2026-07-23',
+	startsAt: null,
+	endsAt: null,
+	createdAt: new Date('2026-07-23T00:00:00.000Z'),
+	updatedAt: new Date('2026-07-23T00:00:00.000Z'),
+};
+
+describe('AttendanceService', () => {
+	let service: AttendanceService;
+	let attendanceRepository: {
+		findSessionBySectionAndDate: ReturnType<typeof vi.fn>;
+		findSessionById: ReturnType<typeof vi.fn>;
+		createSession: ReturnType<typeof vi.fn>;
+		listMarksForSession: ReturnType<typeof vi.fn>;
+		markStudents: ReturnType<typeof vi.fn>;
+	};
+	let academicRepository: {
+		findSectionById: ReturnType<typeof vi.fn>;
+	};
+	let studentsRepository: {
+		findStudentById: ReturnType<typeof vi.fn>;
+		listEnrollments: ReturnType<typeof vi.fn>;
+	};
+	let membershipsRepository: {
+		findActiveByTenantAndUser: ReturnType<typeof vi.fn>;
+	};
+
+	beforeEach(() => {
+		attendanceRepository = {
+			findSessionBySectionAndDate: vi.fn(),
+			findSessionById: vi.fn(),
+			createSession: vi.fn(),
+			listMarksForSession: vi.fn(),
+			markStudents: vi.fn(),
+		};
+		academicRepository = {
+			findSectionById: vi.fn(),
+		};
+		studentsRepository = {
+			findStudentById: vi.fn(),
+			listEnrollments: vi.fn(),
+		};
+		membershipsRepository = {
+			findActiveByTenantAndUser: vi.fn(),
+		};
+
+		service = new AttendanceService(
+			attendanceRepository as unknown as AttendanceRepository,
+			academicRepository as unknown as AcademicRepository,
+			studentsRepository as unknown as StudentsRepository,
+			new MembershipsService(
+				membershipsRepository as unknown as MembershipsRepository,
+				createMockPermissionsService(),
+			),
+		);
+	});
+
+	it('returns an existing session for readers', async () => {
+		membershipsRepository.findActiveByTenantAndUser.mockResolvedValue({
+			id: 'teacher-membership-1',
+			tenantId: 'tenant-1',
+			userId: 'user-1',
+			role: 'teacher',
+			status: 'active',
+		});
+		academicRepository.findSectionById.mockResolvedValue(sectionRecord);
+		attendanceRepository.findSessionBySectionAndDate.mockResolvedValue(sessionRecord);
+		attendanceRepository.listMarksForSession.mockResolvedValue([]);
+
+		const result = await service.getOrCreateSession('user-1', 'tenant-1', {
+			sectionId: 'section-1',
+			sessionDate: '2026-07-23',
+		});
+
+		expect(result.session.id).toBe('session-1');
+		expect(attendanceRepository.createSession).not.toHaveBeenCalled();
+	});
+
+	it('blocks unassigned teachers from marking attendance', async () => {
+		membershipsRepository.findActiveByTenantAndUser.mockResolvedValue({
+			id: 'other-teacher',
+			tenantId: 'tenant-1',
+			userId: 'user-1',
+			role: 'teacher',
+			status: 'active',
+		});
+		attendanceRepository.findSessionById.mockResolvedValue(sessionRecord);
+		academicRepository.findSectionById.mockResolvedValue(sectionRecord);
+
+		await expect(
+			service.markAttendance('user-1', 'tenant-1', 'session-1', {
+				marks: [{ studentId: 'student-1', status: 'present' }],
+			}),
+		).rejects.toBeInstanceOf(ForbiddenException);
+	});
+
+	it('marks attendance for assigned homeroom teachers', async () => {
+		membershipsRepository.findActiveByTenantAndUser.mockResolvedValue({
+			id: 'teacher-membership-1',
+			tenantId: 'tenant-1',
+			userId: 'user-1',
+			role: 'teacher',
+			status: 'active',
+		});
+		attendanceRepository.findSessionById.mockResolvedValue(sessionRecord);
+		academicRepository.findSectionById.mockResolvedValue(sectionRecord);
+		studentsRepository.listEnrollments.mockResolvedValue([
+			{
+				id: 'enrollment-1',
+				studentId: 'student-1',
+				sectionId: 'section-1',
+				status: 'active',
+			},
+		]);
+		studentsRepository.findStudentById.mockResolvedValue({
+			id: 'student-1',
+			tenantId: 'tenant-1',
+		});
+		attendanceRepository.markStudents.mockResolvedValue([
+			{
+				id: 'mark-1',
+				tenantId: 'tenant-1',
+				sessionId: 'session-1',
+				studentId: 'student-1',
+				status: 'present',
+				markedAt: new Date('2026-07-23T08:00:00.000Z'),
+				markedByMembershipId: 'teacher-membership-1',
+				createdAt: new Date('2026-07-23T08:00:00.000Z'),
+				updatedAt: new Date('2026-07-23T08:00:00.000Z'),
+			},
+		]);
+
+		const result = await service.markAttendance('user-1', 'tenant-1', 'session-1', {
+			marks: [{ studentId: 'student-1', status: 'present' }],
+		});
+
+		expect(result.marks).toHaveLength(1);
+		expect(result.summary.present).toBe(1);
+	});
+
+	it('rejects invalid student ids', async () => {
+		membershipsRepository.findActiveByTenantAndUser.mockResolvedValue({
+			id: 'membership-1',
+			tenantId: 'tenant-1',
+			userId: 'user-1',
+			role: 'owner',
+			status: 'active',
+		});
+		attendanceRepository.findSessionById.mockResolvedValue(sessionRecord);
+		academicRepository.findSectionById.mockResolvedValue(sectionRecord);
+		studentsRepository.listEnrollments.mockResolvedValue([]);
+		studentsRepository.findStudentById.mockResolvedValue(null);
+
+		await expect(
+			service.markAttendance('user-1', 'tenant-1', 'session-1', {
+				marks: [{ studentId: 'student-missing', status: 'present' }],
+			}),
+		).rejects.toBeInstanceOf(NotFoundException);
+	});
+});
