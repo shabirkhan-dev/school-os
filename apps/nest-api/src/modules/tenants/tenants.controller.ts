@@ -19,6 +19,8 @@ import { RequirePermissions } from '@/modules/authorization/require-permissions.
 import { CurrentTenant } from '@/modules/tenants/current-tenant.decorator';
 import { TenantGuard } from '@/modules/tenants/tenant.guard';
 import type { TenantContext } from '@/modules/tenants/tenant-context.types';
+import { UpdateOrganizationConfigDto } from './tenant-config.dto';
+import { TenantConfigService } from './tenant-config.service';
 import { CreateTenantDto, UpdateTenantDto } from './tenants.dto';
 import { TenantsService } from './tenants.service';
 
@@ -27,7 +29,10 @@ import { TenantsService } from './tenants.service';
 @UseGuards(JwtAuthGuard)
 @Controller({ path: 'tenants', version: '1' })
 export class TenantsController {
-	constructor(private readonly tenants: TenantsService) {}
+	constructor(
+		private readonly tenants: TenantsService,
+		private readonly tenantConfig: TenantConfigService,
+	) {}
 
 	@Post()
 	@ApiOperation({ summary: 'Create a tenant and grant the caller owner membership' })
@@ -39,6 +44,29 @@ export class TenantsController {
 	@ApiOperation({ summary: 'List tenants the current user belongs to' })
 	list(@CurrentUser() user: AccessTokenPayload) {
 		return this.tenants.listForUser(user.sub);
+	}
+
+	@Get(':tenantId/organization-config')
+	@UseGuards(TenantGuard, PermissionsGuard)
+	@RequirePermissions(PermissionCodes.TENANT_SETTINGS_READ)
+	@ApiOperation({ summary: 'Get organization settings, branding, and communication policies' })
+	getOrganizationConfig(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+	) {
+		return this.tenantConfig.getForUser(user.sub, tenantId);
+	}
+
+	@Patch(':tenantId/organization-config')
+	@UseGuards(TenantGuard, PermissionsGuard)
+	@RequirePermissions(PermissionCodes.TENANT_SETTINGS_WRITE)
+	@ApiOperation({ summary: 'Update organization settings, branding, and communication policies' })
+	updateOrganizationConfig(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Body() body: UpdateOrganizationConfigDto,
+	) {
+		return this.tenantConfig.updateForUser(user.sub, tenantId, body);
 	}
 
 	@Get(':tenantId/membership')

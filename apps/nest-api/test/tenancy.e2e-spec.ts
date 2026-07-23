@@ -152,6 +152,31 @@ describe('Tenancy (e2e)', () => {
 		expect(response.body.data.tenantContext?.permissions).toContain('tenant.settings.write');
 	});
 
+	it('returns and updates organization config for tenant owners', async () => {
+		const getConfig = await request(app.getHttpServer())
+			.get(`/api/v1/tenants/${tenantId}/organization-config`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.expect(200);
+
+		expect(getConfig.body.data.config.settings.attendanceGraceMinutes).toBe(15);
+		expect(getConfig.body.data.config.branding.displayNameEn).toBeTruthy();
+		expect(getConfig.body.data.config.communicationPolicy.whatsappEnabled).toBe(true);
+
+		const patchConfig = await request(app.getHttpServer())
+			.patch(`/api/v1/tenants/${tenantId}/organization-config`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({
+				settings: { attendanceGraceMinutes: 20 },
+				branding: { displayNameUr: 'AKES' },
+				communicationPolicy: { notifyAllGuardians: true },
+			})
+			.expect(200);
+
+		expect(patchConfig.body.data.config.settings.attendanceGraceMinutes).toBe(20);
+		expect(patchConfig.body.data.config.branding.displayNameUr).toBe('AKES');
+		expect(patchConfig.body.data.config.communicationPolicy.notifyAllGuardians).toBe(true);
+	});
+
 	it('returns validation errors for invalid tenant input', async () => {
 		const response = await request(app.getHttpServer())
 			.post('/api/v1/tenants')

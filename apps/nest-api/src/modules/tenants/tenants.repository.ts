@@ -2,7 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 
 import { DatabaseService } from '@/database/database.service';
-import { memberships, type TenantRecord, tenants } from '@/database/schema';
+import {
+	memberships,
+	type TenantRecord,
+	tenantBranding,
+	tenantCommunicationPolicies,
+	tenantSettings,
+	tenants,
+} from '@/database/schema';
 
 @Injectable()
 export class TenantsRepository {
@@ -46,6 +53,13 @@ export class TenantsRepository {
 				role: 'owner',
 				status: 'active',
 			});
+
+			await transaction.insert(tenantSettings).values({ tenantId: tenant.id });
+			await transaction.insert(tenantBranding).values({
+				tenantId: tenant.id,
+				displayNameEn: tenant.name,
+			});
+			await transaction.insert(tenantCommunicationPolicies).values({ tenantId: tenant.id });
 
 			return tenant;
 		});
