@@ -29,6 +29,13 @@
       "when": 1784059578300,
       "tag": "0003_abnormal_kate_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784800647371,
+      "tag": "0004_tenant_foundation",
+      "breakpoints": true
     }
   ]
 }
