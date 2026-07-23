@@ -20,6 +20,13 @@ import { TenantsService } from './tenants.service';
 		TenantConfigService,
 		TenantGuard,
 	],
-	exports: [TenantsService, TenantsRepository, TenantConfigService, TenantGuard],
+	exports: [
+		TenantsService,
+		TenantsRepository,
+		TenantConfigService,
+		TenantGuard,
+		MembershipsModule,
+		PermissionsModule,
+	],
 })
 export class TenantsModule {}
