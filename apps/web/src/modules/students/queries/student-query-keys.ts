@@ -6,4 +6,6 @@ export const studentQueryKeys = {
 		[...studentQueryKeys.all, tenantId, "detail", studentId] as const,
 	enrollments: (tenantId: string, studentId: string) =>
 		[...studentQueryKeys.all, tenantId, "enrollments", studentId] as const,
+	tenantEnrollments: (tenantId: string, academicYearId: string) =>
+		[...studentQueryKeys.all, tenantId, "tenant-enrollments", academicYearId] as const,
 };

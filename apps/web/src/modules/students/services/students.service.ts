@@ -26,7 +26,7 @@ export const studentsService = {
 	listEnrollments: (
 		accessToken: string,
 		tenantId: string,
-		params?: { studentId?: string; sectionId?: string },
+		params?: { studentId?: string; sectionId?: string; academicYearId?: string },
 	) => {
 		if (params?.studentId) {
 			return apiClient.get<{ enrollments: Enrollment[] }>(
@@ -36,6 +36,7 @@ export const studentsService = {
 		}
 		const search = new URLSearchParams();
 		if (params?.sectionId) search.set("sectionId", params.sectionId);
+		if (params?.academicYearId) search.set("academicYearId", params.academicYearId);
 		const query = search.toString();
 		return apiClient.get<{ enrollments: Enrollment[] }>(
 			`/tenants/${tenantId}/enrollments${query ? `?${query}` : ""}`,

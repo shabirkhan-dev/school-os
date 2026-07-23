@@ -8,8 +8,17 @@ import { Button } from "@school-os/ui/components/button";
 import { Field, FieldGroup, FieldLabel } from "@school-os/ui/components/field";
 import { Input } from "@school-os/ui/components/input";
 import { SelectField } from "@school-os/ui/components/select-field";
-import { Spinner } from "@school-os/ui/components/spinner";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { FormDrawer } from "@/components/admin";
+import {
+	DataTable,
+	type DataTableColumn,
+	DataTablePagination,
+	DataTableShell,
+	DataTableToolbar,
+	defaultSortFn,
+	useClientDataTable,
+} from "@/components/data-table";
 import {
 	useAcademicYearsQuery,
 	useCreateAcademicYearMutation,
@@ -26,6 +35,15 @@ const statusItems = [
 	{ label: "Archived", value: "archived" },
 ];
 
+type YearFormState = {
+	name: string;
+	startsOn: string;
+	endsOn: string;
+	status: AcademicYearStatus;
+};
+
+const emptyForm: YearFormState = { name: "", startsOn: "", endsOn: "", status: "draft" };
+
 export function AcademicYearsPage() {
 	const { activeTenant } = useTenantContext();
 	const { can } = usePermissions();
@@ -38,49 +56,121 @@ export function AcademicYearsPage() {
 	const updateYear = useUpdateAcademicYearMutation(tenantId ?? "");
 	const deleteYear = useDeleteAcademicYearMutation(tenantId ?? "");
 
-	const [editing, setEditing] = useState<AcademicYear | null>(null);
-	const [name, setName] = useState("");
-	const [startsOn, setStartsOn] = useState("");
-	const [endsOn, setEndsOn] = useState("");
-	const [status, setStatus] = useState<AcademicYearStatus>("draft");
+	const [search, setSearch] = useState("");
+	const [drawerOpen, setDrawerOpen] = useState(false);
+	const [editingId, setEditingId] = useState<string | null>(null);
+	const [form, setForm] = useState<YearFormState>(emptyForm);
 	const [error, setError] = useState<string | null>(null);
 
-	function resetForm() {
-		setEditing(null);
-		setName("");
-		setStartsOn("");
-		setEndsOn("");
-		setStatus("draft");
+	const openCreate = useCallback(() => {
+		setEditingId(null);
+		setForm(emptyForm);
 		setError(null);
-	}
+		setDrawerOpen(true);
+	}, []);
 
-	function startEdit(year: AcademicYear) {
-		setEditing(year);
-		setName(year.name);
-		setStartsOn(year.startsOn);
-		setEndsOn(year.endsOn);
-		setStatus(year.status);
+	const openEdit = useCallback((year: AcademicYear) => {
+		setEditingId(year.id);
+		setForm({
+			name: year.name,
+			startsOn: year.startsOn,
+			endsOn: year.endsOn,
+			status: year.status,
+		});
 		setError(null);
-	}
+		setDrawerOpen(true);
+	}, []);
 
-	async function handleSubmit(event: React.FormEvent) {
-		event.preventDefault();
+	const columns = useMemo(
+		(): DataTableColumn<AcademicYear>[] => [
+			{
+				id: "name",
+				header: "Name",
+				sortable: true,
+				sortValue: (row) => row.name,
+				cell: (year) => <span className="font-medium">{year.name}</span>,
+			},
+			{
+				id: "dates",
+				header: "Dates",
+				sortable: true,
+				sortValue: (row) => row.startsOn,
+				className: "tabular-nums",
+				cell: (year) => (
+					<span className="text-muted-foreground">
+						{year.startsOn} → {year.endsOn}
+					</span>
+				),
+			},
+			{
+				id: "status",
+				header: "Status",
+				sortable: true,
+				sortValue: (row) => row.status,
+				cell: (year) => <Badge variant="outline">{year.status}</Badge>,
+			},
+			{
+				id: "actions",
+				header: <span className="sr-only">Actions</span>,
+				headerClassName: "text-right",
+				className: "text-right",
+				cell: (year) =>
+					canWrite ? (
+						<div className="flex justify-end gap-1">
+							<Button
+								type="button"
+								size="icon-sm"
+								variant="ghost"
+								aria-label={`Edit ${year.name}`}
+								onClick={() => openEdit(year)}
+							>
+								<HugeiconsIcon icon={Edit02Icon} strokeWidth={2} />
+							</Button>
+							<Button
+								type="button"
+								size="icon-sm"
+								variant="ghost"
+								className="text-destructive hover:text-destructive"
+								aria-label={`Delete ${year.name}`}
+								onClick={() => void deleteYear.mutateAsync(year.id).catch(() => undefined)}
+							>
+								<HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
+							</Button>
+						</div>
+					) : null,
+			},
+		],
+		[canWrite, deleteYear, openEdit],
+	);
+
+	const table = useClientDataTable({
+		data: yearsQuery.data ?? [],
+		searchQuery: search,
+		searchFn: (row, queryText) => row.name.toLowerCase().includes(queryText),
+		sortFn: (rows, sort) => defaultSortFn(rows, sort, columns),
+	});
+
+	async function handleSave() {
 		if (!tenantId || !canWrite) return;
 		setError(null);
 		try {
-			if (editing) {
+			if (editingId) {
 				await updateYear.mutateAsync({
-					academicYearId: editing.id,
-					input: { name, startsOn, endsOn, status },
+					academicYearId: editingId,
+					input: form,
 				});
 			} else {
-				await createYear.mutateAsync({ name, startsOn, endsOn, status });
+				await createYear.mutateAsync(form);
 			}
-			resetForm();
+			setDrawerOpen(false);
+			setEditingId(null);
+			setForm(emptyForm);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Could not save academic year");
 		}
 	}
+
+	const saving = createYear.isPending || updateYear.isPending;
 
 	if (!tenantId) {
 		return (
@@ -95,131 +185,96 @@ export function AcademicYearsPage() {
 			title="Academic years"
 			description="Create and maintain school years. Only one year can be active at a time."
 		>
-			{canWrite ? (
-				<form
-					onSubmit={handleSubmit}
-					className="mb-6 rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4"
-				>
-					<h2 className="mb-3 font-medium text-[14px] text-dashboard-text-primary">
-						{editing ? "Edit academic year" : "Add academic year"}
-					</h2>
-					<FieldGroup className="grid gap-3 sm:grid-cols-2">
-						<Field>
-							<FieldLabel htmlFor="year-name">Name</FieldLabel>
-							<Input
-								id="year-name"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								required
-							/>
-						</Field>
-						<Field>
-							<FieldLabel htmlFor="year-status">Status</FieldLabel>
-							<SelectField
-								id="year-status"
-								value={status}
-								onValueChange={(value) => setStatus(value as AcademicYearStatus)}
-								items={statusItems}
-							/>
-						</Field>
-						<Field>
-							<FieldLabel htmlFor="year-starts">Starts on</FieldLabel>
-							<Input
-								id="year-starts"
-								type="date"
-								value={startsOn}
-								onChange={(e) => setStartsOn(e.target.value)}
-								required
-							/>
-						</Field>
-						<Field>
-							<FieldLabel htmlFor="year-ends">Ends on</FieldLabel>
-							<Input
-								id="year-ends"
-								type="date"
-								value={endsOn}
-								onChange={(e) => setEndsOn(e.target.value)}
-								required
-							/>
-						</Field>
-					</FieldGroup>
-					{error ? <p className="mt-3 text-[12px] text-destructive">{error}</p> : null}
-					<div className="mt-4 flex gap-2">
-						<Button type="submit" disabled={createYear.isPending || updateYear.isPending}>
-							{createYear.isPending || updateYear.isPending ? (
-								<Spinner className="size-4" />
-							) : editing ? (
-								"Save changes"
-							) : (
-								"Create year"
-							)}
-						</Button>
-						{editing ? (
-							<Button type="button" variant="outline" onClick={resetForm}>
-								Cancel
-							</Button>
-						) : null}
-					</div>
-				</form>
-			) : null}
+			<DataTableShell
+				toolbar={
+					<DataTableToolbar
+						search={search}
+						onSearchChange={(value) => {
+							setSearch(value);
+							table.resetPage();
+						}}
+						searchPlaceholder="Search academic years…"
+						canAdd={canWrite}
+						onAdd={openCreate}
+						addLabel="Add year"
+					/>
+				}
+				footer={
+					<DataTablePagination
+						pageIndex={table.pageIndex}
+						pageCount={table.pageCount}
+						pageSize={table.pageSize}
+						totalRows={table.totalRows}
+						onPageChange={table.setPageIndex}
+						onPageSizeChange={(size) => {
+							table.setPageSize(size);
+							table.setPageIndex(0);
+						}}
+					/>
+				}
+			>
+				<DataTable
+					borderless
+					columns={columns}
+					rows={table.rows}
+					getRowId={(row) => row.id}
+					loading={yearsQuery.isLoading}
+					sort={table.sort}
+					onSort={table.toggleSort}
+					emptyTitle="No academic years yet"
+					emptyDescription="Add a school year to organize terms, sections, and enrollments."
+				/>
+			</DataTableShell>
 
-			{yearsQuery.isLoading ? (
-				<div className="flex justify-center py-10">
-					<Spinner />
-				</div>
-			) : (
-				<div className="overflow-hidden rounded-[14px] border border-dashboard-border">
-					<table className="w-full text-[13px]">
-						<thead className="bg-dashboard-surface-strong text-left text-[11px] text-dashboard-text-muted uppercase">
-							<tr>
-								<th className="px-4 py-2.5">Name</th>
-								<th className="px-4 py-2.5">Dates</th>
-								<th className="px-4 py-2.5">Status</th>
-								{canWrite ? <th className="px-4 py-2.5 text-right">Actions</th> : null}
-							</tr>
-						</thead>
-						<tbody>
-							{(yearsQuery.data ?? []).map((year) => (
-								<tr key={year.id} className="border-dashboard-border-subtle border-t">
-									<td className="px-4 py-3 font-medium">{year.name}</td>
-									<td className="px-4 py-3 text-dashboard-text-secondary tabular-nums">
-										{year.startsOn} → {year.endsOn}
-									</td>
-									<td className="px-4 py-3">
-										<Badge variant="outline">{year.status}</Badge>
-									</td>
-									{canWrite ? (
-										<td className="px-4 py-3">
-											<div className="flex justify-end gap-1">
-												<Button
-													type="button"
-													size="icon-sm"
-													variant="outline"
-													aria-label={`Edit ${year.name}`}
-													onClick={() => startEdit(year)}
-												>
-													<HugeiconsIcon icon={Edit02Icon} strokeWidth={2} />
-												</Button>
-												<Button
-													type="button"
-													size="icon-sm"
-													variant="outline"
-													aria-label={`Delete ${year.name}`}
-													onClick={() =>
-														void deleteYear.mutateAsync(year.id).catch(() => undefined)
-													}
-												>
-													<HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-												</Button>
-											</div>
-										</td>
-									) : null}
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
-			)}
+			<FormDrawer
+				open={drawerOpen}
+				onOpenChange={setDrawerOpen}
+				title={editingId ? "Edit academic year" : "Add academic year"}
+				description="Only one year can be active at a time."
+				onSubmit={() => void handleSave()}
+				submitLabel={editingId ? "Save changes" : "Create year"}
+				saving={saving}
+				error={error}
+				submitDisabled={!form.name.trim() || !form.startsOn || !form.endsOn}
+			>
+				<FieldGroup className="grid gap-4">
+					<Field>
+						<FieldLabel>Name</FieldLabel>
+						<Input
+							value={form.name}
+							onChange={(event) => setForm({ ...form, name: event.target.value })}
+							placeholder="2025–2026"
+							required
+						/>
+					</Field>
+					<Field>
+						<FieldLabel>Status</FieldLabel>
+						<SelectField
+							value={form.status}
+							onValueChange={(value) => setForm({ ...form, status: value as AcademicYearStatus })}
+							items={statusItems}
+						/>
+					</Field>
+					<Field>
+						<FieldLabel>Starts on</FieldLabel>
+						<Input
+							type="date"
+							value={form.startsOn}
+							onChange={(event) => setForm({ ...form, startsOn: event.target.value })}
+							required
+						/>
+					</Field>
+					<Field>
+						<FieldLabel>Ends on</FieldLabel>
+						<Input
+							type="date"
+							value={form.endsOn}
+							onChange={(event) => setForm({ ...form, endsOn: event.target.value })}
+							required
+						/>
+					</Field>
+				</FieldGroup>
+			</FormDrawer>
 		</AcademicPageShell>
 	);
 }

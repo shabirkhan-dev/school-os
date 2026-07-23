@@ -1,21 +1,47 @@
 "use client";
 
-import { StudentIcon } from "@hugeicons/core-free-icons";
+import {
+	CreditCardIcon,
+	MoreHorizontalIcon,
+	StudentIcon,
+	TableIcon,
+	UserAdd01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert, AlertDescription } from "@school-os/ui/components/alert";
+import { Badge } from "@school-os/ui/components/badge";
 import { Button } from "@school-os/ui/components/button";
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@school-os/ui/components/card";
+	Drawer,
+	DrawerClose,
+	DrawerContent,
+	DrawerDescription,
+	DrawerFooter,
+	DrawerHeader,
+	DrawerTitle,
+} from "@school-os/ui/components/drawer";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@school-os/ui/components/dropdown-menu";
 import { Field, FieldGroup, FieldLabel } from "@school-os/ui/components/field";
 import { Input } from "@school-os/ui/components/input";
 import { SelectField } from "@school-os/ui/components/select-field";
 import { Spinner } from "@school-os/ui/components/spinner";
-import { useMemo, useState } from "react";
+import { ToggleGroup, ToggleGroupItem } from "@school-os/ui/components/toggle-group";
+import { useCallback, useMemo, useState } from "react";
+import { AdminPageShell, FormDrawer } from "@/components/admin";
+import {
+	DataTable,
+	type DataTableColumn,
+	DataTablePagination,
+	DataTableShell,
+	DataTableToolbar,
+	defaultSortFn,
+	useClientDataTable,
+} from "@/components/data-table";
 import { useAcademicYearsQuery, useClassesQuery, useSectionsQuery } from "@/modules/academic";
 import { formatSectionLabel } from "@/modules/academic/utils/format-section-label";
 import { useGuardiansQuery, useLinkStudentGuardianMutation } from "@/modules/guardians";
@@ -25,8 +51,54 @@ import {
 	useStudentEnrollmentsQuery,
 	useStudentQuery,
 	useStudentsQuery,
+	useTenantEnrollmentsQuery,
 } from "@/modules/students";
+import type { Student } from "@/modules/students/types/student.types";
 import { PermissionCodes, usePermissions, useTenantContext } from "@/modules/tenants";
+import { formatStudentGender, studentStatusBadgeVariant } from "../utils/student-ui.utils";
+import { StudentAvatar } from "./student-avatar";
+import { StudentIdCard } from "./student-id-card";
+import { StudentRosterCards } from "./student-roster-cards";
+
+type RosterView = "table" | "cards";
+
+type AdmitFormState = {
+	studentCode: string;
+	firstName: string;
+	lastName: string;
+	dateOfBirth: string;
+	gender: string;
+	email: string;
+	phone: string;
+	addressLine1: string;
+	city: string;
+	emergencyContactName: string;
+	emergencyContactPhone: string;
+	previousSchool: string;
+	guardianFirstName: string;
+	guardianLastName: string;
+	guardianPhone: string;
+	guardianRelationship: string;
+};
+
+const emptyAdmitForm: AdmitFormState = {
+	studentCode: "",
+	firstName: "",
+	lastName: "",
+	dateOfBirth: "",
+	gender: "",
+	email: "",
+	phone: "",
+	addressLine1: "",
+	city: "",
+	emergencyContactName: "",
+	emergencyContactPhone: "",
+	previousSchool: "",
+	guardianFirstName: "",
+	guardianLastName: "",
+	guardianPhone: "",
+	guardianRelationship: "father",
+};
 
 export function StudentsPage() {
 	const { activeTenant, activeCampus, campuses } = useTenantContext();
@@ -47,64 +119,45 @@ export function StudentsPage() {
 	const createStudent = useCreateStudentMutation(tenantId ?? "", campusId);
 	const createEnrollment = useCreateEnrollmentMutation(tenantId ?? "");
 
-	const [studentCode, setStudentCode] = useState("");
-	const [firstName, setFirstName] = useState("");
-	const [lastName, setLastName] = useState("");
-	const [dateOfBirth, setDateOfBirth] = useState("");
-	const [gender, setGender] = useState("");
-	const [studentEmail, setStudentEmail] = useState("");
-	const [studentPhone, setStudentPhone] = useState("");
-	const [addressLine1, setAddressLine1] = useState("");
-	const [city, setCity] = useState("");
-	const [emergencyContactName, setEmergencyContactName] = useState("");
-	const [emergencyContactPhone, setEmergencyContactPhone] = useState("");
-	const [previousSchool, setPreviousSchool] = useState("");
-	const [guardianFirstName, setGuardianFirstName] = useState("");
-	const [guardianLastName, setGuardianLastName] = useState("");
-	const [guardianPhone, setGuardianPhone] = useState("");
-	const [guardianRelationship, setGuardianRelationship] = useState("father");
-	const [selectedStudentId, setSelectedStudentId] = useState("");
-	const [selectedSectionId, setSelectedSectionId] = useState("");
-	const [selectedYearId, setSelectedYearId] = useState("");
+	const [rosterView, setRosterView] = useState<RosterView>("table");
+	const [rosterSearch, setRosterSearch] = useState("");
+	const [statusFilter, setStatusFilter] = useState("");
+	const [message, setMessage] = useState<string | null>(null);
+	const [error, setError] = useState<string | null>(null);
+
+	const [admitOpen, setAdmitOpen] = useState(false);
+	const [admitForm, setAdmitForm] = useState<AdmitFormState>(emptyAdmitForm);
+
+	const [enrollOpen, setEnrollOpen] = useState(false);
+	const [enrollStudentId, setEnrollStudentId] = useState("");
+	const [enrollSectionId, setEnrollSectionId] = useState("");
+	const [enrollYearId, setEnrollYearId] = useState("");
+
+	const [manageOpen, setManageOpen] = useState(false);
+	const [manageStudentId, setManageStudentId] = useState("");
+
 	const [linkGuardianId, setLinkGuardianId] = useState("");
 	const [linkRelationship, setLinkRelationship] = useState("mother");
 	const [linkNewFirstName, setLinkNewFirstName] = useState("");
 	const [linkNewLastName, setLinkNewLastName] = useState("");
 	const [linkNewPhone, setLinkNewPhone] = useState("");
 	const [useNewGuardian, setUseNewGuardian] = useState(false);
-	const [message, setMessage] = useState<string | null>(null);
-	const [error, setError] = useState<string | null>(null);
-
-	const enrollmentsQuery = useStudentEnrollmentsQuery(
-		tenantId,
-		selectedStudentId || null,
-		Boolean(selectedStudentId),
-	);
-	const studentDetailQuery = useStudentQuery(
-		tenantId,
-		selectedStudentId || null,
-		Boolean(selectedStudentId),
-	);
-	const linkGuardian = useLinkStudentGuardianMutation(tenantId ?? "", selectedStudentId);
-
-	const guardianItems = useMemo(
-		() =>
-			(guardiansQuery.data ?? []).map((guardian) => ({
-				label: guardian.fullName,
-				value: guardian.id,
-			})),
-		[guardiansQuery.data],
-	);
 
 	const activeYearId = useMemo(() => {
 		const activeYear = yearsQuery.data?.find((year) => year.status === "active");
 		return activeYear?.id ?? yearsQuery.data?.[0]?.id ?? "";
 	}, [yearsQuery.data]);
 
-	const sectionOptions = useMemo(() => {
-		const yearId = selectedYearId || activeYearId;
-		return (sectionsQuery.data ?? []).filter((section) => section.academicYearId === yearId);
-	}, [sectionsQuery.data, selectedYearId, activeYearId]);
+	const activeYearLabel = useMemo(() => {
+		const year = yearsQuery.data?.find((item) => item.id === activeYearId);
+		return year?.name;
+	}, [activeYearId, yearsQuery.data]);
+
+	const tenantEnrollmentsQuery = useTenantEnrollmentsQuery(
+		tenantId,
+		activeYearId || null,
+		Boolean(activeYearId),
+	);
 
 	const classNameById = useMemo(
 		() => new Map((classesQuery.data ?? []).map((item) => [item.id, item.name])),
@@ -127,6 +180,214 @@ export function StudentsPage() {
 				]),
 			),
 		[campusNameById, classNameById, sectionsQuery.data],
+	);
+
+	const sectionLabelByStudentId = useMemo(() => {
+		const map = new Map<string, string>();
+		for (const enrollment of tenantEnrollmentsQuery.data ?? []) {
+			if (enrollment.status !== "active") continue;
+			const label = sectionLabelById.get(enrollment.sectionId);
+			if (label) map.set(enrollment.studentId, label);
+		}
+		return map;
+	}, [sectionLabelById, tenantEnrollmentsQuery.data]);
+
+	const openEnroll = useCallback((studentId: string) => {
+		setEnrollStudentId(studentId);
+		setEnrollSectionId("");
+		setEnrollYearId("");
+		setEnrollOpen(true);
+	}, []);
+
+	const openManage = useCallback((studentId: string) => {
+		setManageStudentId(studentId);
+		setLinkGuardianId("");
+		setLinkNewFirstName("");
+		setLinkNewLastName("");
+		setLinkNewPhone("");
+		setUseNewGuardian(false);
+		setManageOpen(true);
+	}, []);
+
+	const studentColumns = useMemo(
+		(): DataTableColumn<Student>[] => [
+			{
+				id: "avatar",
+				header: "",
+				className: "w-[52px]",
+				cell: (student) => <StudentAvatar student={student} size="sm" />,
+			},
+			{
+				id: "name",
+				header: "Student",
+				sortable: true,
+				sortValue: (row) => row.fullName,
+				cell: (student) => (
+					<div className="min-w-[140px]">
+						<p className="font-medium text-foreground">{student.fullName}</p>
+						<p className="font-mono text-[12px] text-muted-foreground">{student.studentCode}</p>
+					</div>
+				),
+			},
+			{
+				id: "section",
+				header: "Section",
+				sortable: true,
+				sortValue: (row) => sectionLabelByStudentId.get(row.id) ?? "",
+				cell: (student) => (
+					<span className="text-muted-foreground text-sm">
+						{sectionLabelByStudentId.get(student.id) ?? "—"}
+					</span>
+				),
+			},
+			{
+				id: "phone",
+				header: "Phone",
+				sortable: true,
+				sortValue: (row) => row.phone ?? "",
+				cell: (student) => (
+					<span className="text-muted-foreground text-sm">{student.phone ?? "—"}</span>
+				),
+			},
+			{
+				id: "dateOfBirth",
+				header: "DOB",
+				sortable: true,
+				sortValue: (row) => row.dateOfBirth ?? "",
+				className: "tabular-nums",
+				cell: (student) => (
+					<span className="text-muted-foreground text-sm">{student.dateOfBirth ?? "—"}</span>
+				),
+			},
+			{
+				id: "gender",
+				header: "Gender",
+				sortable: true,
+				sortValue: (row) => row.gender ?? "",
+				cell: (student) => (
+					<span className="text-muted-foreground text-sm capitalize">
+						{formatStudentGender(student.gender)}
+					</span>
+				),
+			},
+			{
+				id: "emergency",
+				header: "Emergency",
+				sortable: true,
+				sortValue: (row) => row.emergencyContactName ?? "",
+				cell: (student) => (
+					<div className="min-w-[120px] text-muted-foreground text-sm">
+						<p>{student.emergencyContactName ?? "—"}</p>
+						{student.emergencyContactPhone ? (
+							<p className="text-[12px]">{student.emergencyContactPhone}</p>
+						) : null}
+					</div>
+				),
+			},
+			{
+				id: "status",
+				header: "Status",
+				sortable: true,
+				sortValue: (row) => row.status,
+				cell: (student) => (
+					<Badge variant={studentStatusBadgeVariant(student.status)} className="capitalize">
+						{student.status}
+					</Badge>
+				),
+			},
+			{
+				id: "actions",
+				header: <span className="sr-only">Actions</span>,
+				headerClassName: "text-right",
+				className: "text-right",
+				cell: (student) => (
+					<DropdownMenu>
+						<DropdownMenuTrigger
+							render={
+								<Button
+									type="button"
+									variant="ghost"
+									size="icon-sm"
+									aria-label={`Actions for ${student.fullName}`}
+								/>
+							}
+						>
+							<HugeiconsIcon icon={MoreHorizontalIcon} strokeWidth={2} />
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							<DropdownMenuItem onClick={() => openManage(student.id)}>
+								View profile & ID
+							</DropdownMenuItem>
+							{canWrite ? (
+								<DropdownMenuItem onClick={() => openEnroll(student.id)}>
+									Enroll in section
+								</DropdownMenuItem>
+							) : null}
+						</DropdownMenuContent>
+					</DropdownMenu>
+				),
+			},
+		],
+		[canWrite, openEnroll, openManage, sectionLabelByStudentId],
+	);
+
+	const rosterTable = useClientDataTable({
+		data: studentsQuery.data ?? [],
+		searchQuery: rosterSearch,
+		searchFn: (row, queryText) => {
+			const haystack = [
+				row.fullName,
+				row.studentCode,
+				row.email,
+				row.phone,
+				sectionLabelByStudentId.get(row.id),
+			]
+				.filter(Boolean)
+				.join(" ")
+				.toLowerCase();
+			return haystack.includes(queryText);
+		},
+		filterFn: (row, filters) => {
+			if (filters.status && row.status !== filters.status) return false;
+			return true;
+		},
+		sortFn: (rows, sort) => defaultSortFn(rows, sort, studentColumns),
+	});
+
+	const manageStudentQuery = useStudentQuery(
+		tenantId,
+		manageStudentId || null,
+		Boolean(manageOpen && manageStudentId),
+	);
+	const manageEnrollmentsQuery = useStudentEnrollmentsQuery(
+		tenantId,
+		manageStudentId || null,
+		Boolean(manageOpen && manageStudentId),
+	);
+	const enrollEnrollmentsQuery = useStudentEnrollmentsQuery(
+		tenantId,
+		enrollStudentId || null,
+		Boolean(enrollOpen && enrollStudentId),
+	);
+	const linkGuardian = useLinkStudentGuardianMutation(tenantId ?? "", manageStudentId);
+
+	const guardianItems = useMemo(
+		() =>
+			(guardiansQuery.data ?? []).map((guardian) => ({
+				label: guardian.fullName,
+				value: guardian.id,
+			})),
+		[guardiansQuery.data],
+	);
+
+	const sectionOptions = useMemo(() => {
+		const yearId = enrollYearId || activeYearId;
+		return (sectionsQuery.data ?? []).filter((section) => section.academicYearId === yearId);
+	}, [sectionsQuery.data, enrollYearId, activeYearId]);
+
+	const enrollStudent = useMemo(
+		() => (studentsQuery.data ?? []).find((student) => student.id === enrollStudentId),
+		[enrollStudentId, studentsQuery.data],
 	);
 
 	if (!tenantId) {
@@ -153,35 +414,36 @@ export function StudentsPage() {
 		);
 	}
 
-	async function handleCreateStudent(event: React.FormEvent) {
-		event.preventDefault();
-		if (!campusId) return;
+	async function handleAdmitStudent() {
+		if (!campusId || !canWrite) return;
 		setError(null);
 		setMessage(null);
 		try {
 			const result = await createStudent.mutateAsync({
 				campusId,
-				studentCode,
-				firstName,
-				lastName,
-				dateOfBirth: dateOfBirth || undefined,
-				gender: gender ? (gender as "male" | "female" | "other" | "prefer_not_to_say") : undefined,
-				email: studentEmail || undefined,
-				phone: studentPhone || undefined,
-				addressLine1: addressLine1 || undefined,
-				city: city || undefined,
-				emergencyContactName: emergencyContactName || undefined,
-				emergencyContactPhone: emergencyContactPhone || undefined,
-				previousSchool: previousSchool || undefined,
+				studentCode: admitForm.studentCode,
+				firstName: admitForm.firstName,
+				lastName: admitForm.lastName,
+				dateOfBirth: admitForm.dateOfBirth || undefined,
+				gender: admitForm.gender
+					? (admitForm.gender as "male" | "female" | "other" | "prefer_not_to_say")
+					: undefined,
+				email: admitForm.email || undefined,
+				phone: admitForm.phone || undefined,
+				addressLine1: admitForm.addressLine1 || undefined,
+				city: admitForm.city || undefined,
+				emergencyContactName: admitForm.emergencyContactName || undefined,
+				emergencyContactPhone: admitForm.emergencyContactPhone || undefined,
+				previousSchool: admitForm.previousSchool || undefined,
 				admittedOn: new Date().toISOString().slice(0, 10),
 				guardians:
-					guardianFirstName && guardianLastName
+					admitForm.guardianFirstName && admitForm.guardianLastName
 						? [
 								{
-									firstName: guardianFirstName,
-									lastName: guardianLastName,
-									phone: guardianPhone || undefined,
-									relationship: guardianRelationship as
+									firstName: admitForm.guardianFirstName,
+									lastName: admitForm.guardianLastName,
+									phone: admitForm.guardianPhone || undefined,
+									relationship: admitForm.guardianRelationship as
 										| "father"
 										| "mother"
 										| "guardian"
@@ -194,54 +456,38 @@ export function StudentsPage() {
 							]
 						: undefined,
 			});
-			setStudentCode("");
-			setFirstName("");
-			setLastName("");
-			setDateOfBirth("");
-			setGender("");
-			setStudentEmail("");
-			setStudentPhone("");
-			setAddressLine1("");
-			setCity("");
-			setEmergencyContactName("");
-			setEmergencyContactPhone("");
-			setPreviousSchool("");
-			setGuardianFirstName("");
-			setGuardianLastName("");
-			setGuardianPhone("");
-			setSelectedStudentId(result.student.id);
-			setMessage(`Student ${result.student.fullName} created`);
+			setAdmitOpen(false);
+			setAdmitForm(emptyAdmitForm);
+			setMessage(`Student ${result.student.fullName} admitted`);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Could not create student");
+			setError(err instanceof Error ? err.message : "Could not admit student");
 		}
 	}
 
-	async function handleCreateEnrollment(event: React.FormEvent) {
-		event.preventDefault();
+	async function handleCreateEnrollment() {
 		setError(null);
 		setMessage(null);
-		const academicYearId = selectedYearId || activeYearId;
-		if (!selectedStudentId || !selectedSectionId || !academicYearId) {
-			setError("Select a student, academic year, and section");
+		const academicYearId = enrollYearId || activeYearId;
+		if (!enrollStudentId || !enrollSectionId || !academicYearId) {
+			setError("Select a section and academic year");
 			return;
 		}
 		try {
 			await createEnrollment.mutateAsync({
-				studentId: selectedStudentId,
-				input: {
-					sectionId: selectedSectionId,
-					academicYearId,
-				},
+				studentId: enrollStudentId,
+				input: { sectionId: enrollSectionId, academicYearId },
 			});
+			setEnrollOpen(false);
+			setEnrollStudentId("");
+			await tenantEnrollmentsQuery.refetch();
 			setMessage("Student enrolled successfully");
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Could not enroll student");
 		}
 	}
 
-	async function handleLinkGuardian(event: React.FormEvent) {
-		event.preventDefault();
-		if (!selectedStudentId || !canWriteGuardians) return;
+	async function handleLinkGuardian() {
+		if (!manageStudentId || !canWriteGuardians) return;
 		setError(null);
 		setMessage(null);
 		try {
@@ -283,488 +529,562 @@ export function StudentsPage() {
 			setLinkNewLastName("");
 			setLinkNewPhone("");
 			setMessage("Guardian linked to student");
-			await studentDetailQuery.refetch();
+			await manageStudentQuery.refetch();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Could not link guardian");
 		}
 	}
 
 	return (
-		<div className="space-y-6">
-			<div className="flex items-center gap-3">
-				<div className="flex size-10 items-center justify-center rounded-xl bg-dashboard-accent-soft text-dashboard-accent">
-					<HugeiconsIcon icon={StudentIcon} className="size-5" strokeWidth={2} />
-				</div>
-				<div>
-					<h1 className="font-semibold text-[24px] text-dashboard-text-primary">Students</h1>
-					<p className="text-dashboard-text-secondary text-sm">
-						Create student records and enroll them into sections for the active academic year.
-					</p>
-				</div>
-			</div>
-
+		<AdminPageShell
+			title="Students"
+			description="Admit students, browse the roster in table or ID-card view, and enroll them into sections."
+			icon={StudentIcon}
+			maxWidth="7xl"
+		>
 			{message ? (
-				<Alert>
+				<Alert className="mb-4">
 					<AlertDescription>{message}</AlertDescription>
 				</Alert>
 			) : null}
 			{error ? (
-				<Alert variant="destructive">
+				<Alert variant="destructive" className="mb-4">
 					<AlertDescription>{error}</AlertDescription>
 				</Alert>
 			) : null}
 
-			<div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-				<Card className="border-dashboard-border bg-dashboard-surface">
-					<CardHeader>
-						<CardTitle>Student roster</CardTitle>
-						<CardDescription>
-							{campusId
-								? "Students registered for the selected campus."
-								: "Select a campus to filter the roster."}
-						</CardDescription>
-					</CardHeader>
-					<CardContent>
-						{studentsQuery.isLoading ? (
-							<div className="flex justify-center py-8">
-								<Spinner />
-							</div>
-						) : studentsQuery.data?.length ? (
-							<ul className="divide-y divide-border">
-								{studentsQuery.data.map((student) => (
-									<li key={student.id} className="flex items-center justify-between py-3">
-										<div>
-											<p className="font-medium text-dashboard-text-primary">{student.fullName}</p>
-											<p className="text-dashboard-text-secondary text-sm">
-												{student.studentCode} · {student.status}
-											</p>
-										</div>
-										<Button
-											type="button"
-											variant={selectedStudentId === student.id ? "default" : "outline"}
-											size="sm"
-											onClick={() => setSelectedStudentId(student.id)}
-										>
-											Select
-										</Button>
+			<DataTableShell
+				toolbar={
+					<DataTableToolbar
+						search={rosterSearch}
+						onSearchChange={(value) => {
+							setRosterSearch(value);
+							rosterTable.resetPage();
+						}}
+						searchPlaceholder="Search students…"
+						filters={[
+							{
+								id: "status",
+								label: "Status",
+								value: statusFilter,
+								onChange: (value) => {
+									setStatusFilter(value);
+									rosterTable.setFilter("status", value);
+								},
+								items: [
+									{ label: "Active", value: "active" },
+									{ label: "Inactive", value: "inactive" },
+									{ label: "Graduated", value: "graduated" },
+									{ label: "Withdrawn", value: "withdrawn" },
+								],
+							},
+						]}
+						canAdd={canWrite}
+						onAdd={() => {
+							setAdmitForm(emptyAdmitForm);
+							setAdmitOpen(true);
+						}}
+						addLabel="Admit student"
+					>
+						<ToggleGroup
+							value={[rosterView]}
+							onValueChange={(next) => {
+								const selected = next[0] as RosterView | undefined;
+								if (selected) setRosterView(selected);
+							}}
+							variant="outline"
+							size="sm"
+							spacing={0}
+							aria-label="Roster view"
+						>
+							<ToggleGroupItem value="table" className="gap-1.5 px-2.5">
+								<HugeiconsIcon icon={TableIcon} strokeWidth={2} className="size-3.5" />
+								<span className="hidden sm:inline">Table</span>
+							</ToggleGroupItem>
+							<ToggleGroupItem value="cards" className="gap-1.5 px-2.5">
+								<HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} className="size-3.5" />
+								<span className="hidden sm:inline">ID cards</span>
+							</ToggleGroupItem>
+						</ToggleGroup>
+					</DataTableToolbar>
+				}
+				footer={
+					<DataTablePagination
+						pageIndex={rosterTable.pageIndex}
+						pageCount={rosterTable.pageCount}
+						pageSize={rosterTable.pageSize}
+						totalRows={rosterTable.totalRows}
+						onPageChange={rosterTable.setPageIndex}
+						onPageSizeChange={(size) => {
+							rosterTable.setPageSize(size);
+							rosterTable.setPageIndex(0);
+						}}
+					/>
+				}
+			>
+				{rosterView === "table" ? (
+					<DataTable
+						borderless
+						columns={studentColumns}
+						rows={rosterTable.rows}
+						getRowId={(row) => row.id}
+						loading={studentsQuery.isLoading}
+						sort={rosterTable.sort}
+						onSort={rosterTable.toggleSort}
+						emptyTitle="No students yet"
+						emptyDescription={
+							campusId
+								? "Admit a student to start building your campus roster."
+								: "Select a campus to filter the roster."
+						}
+					/>
+				) : (
+					<StudentRosterCards
+						students={rosterTable.rows}
+						schoolName={activeTenant?.name ?? "School"}
+						tenantId={tenantId}
+						sectionLabelByStudentId={sectionLabelByStudentId}
+						academicYearLabel={activeYearLabel}
+						loading={studentsQuery.isLoading}
+					/>
+				)}
+			</DataTableShell>
+
+			<FormDrawer
+				open={admitOpen}
+				onOpenChange={setAdmitOpen}
+				title="Admit student"
+				description="Capture student details and an optional primary guardian at admission."
+				onSubmit={() => void handleAdmitStudent()}
+				submitLabel="Admit student"
+				saving={createStudent.isPending}
+				submitDisabled={
+					!campusId || !admitForm.studentCode.trim() || !admitForm.firstName || !admitForm.lastName
+				}
+			>
+				<AdmitStudentFields value={admitForm} onChange={setAdmitForm} />
+			</FormDrawer>
+
+			<FormDrawer
+				open={enrollOpen}
+				onOpenChange={setEnrollOpen}
+				title="Enroll student"
+				description={
+					enrollStudent
+						? `Assign ${enrollStudent.fullName} to a section for the selected year.`
+						: "Assign the student to a section."
+				}
+				onSubmit={() => void handleCreateEnrollment()}
+				submitLabel="Enroll student"
+				saving={createEnrollment.isPending}
+				submitDisabled={!enrollSectionId}
+			>
+				<FieldGroup className="grid gap-4">
+					<Field>
+						<FieldLabel>Academic year</FieldLabel>
+						<SelectField
+							value={enrollYearId || activeYearId}
+							onValueChange={setEnrollYearId}
+							items={(yearsQuery.data ?? []).map((year) => ({
+								label: year.name,
+								value: year.id,
+							}))}
+						/>
+					</Field>
+					<Field>
+						<FieldLabel>Section</FieldLabel>
+						<SelectField
+							value={enrollSectionId}
+							onValueChange={setEnrollSectionId}
+							nullable
+							placeholder="Select section"
+							items={sectionOptions.map((section) => ({
+								label: sectionLabelById.get(section.id) ?? section.name,
+								value: section.id,
+							}))}
+						/>
+					</Field>
+					{enrollEnrollmentsQuery.data?.length ? (
+						<div className="rounded-lg border border-border bg-muted/30 p-3">
+							<p className="mb-2 font-medium text-sm">Current enrollments</p>
+							<ul className="space-y-1 text-muted-foreground text-sm">
+								{enrollEnrollmentsQuery.data.map((enrollment) => (
+									<li key={enrollment.id}>
+										{sectionLabelById.get(enrollment.sectionId) ?? enrollment.sectionId.slice(0, 8)}{" "}
+										· {enrollment.status}
 									</li>
 								))}
 							</ul>
-						) : (
-							<p className="text-dashboard-text-secondary text-sm">No students yet.</p>
-						)}
-					</CardContent>
-				</Card>
-
-				{selectedStudentId && studentDetailQuery.data ? (
-					<Card className="border-dashboard-border bg-dashboard-surface">
-						<CardHeader>
-							<CardTitle>Student profile</CardTitle>
-							<CardDescription>
-								Admission details and linked guardians for the selected student.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="space-y-4 text-sm">
-							{studentDetailQuery.isLoading ? (
-								<div className="flex justify-center py-4">
-									<Spinner />
-								</div>
-							) : (
-								<>
-									<dl className="grid gap-3 sm:grid-cols-2">
-										<div>
-											<dt className="text-dashboard-text-muted text-xs uppercase">Full name</dt>
-											<dd className="font-medium">{studentDetailQuery.data.student.fullName}</dd>
-										</div>
-										<div>
-											<dt className="text-dashboard-text-muted text-xs uppercase">Admission no.</dt>
-											<dd>{studentDetailQuery.data.student.studentCode}</dd>
-										</div>
-										<div>
-											<dt className="text-dashboard-text-muted text-xs uppercase">Date of birth</dt>
-											<dd>{studentDetailQuery.data.student.dateOfBirth ?? "—"}</dd>
-										</div>
-										<div>
-											<dt className="text-dashboard-text-muted text-xs uppercase">Admitted on</dt>
-											<dd>{studentDetailQuery.data.student.admittedOn ?? "—"}</dd>
-										</div>
-										<div>
-											<dt className="text-dashboard-text-muted text-xs uppercase">
-												Previous school
-											</dt>
-											<dd>{studentDetailQuery.data.student.previousSchool ?? "—"}</dd>
-										</div>
-										<div>
-											<dt className="text-dashboard-text-muted text-xs uppercase">
-												Emergency contact
-											</dt>
-											<dd>
-												{studentDetailQuery.data.student.emergencyContactName ?? "—"}
-												{studentDetailQuery.data.student.emergencyContactPhone
-													? ` · ${studentDetailQuery.data.student.emergencyContactPhone}`
-													: ""}
-											</dd>
-										</div>
-									</dl>
-									<div>
-										<p className="mb-2 font-medium">Guardians</p>
-										{studentDetailQuery.data.guardians.length === 0 ? (
-											<p className="text-dashboard-text-secondary">No guardians linked yet.</p>
-										) : (
-											<ul className="space-y-2">
-												{studentDetailQuery.data.guardians.map((link) => (
-													<li
-														key={link.id}
-														className="rounded-lg border border-dashboard-border-subtle px-3 py-2"
-													>
-														<p className="font-medium">{link.guardian.fullName}</p>
-														<p className="text-dashboard-text-secondary text-xs">
-															{link.relationship}
-															{link.isPrimary ? " · Primary" : ""}
-															{link.guardian.phone ? ` · ${link.guardian.phone}` : ""}
-															{link.guardian.email ? ` · ${link.guardian.email}` : ""}
-														</p>
-													</li>
-												))}
-											</ul>
-										)}
-									</div>
-									{canWriteGuardians ? (
-										<form
-											onSubmit={handleLinkGuardian}
-											className="rounded-lg border border-dashboard-border-subtle p-3"
-										>
-											<p className="mb-3 font-medium text-[13px]">Link another guardian</p>
-											<FieldGroup className="gap-3">
-												<Field>
-													<FieldLabel htmlFor="link-mode">Source</FieldLabel>
-													<SelectField
-														id="link-mode"
-														value={useNewGuardian ? "new" : "existing"}
-														onValueChange={(value) => setUseNewGuardian(value === "new")}
-														items={[
-															{ label: "Existing guardian", value: "existing" },
-															{ label: "New guardian", value: "new" },
-														]}
-													/>
-												</Field>
-												{useNewGuardian ? (
-													<>
-														<Field>
-															<FieldLabel htmlFor="link-first">First name</FieldLabel>
-															<Input
-																id="link-first"
-																value={linkNewFirstName}
-																onChange={(e) => setLinkNewFirstName(e.target.value)}
-																required
-															/>
-														</Field>
-														<Field>
-															<FieldLabel htmlFor="link-last">Last name</FieldLabel>
-															<Input
-																id="link-last"
-																value={linkNewLastName}
-																onChange={(e) => setLinkNewLastName(e.target.value)}
-																required
-															/>
-														</Field>
-														<Field>
-															<FieldLabel htmlFor="link-phone">Phone</FieldLabel>
-															<Input
-																id="link-phone"
-																value={linkNewPhone}
-																onChange={(e) => setLinkNewPhone(e.target.value)}
-															/>
-														</Field>
-													</>
-												) : (
-													<Field>
-														<FieldLabel htmlFor="link-guardian">Guardian</FieldLabel>
-														<SelectField
-															id="link-guardian"
-															value={linkGuardianId}
-															onValueChange={setLinkGuardianId}
-															placeholder="Select guardian"
-															items={guardianItems}
-														/>
-													</Field>
-												)}
-												<Field>
-													<FieldLabel htmlFor="link-relationship">Relationship</FieldLabel>
-													<SelectField
-														id="link-relationship"
-														value={linkRelationship}
-														onValueChange={setLinkRelationship}
-														items={[
-															{ label: "Father", value: "father" },
-															{ label: "Mother", value: "mother" },
-															{ label: "Guardian", value: "guardian" },
-															{ label: "Step parent", value: "step_parent" },
-															{ label: "Grandparent", value: "grandparent" },
-															{ label: "Other", value: "other" },
-														]}
-													/>
-												</Field>
-												<Button type="submit" size="sm" disabled={linkGuardian.isPending}>
-													{linkGuardian.isPending ? "Linking..." : "Link guardian"}
-												</Button>
-											</FieldGroup>
-										</form>
-									) : null}
-								</>
-							)}
-						</CardContent>
-					</Card>
-				) : null}
-
-				<div className="space-y-6">
-					{canWrite ? (
-						<Card className="border-dashboard-border bg-dashboard-surface">
-							<CardHeader>
-								<CardTitle>Admit student</CardTitle>
-								<CardDescription>
-									Capture student details and a primary guardian at admission time.
-								</CardDescription>
-							</CardHeader>
-							<CardContent>
-								<form onSubmit={handleCreateStudent}>
-									<FieldGroup>
-										<Field>
-											<FieldLabel htmlFor="student-code">Admission number</FieldLabel>
-											<Input
-												id="student-code"
-												value={studentCode}
-												onChange={(event) => setStudentCode(event.target.value)}
-												placeholder="AKES-2026-001"
-												required
-											/>
-										</Field>
-										<Field>
-											<FieldLabel htmlFor="first-name">First name</FieldLabel>
-											<Input
-												id="first-name"
-												value={firstName}
-												onChange={(event) => setFirstName(event.target.value)}
-												required
-											/>
-										</Field>
-										<Field>
-											<FieldLabel htmlFor="last-name">Last name</FieldLabel>
-											<Input
-												id="last-name"
-												value={lastName}
-												onChange={(event) => setLastName(event.target.value)}
-												required
-											/>
-										</Field>
-										<Field>
-											<FieldLabel htmlFor="date-of-birth">Date of birth</FieldLabel>
-											<Input
-												id="date-of-birth"
-												type="date"
-												value={dateOfBirth}
-												onChange={(event) => setDateOfBirth(event.target.value)}
-											/>
-										</Field>
-										<Field>
-											<FieldLabel htmlFor="gender">Gender</FieldLabel>
-											<SelectField
-												id="gender"
-												value={gender}
-												onValueChange={setGender}
-												nullable
-												placeholder="Select gender"
-												items={[
-													{ label: "Male", value: "male" },
-													{ label: "Female", value: "female" },
-													{ label: "Other", value: "other" },
-													{ label: "Prefer not to say", value: "prefer_not_to_say" },
-												]}
-											/>
-										</Field>
-										<Field>
-											<FieldLabel htmlFor="student-email">Student email</FieldLabel>
-											<Input
-												id="student-email"
-												type="email"
-												value={studentEmail}
-												onChange={(event) => setStudentEmail(event.target.value)}
-											/>
-										</Field>
-										<Field>
-											<FieldLabel htmlFor="student-phone">Student phone</FieldLabel>
-											<Input
-												id="student-phone"
-												value={studentPhone}
-												onChange={(event) => setStudentPhone(event.target.value)}
-											/>
-										</Field>
-										<Field>
-											<FieldLabel htmlFor="address">Address</FieldLabel>
-											<Input
-												id="address"
-												value={addressLine1}
-												onChange={(event) => setAddressLine1(event.target.value)}
-											/>
-										</Field>
-										<Field>
-											<FieldLabel htmlFor="city">City</FieldLabel>
-											<Input
-												id="city"
-												value={city}
-												onChange={(event) => setCity(event.target.value)}
-											/>
-										</Field>
-										<Field>
-											<FieldLabel htmlFor="emergency-name">Emergency contact name</FieldLabel>
-											<Input
-												id="emergency-name"
-												value={emergencyContactName}
-												onChange={(event) => setEmergencyContactName(event.target.value)}
-											/>
-										</Field>
-										<Field>
-											<FieldLabel htmlFor="emergency-phone">Emergency contact phone</FieldLabel>
-											<Input
-												id="emergency-phone"
-												value={emergencyContactPhone}
-												onChange={(event) => setEmergencyContactPhone(event.target.value)}
-											/>
-										</Field>
-										<Field>
-											<FieldLabel htmlFor="previous-school">Previous school</FieldLabel>
-											<Input
-												id="previous-school"
-												value={previousSchool}
-												onChange={(event) => setPreviousSchool(event.target.value)}
-											/>
-										</Field>
-										<div className="rounded-lg border border-dashboard-border-subtle p-3">
-											<p className="mb-3 font-medium text-[13px] text-dashboard-text-primary">
-												Primary guardian
-											</p>
-											<FieldGroup>
-												<Field>
-													<FieldLabel htmlFor="guardian-first-name">First name</FieldLabel>
-													<Input
-														id="guardian-first-name"
-														value={guardianFirstName}
-														onChange={(event) => setGuardianFirstName(event.target.value)}
-													/>
-												</Field>
-												<Field>
-													<FieldLabel htmlFor="guardian-last-name">Last name</FieldLabel>
-													<Input
-														id="guardian-last-name"
-														value={guardianLastName}
-														onChange={(event) => setGuardianLastName(event.target.value)}
-													/>
-												</Field>
-												<Field>
-													<FieldLabel htmlFor="guardian-phone">Phone</FieldLabel>
-													<Input
-														id="guardian-phone"
-														value={guardianPhone}
-														onChange={(event) => setGuardianPhone(event.target.value)}
-													/>
-												</Field>
-												<Field>
-													<FieldLabel htmlFor="guardian-relationship">Relationship</FieldLabel>
-													<SelectField
-														id="guardian-relationship"
-														value={guardianRelationship}
-														onValueChange={setGuardianRelationship}
-														items={[
-															{ label: "Father", value: "father" },
-															{ label: "Mother", value: "mother" },
-															{ label: "Guardian", value: "guardian" },
-															{ label: "Step parent", value: "step_parent" },
-															{ label: "Grandparent", value: "grandparent" },
-															{ label: "Other", value: "other" },
-														]}
-													/>
-												</Field>
-											</FieldGroup>
-										</div>
-										<Button type="submit" disabled={createStudent.isPending || !campusId}>
-											{createStudent.isPending ? "Creating..." : "Create student"}
-										</Button>
-									</FieldGroup>
-								</form>
-							</CardContent>
-						</Card>
+						</div>
 					) : null}
+				</FieldGroup>
+			</FormDrawer>
 
-					{canWrite ? (
-						<Card className="border-dashboard-border bg-dashboard-surface">
-							<CardHeader>
-								<CardTitle>Enroll student</CardTitle>
-								<CardDescription>
-									Assign the selected student to a section for one academic year.
-								</CardDescription>
-							</CardHeader>
-							<CardContent>
-								<form onSubmit={handleCreateEnrollment}>
-									<FieldGroup>
-										<Field>
-											<FieldLabel htmlFor="enroll-year">Academic year</FieldLabel>
-											<SelectField
-												id="enroll-year"
-												value={selectedYearId || activeYearId}
-												onValueChange={setSelectedYearId}
-												items={(yearsQuery.data ?? []).map((year) => ({
-													label: year.name,
-													value: year.id,
-												}))}
-											/>
-										</Field>
-										<Field>
-											<FieldLabel htmlFor="enroll-section">Section</FieldLabel>
-											<SelectField
-												id="enroll-section"
-												value={selectedSectionId}
-												onValueChange={setSelectedSectionId}
-												nullable
-												placeholder="Select section"
-												items={sectionOptions.map((section) => ({
-													label:
-														sectionLabelById.get(section.id) ??
-														formatSectionLabel(
-															section,
-															classNameById.get(section.classId),
-															campusNameById.get(section.campusId),
-														),
-													value: section.id,
-												}))}
-											/>
-										</Field>
-										<Button
-											type="submit"
-											disabled={createEnrollment.isPending || !selectedStudentId}
-										>
-											{createEnrollment.isPending ? "Enrolling..." : "Enroll student"}
-										</Button>
-									</FieldGroup>
-								</form>
-								{selectedStudentId && enrollmentsQuery.data?.length ? (
-									<div className="mt-4 space-y-2">
-										<p className="font-medium text-sm">Current enrollments</p>
-										<ul className="space-y-1 text-dashboard-text-secondary text-sm">
-											{enrollmentsQuery.data.map((enrollment) => (
+			<Drawer open={manageOpen} onOpenChange={setManageOpen} direction="right">
+				<DrawerContent className="h-full max-h-none data-[vaul-drawer-direction=right]:w-full data-[vaul-drawer-direction=right]:sm:max-w-lg">
+					<DrawerHeader className="border-border border-b text-start">
+						<DrawerTitle>Student profile</DrawerTitle>
+						<DrawerDescription>
+							ID card, admission details, guardians, and enrollments.
+						</DrawerDescription>
+					</DrawerHeader>
+					<div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+						{manageStudentQuery.isLoading || !manageStudentQuery.data ? (
+							<div className="flex justify-center py-10">
+								<Spinner className="size-6" />
+							</div>
+						) : (
+							<div className="space-y-6">
+								<StudentIdCard
+									student={manageStudentQuery.data.student}
+									schoolName={activeTenant?.name ?? "School"}
+									tenantId={tenantId}
+									sectionLabel={sectionLabelByStudentId.get(manageStudentQuery.data.student.id)}
+									academicYearLabel={activeYearLabel}
+									className="mx-auto"
+								/>
+
+								<dl className="grid gap-3 sm:grid-cols-2 text-sm">
+									<div>
+										<dt className="text-muted-foreground text-xs uppercase">Email</dt>
+										<dd>{manageStudentQuery.data.student.email ?? "—"}</dd>
+									</div>
+									<div>
+										<dt className="text-muted-foreground text-xs uppercase">Phone</dt>
+										<dd>{manageStudentQuery.data.student.phone ?? "—"}</dd>
+									</div>
+									<div>
+										<dt className="text-muted-foreground text-xs uppercase">Address</dt>
+										<dd>
+											{[
+												manageStudentQuery.data.student.addressLine1,
+												manageStudentQuery.data.student.city,
+											]
+												.filter(Boolean)
+												.join(", ") || "—"}
+										</dd>
+									</div>
+									<div>
+										<dt className="text-muted-foreground text-xs uppercase">Previous school</dt>
+										<dd>{manageStudentQuery.data.student.previousSchool ?? "—"}</dd>
+									</div>
+								</dl>
+
+								<div>
+									<p className="mb-2 font-medium text-sm">Enrollments</p>
+									{manageEnrollmentsQuery.data?.length ? (
+										<ul className="space-y-1 text-muted-foreground text-sm">
+											{manageEnrollmentsQuery.data.map((enrollment) => (
 												<li key={enrollment.id}>
-													{sectionLabelById.get(enrollment.sectionId) ??
-														`Section ${enrollment.sectionId.slice(0, 8)}`}{" "}
-													· {enrollment.status}
+													{sectionLabelById.get(enrollment.sectionId) ?? enrollment.sectionId} ·{" "}
+													{enrollment.status}
 												</li>
 											))}
 										</ul>
-									</div>
+									) : (
+										<p className="text-muted-foreground text-sm">
+											Not enrolled in any section yet.
+										</p>
+									)}
+									{canWrite ? (
+										<Button
+											type="button"
+											size="sm"
+											variant="outline"
+											className="mt-3"
+											onClick={() => {
+												setManageOpen(false);
+												openEnroll(manageStudentId);
+											}}
+										>
+											<HugeiconsIcon
+												icon={UserAdd01Icon}
+												data-icon="inline-start"
+												strokeWidth={2}
+											/>
+											Enroll in section
+										</Button>
+									) : null}
+								</div>
+
+								<div>
+									<p className="mb-2 font-medium text-sm">Guardians</p>
+									{manageStudentQuery.data.guardians.length === 0 ? (
+										<p className="text-muted-foreground text-sm">No guardians linked yet.</p>
+									) : (
+										<ul className="space-y-2">
+											{manageStudentQuery.data.guardians.map((link) => (
+												<li
+													key={link.id}
+													className="rounded-lg border border-border px-3 py-2 text-sm"
+												>
+													<p className="font-medium">{link.guardian.fullName}</p>
+													<p className="text-muted-foreground text-xs">
+														{link.relationship}
+														{link.isPrimary ? " · Primary" : ""}
+														{link.guardian.phone ? ` · ${link.guardian.phone}` : ""}
+													</p>
+												</li>
+											))}
+										</ul>
+									)}
+								</div>
+
+								{canWriteGuardians ? (
+									<form
+										className="rounded-lg border border-border p-3"
+										onSubmit={(event) => {
+											event.preventDefault();
+											void handleLinkGuardian();
+										}}
+									>
+										<p className="mb-3 font-medium text-sm">Link guardian</p>
+										<FieldGroup className="gap-3">
+											<Field>
+												<FieldLabel>Source</FieldLabel>
+												<SelectField
+													value={useNewGuardian ? "new" : "existing"}
+													onValueChange={(value) => setUseNewGuardian(value === "new")}
+													items={[
+														{ label: "Existing guardian", value: "existing" },
+														{ label: "New guardian", value: "new" },
+													]}
+												/>
+											</Field>
+											{useNewGuardian ? (
+												<>
+													<Field>
+														<FieldLabel>First name</FieldLabel>
+														<Input
+															value={linkNewFirstName}
+															onChange={(event) => setLinkNewFirstName(event.target.value)}
+															required
+														/>
+													</Field>
+													<Field>
+														<FieldLabel>Last name</FieldLabel>
+														<Input
+															value={linkNewLastName}
+															onChange={(event) => setLinkNewLastName(event.target.value)}
+															required
+														/>
+													</Field>
+													<Field>
+														<FieldLabel>Phone</FieldLabel>
+														<Input
+															value={linkNewPhone}
+															onChange={(event) => setLinkNewPhone(event.target.value)}
+														/>
+													</Field>
+												</>
+											) : (
+												<Field>
+													<FieldLabel>Guardian</FieldLabel>
+													<SelectField
+														value={linkGuardianId}
+														onValueChange={setLinkGuardianId}
+														placeholder="Select guardian"
+														items={guardianItems}
+													/>
+												</Field>
+											)}
+											<Field>
+												<FieldLabel>Relationship</FieldLabel>
+												<SelectField
+													value={linkRelationship}
+													onValueChange={setLinkRelationship}
+													items={[
+														{ label: "Father", value: "father" },
+														{ label: "Mother", value: "mother" },
+														{ label: "Guardian", value: "guardian" },
+														{ label: "Step parent", value: "step_parent" },
+														{ label: "Grandparent", value: "grandparent" },
+														{ label: "Other", value: "other" },
+													]}
+												/>
+											</Field>
+											<Button type="submit" size="sm" disabled={linkGuardian.isPending}>
+												{linkGuardian.isPending ? "Linking…" : "Link guardian"}
+											</Button>
+										</FieldGroup>
+									</form>
 								) : null}
-							</CardContent>
-						</Card>
-					) : null}
-				</div>
+							</div>
+						)}
+					</div>
+					<DrawerFooter className="border-border border-t">
+						<DrawerClose asChild>
+							<Button type="button" variant="outline">
+								Close
+							</Button>
+						</DrawerClose>
+					</DrawerFooter>
+				</DrawerContent>
+			</Drawer>
+		</AdminPageShell>
+	);
+}
+
+function AdmitStudentFields({
+	value,
+	onChange,
+}: {
+	value: AdmitFormState;
+	onChange: (next: AdmitFormState) => void;
+}) {
+	return (
+		<FieldGroup className="grid gap-4">
+			<Field>
+				<FieldLabel>Admission number</FieldLabel>
+				<Input
+					value={value.studentCode}
+					onChange={(event) => onChange({ ...value, studentCode: event.target.value })}
+					placeholder="AKES-2026-001"
+					required
+				/>
+			</Field>
+			<div className="grid gap-4 sm:grid-cols-2">
+				<Field>
+					<FieldLabel>First name</FieldLabel>
+					<Input
+						value={value.firstName}
+						onChange={(event) => onChange({ ...value, firstName: event.target.value })}
+						required
+					/>
+				</Field>
+				<Field>
+					<FieldLabel>Last name</FieldLabel>
+					<Input
+						value={value.lastName}
+						onChange={(event) => onChange({ ...value, lastName: event.target.value })}
+						required
+					/>
+				</Field>
 			</div>
-		</div>
+			<div className="grid gap-4 sm:grid-cols-2">
+				<Field>
+					<FieldLabel>Date of birth</FieldLabel>
+					<Input
+						type="date"
+						value={value.dateOfBirth}
+						onChange={(event) => onChange({ ...value, dateOfBirth: event.target.value })}
+					/>
+				</Field>
+				<Field>
+					<FieldLabel>Gender</FieldLabel>
+					<SelectField
+						value={value.gender}
+						onValueChange={(gender) => onChange({ ...value, gender })}
+						nullable
+						placeholder="Select gender"
+						items={[
+							{ label: "Male", value: "male" },
+							{ label: "Female", value: "female" },
+							{ label: "Other", value: "other" },
+							{ label: "Prefer not to say", value: "prefer_not_to_say" },
+						]}
+					/>
+				</Field>
+			</div>
+			<div className="grid gap-4 sm:grid-cols-2">
+				<Field>
+					<FieldLabel>Email</FieldLabel>
+					<Input
+						type="email"
+						value={value.email}
+						onChange={(event) => onChange({ ...value, email: event.target.value })}
+					/>
+				</Field>
+				<Field>
+					<FieldLabel>Phone</FieldLabel>
+					<Input
+						value={value.phone}
+						onChange={(event) => onChange({ ...value, phone: event.target.value })}
+					/>
+				</Field>
+			</div>
+			<Field>
+				<FieldLabel>Address</FieldLabel>
+				<Input
+					value={value.addressLine1}
+					onChange={(event) => onChange({ ...value, addressLine1: event.target.value })}
+				/>
+			</Field>
+			<Field>
+				<FieldLabel>City</FieldLabel>
+				<Input
+					value={value.city}
+					onChange={(event) => onChange({ ...value, city: event.target.value })}
+				/>
+			</Field>
+			<div className="grid gap-4 sm:grid-cols-2">
+				<Field>
+					<FieldLabel>Emergency contact</FieldLabel>
+					<Input
+						value={value.emergencyContactName}
+						onChange={(event) => onChange({ ...value, emergencyContactName: event.target.value })}
+					/>
+				</Field>
+				<Field>
+					<FieldLabel>Emergency phone</FieldLabel>
+					<Input
+						value={value.emergencyContactPhone}
+						onChange={(event) => onChange({ ...value, emergencyContactPhone: event.target.value })}
+					/>
+				</Field>
+			</div>
+			<Field>
+				<FieldLabel>Previous school</FieldLabel>
+				<Input
+					value={value.previousSchool}
+					onChange={(event) => onChange({ ...value, previousSchool: event.target.value })}
+				/>
+			</Field>
+			<div className="rounded-lg border border-border p-3">
+				<p className="mb-3 font-medium text-sm">Primary guardian (optional)</p>
+				<FieldGroup className="gap-3">
+					<div className="grid gap-3 sm:grid-cols-2">
+						<Field>
+							<FieldLabel>First name</FieldLabel>
+							<Input
+								value={value.guardianFirstName}
+								onChange={(event) => onChange({ ...value, guardianFirstName: event.target.value })}
+							/>
+						</Field>
+						<Field>
+							<FieldLabel>Last name</FieldLabel>
+							<Input
+								value={value.guardianLastName}
+								onChange={(event) => onChange({ ...value, guardianLastName: event.target.value })}
+							/>
+						</Field>
+					</div>
+					<Field>
+						<FieldLabel>Phone</FieldLabel>
+						<Input
+							value={value.guardianPhone}
+							onChange={(event) => onChange({ ...value, guardianPhone: event.target.value })}
+						/>
+					</Field>
+					<Field>
+						<FieldLabel>Relationship</FieldLabel>
+						<SelectField
+							value={value.guardianRelationship}
+							onValueChange={(relationship) =>
+								onChange({ ...value, guardianRelationship: relationship })
+							}
+							items={[
+								{ label: "Father", value: "father" },
+								{ label: "Mother", value: "mother" },
+								{ label: "Guardian", value: "guardian" },
+								{ label: "Step parent", value: "step_parent" },
+								{ label: "Grandparent", value: "grandparent" },
+								{ label: "Other", value: "other" },
+							]}
+						/>
+					</Field>
+				</FieldGroup>
+			</div>
+		</FieldGroup>
 	);
 }

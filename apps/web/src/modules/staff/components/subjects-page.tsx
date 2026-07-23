@@ -1,17 +1,34 @@
 "use client";
 
 import { Alert, AlertDescription } from "@school-os/ui/components/alert";
-import { Button } from "@school-os/ui/components/button";
 import { Field, FieldGroup, FieldLabel } from "@school-os/ui/components/field";
 import { Input } from "@school-os/ui/components/input";
-import { Spinner } from "@school-os/ui/components/spinner";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { FormDrawer } from "@/components/admin";
+import {
+	DataTable,
+	type DataTableColumn,
+	DataTablePagination,
+	DataTableShell,
+	DataTableToolbar,
+	defaultSortFn,
+	useClientDataTable,
+} from "@/components/data-table";
 import { AcademicPageShell } from "@/modules/academic/components/academic-page-shell";
 import {
 	useCreateSubjectMutation,
 	useSubjectsQuery,
 } from "@/modules/staff/hooks/use-staff-queries";
+import type { Subject } from "@/modules/staff/types/staff.types";
 import { PermissionCodes, usePermissions, useTenantContext } from "@/modules/tenants";
+
+type SubjectFormState = {
+	code: string;
+	name: string;
+	description: string;
+};
+
+const emptyForm: SubjectFormState = { code: "", name: "", description: "" };
 
 export function SubjectsPage() {
 	const { activeTenant } = useTenantContext();
@@ -23,29 +40,70 @@ export function SubjectsPage() {
 	const subjectsQuery = useSubjectsQuery(tenantId, canRead);
 	const createSubject = useCreateSubjectMutation(tenantId ?? "");
 
-	const [code, setCode] = useState("");
-	const [name, setName] = useState("");
-	const [description, setDescription] = useState("");
+	const [search, setSearch] = useState("");
+	const [drawerOpen, setDrawerOpen] = useState(false);
+	const [form, setForm] = useState<SubjectFormState>(emptyForm);
 	const [error, setError] = useState<string | null>(null);
 
-	function resetForm() {
-		setCode("");
-		setName("");
-		setDescription("");
+	const columns = useMemo(
+		(): DataTableColumn<Subject>[] => [
+			{
+				id: "code",
+				header: "Code",
+				sortable: true,
+				sortValue: (row) => row.code,
+				cell: (subject) => <span className="font-medium">{subject.code}</span>,
+			},
+			{
+				id: "name",
+				header: "Name",
+				sortable: true,
+				sortValue: (row) => row.name,
+				cell: (subject) => subject.name,
+			},
+			{
+				id: "description",
+				header: "Description",
+				sortable: true,
+				sortValue: (row) => row.description ?? "",
+				cell: (subject) => (
+					<span className="text-dashboard-text-secondary">{subject.description ?? "—"}</span>
+				),
+			},
+		],
+		[],
+	);
+
+	const table = useClientDataTable({
+		data: subjectsQuery.data ?? [],
+		searchQuery: search,
+		searchFn: (row, queryText) => {
+			const haystack = [row.code, row.name, row.description]
+				.filter(Boolean)
+				.join(" ")
+				.toLowerCase();
+			return haystack.includes(queryText);
+		},
+		sortFn: (rows, sort) => defaultSortFn(rows, sort, columns),
+	});
+
+	function openCreate() {
+		setForm(emptyForm);
 		setError(null);
+		setDrawerOpen(true);
 	}
 
-	async function handleSubmit(event: React.FormEvent) {
-		event.preventDefault();
+	async function handleCreate() {
 		if (!tenantId || !canWrite) return;
 		setError(null);
 		try {
 			await createSubject.mutateAsync({
-				code,
-				name,
-				description: description || undefined,
+				code: form.code,
+				name: form.name,
+				description: form.description || undefined,
 			});
-			resetForm();
+			setDrawerOpen(false);
+			setForm(emptyForm);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Could not create subject");
 		}
@@ -64,88 +122,87 @@ export function SubjectsPage() {
 			title="Subjects"
 			description="Subject catalog used when assigning teachers to sections."
 		>
-			{canWrite ? (
-				<form
-					onSubmit={handleSubmit}
-					className="mb-6 rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4"
-				>
-					<h2 className="mb-3 font-medium text-[14px] text-dashboard-text-primary">Add subject</h2>
-					<FieldGroup className="grid gap-3 sm:grid-cols-2">
-						<Field>
-							<FieldLabel htmlFor="subject-code">Code</FieldLabel>
-							<Input
-								id="subject-code"
-								value={code}
-								onChange={(e) => setCode(e.target.value)}
-								placeholder="MATH"
-								required
-							/>
-						</Field>
-						<Field>
-							<FieldLabel htmlFor="subject-name">Name</FieldLabel>
-							<Input
-								id="subject-name"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								placeholder="Mathematics"
-								required
-							/>
-						</Field>
-						<Field className="sm:col-span-2">
-							<FieldLabel htmlFor="subject-description">Description</FieldLabel>
-							<Input
-								id="subject-description"
-								value={description}
-								onChange={(e) => setDescription(e.target.value)}
-								placeholder="Optional short description"
-							/>
-						</Field>
-					</FieldGroup>
-					{error ? <p className="mt-3 text-[12px] text-destructive">{error}</p> : null}
-					<div className="mt-4">
-						<Button type="submit" disabled={createSubject.isPending}>
-							{createSubject.isPending ? <Spinner className="size-4" /> : "Create subject"}
-						</Button>
-					</div>
-				</form>
-			) : null}
+			<DataTableShell
+				toolbar={
+					<DataTableToolbar
+						search={search}
+						onSearchChange={(value) => {
+							setSearch(value);
+							table.resetPage();
+						}}
+						searchPlaceholder="Search subjects…"
+						canAdd={canWrite}
+						onAdd={openCreate}
+						addLabel="Add subject"
+					/>
+				}
+				footer={
+					<DataTablePagination
+						pageIndex={table.pageIndex}
+						pageCount={table.pageCount}
+						pageSize={table.pageSize}
+						totalRows={table.totalRows}
+						onPageChange={table.setPageIndex}
+						onPageSizeChange={(size) => {
+							table.setPageSize(size);
+							table.setPageIndex(0);
+						}}
+					/>
+				}
+			>
+				<DataTable
+					borderless
+					columns={columns}
+					rows={table.rows}
+					getRowId={(row) => row.id}
+					loading={subjectsQuery.isLoading}
+					sort={table.sort}
+					onSort={table.toggleSort}
+					emptyTitle="No subjects yet"
+					emptyDescription="Add your first subject using the button above."
+				/>
+			</DataTableShell>
 
-			{subjectsQuery.isLoading ? (
-				<div className="flex justify-center py-10">
-					<Spinner />
-				</div>
-			) : (
-				<div className="overflow-hidden rounded-[14px] border border-dashboard-border">
-					<table className="w-full text-[13px]">
-						<thead className="bg-dashboard-surface-strong text-left text-[11px] text-dashboard-text-muted uppercase">
-							<tr>
-								<th className="px-4 py-2.5">Code</th>
-								<th className="px-4 py-2.5">Name</th>
-								<th className="px-4 py-2.5">Description</th>
-							</tr>
-						</thead>
-						<tbody>
-							{(subjectsQuery.data ?? []).length === 0 ? (
-								<tr>
-									<td colSpan={3} className="px-4 py-6 text-dashboard-text-muted">
-										No subjects yet. Add your first subject above.
-									</td>
-								</tr>
-							) : (
-								(subjectsQuery.data ?? []).map((subject) => (
-									<tr key={subject.id} className="border-dashboard-border-subtle border-t">
-										<td className="px-4 py-3 font-medium">{subject.code}</td>
-										<td className="px-4 py-3">{subject.name}</td>
-										<td className="px-4 py-3 text-dashboard-text-secondary">
-											{subject.description ?? "—"}
-										</td>
-									</tr>
-								))
-							)}
-						</tbody>
-					</table>
-				</div>
-			)}
+			<FormDrawer
+				open={drawerOpen}
+				onOpenChange={setDrawerOpen}
+				title="Add subject"
+				description="Subjects can be assigned to teachers and sections."
+				onSubmit={() => void handleCreate()}
+				submitLabel="Create subject"
+				saving={createSubject.isPending}
+				error={error}
+				submitDisabled={!form.code.trim() || !form.name.trim()}
+			>
+				<FieldGroup className="grid gap-4">
+					<Field>
+						<FieldLabel>Code</FieldLabel>
+						<Input
+							value={form.code}
+							onChange={(event) => setForm({ ...form, code: event.target.value })}
+							placeholder="MATH"
+							required
+						/>
+					</Field>
+					<Field>
+						<FieldLabel>Name</FieldLabel>
+						<Input
+							value={form.name}
+							onChange={(event) => setForm({ ...form, name: event.target.value })}
+							placeholder="Mathematics"
+							required
+						/>
+					</Field>
+					<Field>
+						<FieldLabel>Description</FieldLabel>
+						<Input
+							value={form.description}
+							onChange={(event) => setForm({ ...form, description: event.target.value })}
+							placeholder="Optional"
+						/>
+					</Field>
+				</FieldGroup>
+			</FormDrawer>
 		</AcademicPageShell>
 	);
 }

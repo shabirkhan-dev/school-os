@@ -6,6 +6,7 @@ export {
 	useStudentEnrollmentsQuery,
 	useStudentQuery,
 	useStudentsQuery,
+	useTenantEnrollmentsQuery,
 } from "./hooks/use-student-queries";
 export type {
 	CreateEnrollmentInput,

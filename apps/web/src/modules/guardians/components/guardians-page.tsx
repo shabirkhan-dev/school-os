@@ -8,8 +8,17 @@ import { Button } from "@school-os/ui/components/button";
 import { Field, FieldGroup, FieldLabel } from "@school-os/ui/components/field";
 import { Input } from "@school-os/ui/components/input";
 import { SelectField } from "@school-os/ui/components/select-field";
-import { Spinner } from "@school-os/ui/components/spinner";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { AdminPageShell, FormDrawer } from "@/components/admin";
+import {
+	DataTable,
+	type DataTableColumn,
+	DataTablePagination,
+	DataTableShell,
+	DataTableToolbar,
+	defaultSortFn,
+	useClientDataTable,
+} from "@/components/data-table";
 import { PermissionCodes, usePermissions, useTenantContext } from "@/modules/tenants";
 import {
 	useCreateGuardianMutation,
@@ -25,6 +34,87 @@ const channelItems = [
 	{ label: "SMS", value: "sms" },
 ];
 
+type GuardianFormState = {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	occupation: string;
+	preferredChannel: Guardian["preferredChannel"];
+};
+
+const emptyForm: GuardianFormState = {
+	firstName: "",
+	lastName: "",
+	email: "",
+	phone: "",
+	occupation: "",
+	preferredChannel: "email",
+};
+
+function GuardianFormFields({
+	value,
+	onChange,
+}: {
+	value: GuardianFormState;
+	onChange: (next: GuardianFormState) => void;
+}) {
+	return (
+		<FieldGroup className="grid gap-4">
+			<div className="grid gap-4 sm:grid-cols-2">
+				<Field>
+					<FieldLabel>First name</FieldLabel>
+					<Input
+						value={value.firstName}
+						onChange={(event) => onChange({ ...value, firstName: event.target.value })}
+						required
+					/>
+				</Field>
+				<Field>
+					<FieldLabel>Last name</FieldLabel>
+					<Input
+						value={value.lastName}
+						onChange={(event) => onChange({ ...value, lastName: event.target.value })}
+						required
+					/>
+				</Field>
+			</div>
+			<Field>
+				<FieldLabel>Email</FieldLabel>
+				<Input
+					type="email"
+					value={value.email}
+					onChange={(event) => onChange({ ...value, email: event.target.value })}
+				/>
+			</Field>
+			<Field>
+				<FieldLabel>Phone</FieldLabel>
+				<Input
+					value={value.phone}
+					onChange={(event) => onChange({ ...value, phone: event.target.value })}
+				/>
+			</Field>
+			<Field>
+				<FieldLabel>Occupation</FieldLabel>
+				<Input
+					value={value.occupation}
+					onChange={(event) => onChange({ ...value, occupation: event.target.value })}
+				/>
+			</Field>
+			<Field>
+				<FieldLabel>Preferred contact</FieldLabel>
+				<SelectField
+					value={value.preferredChannel}
+					onValueChange={(channel) =>
+						onChange({ ...value, preferredChannel: channel as Guardian["preferredChannel"] })
+					}
+					items={channelItems}
+				/>
+			</Field>
+		</FieldGroup>
+	);
+}
+
 export function GuardiansPage() {
 	const { activeTenant } = useTenantContext();
 	const { can, isLoading: permissionsLoading } = usePermissions();
@@ -36,69 +126,146 @@ export function GuardiansPage() {
 	const createGuardian = useCreateGuardianMutation(tenantId ?? "");
 	const updateGuardian = useUpdateGuardianMutation(tenantId ?? "");
 
-	const [editing, setEditing] = useState<Guardian | null>(null);
-	const [firstName, setFirstName] = useState("");
-	const [lastName, setLastName] = useState("");
-	const [email, setEmail] = useState("");
-	const [phone, setPhone] = useState("");
-	const [occupation, setOccupation] = useState("");
-	const [preferredChannel, setPreferredChannel] = useState("email");
+	const [search, setSearch] = useState("");
+	const [portalFilter, setPortalFilter] = useState("");
+	const [drawerOpen, setDrawerOpen] = useState(false);
+	const [editingId, setEditingId] = useState<string | null>(null);
+	const [form, setForm] = useState<GuardianFormState>(emptyForm);
 	const [error, setError] = useState<string | null>(null);
 
-	function resetForm() {
-		setEditing(null);
-		setFirstName("");
-		setLastName("");
-		setEmail("");
-		setPhone("");
-		setOccupation("");
-		setPreferredChannel("email");
+	const openCreate = useCallback(() => {
+		setEditingId(null);
+		setForm(emptyForm);
 		setError(null);
-	}
+		setDrawerOpen(true);
+	}, []);
 
-	function startEdit(guardian: Guardian) {
-		setEditing(guardian);
-		setFirstName(guardian.firstName);
-		setLastName(guardian.lastName);
-		setEmail(guardian.email ?? "");
-		setPhone(guardian.phone ?? "");
-		setOccupation(guardian.occupation ?? "");
-		setPreferredChannel(guardian.preferredChannel);
+	const openEdit = useCallback((guardian: Guardian) => {
+		setEditingId(guardian.id);
+		setForm({
+			firstName: guardian.firstName,
+			lastName: guardian.lastName,
+			email: guardian.email ?? "",
+			phone: guardian.phone ?? "",
+			occupation: guardian.occupation ?? "",
+			preferredChannel: guardian.preferredChannel,
+		});
 		setError(null);
-	}
+		setDrawerOpen(true);
+	}, []);
 
-	async function handleSubmit(event: React.FormEvent) {
-		event.preventDefault();
+	const columns = useMemo(
+		(): DataTableColumn<Guardian>[] => [
+			{
+				id: "name",
+				header: "Name",
+				sortable: true,
+				sortValue: (row) => row.fullName,
+				cell: (guardian) => <span className="font-medium">{guardian.fullName}</span>,
+			},
+			{
+				id: "phone",
+				header: "Phone",
+				sortable: true,
+				sortValue: (row) => row.phone ?? "",
+				cell: (guardian) => (
+					<span className="text-dashboard-text-secondary">{guardian.phone ?? "—"}</span>
+				),
+			},
+			{
+				id: "email",
+				header: "Email",
+				sortable: true,
+				sortValue: (row) => row.email ?? "",
+				cell: (guardian) => (
+					<span className="text-dashboard-text-secondary">{guardian.email ?? "—"}</span>
+				),
+			},
+			{
+				id: "portal",
+				header: "Portal",
+				cell: (guardian) =>
+					guardian.membershipId ? (
+						<Badge variant="outline">Linked account</Badge>
+					) : (
+						<span className="text-dashboard-text-muted">Contact only</span>
+					),
+			},
+			{
+				id: "actions",
+				header: <span className="sr-only">Actions</span>,
+				headerClassName: "text-right",
+				className: "text-right",
+				cell: (guardian) =>
+					canWrite ? (
+						<Button
+							type="button"
+							size="icon-sm"
+							variant="ghost"
+							aria-label={`Edit ${guardian.fullName}`}
+							onClick={() => openEdit(guardian)}
+						>
+							<HugeiconsIcon icon={Edit02Icon} strokeWidth={2} />
+						</Button>
+					) : null,
+			},
+		],
+		[canWrite, openEdit],
+	);
+
+	const table = useClientDataTable({
+		data: query.data ?? [],
+		searchQuery: search,
+		searchFn: (row, queryText) => {
+			const haystack = [row.fullName, row.email, row.phone, row.occupation]
+				.filter(Boolean)
+				.join(" ")
+				.toLowerCase();
+			return haystack.includes(queryText);
+		},
+		filterFn: (row, filters) => {
+			if (filters.portal === "linked") return Boolean(row.membershipId);
+			if (filters.portal === "contact") return !row.membershipId;
+			return true;
+		},
+		sortFn: (rows, sort) => defaultSortFn(rows, sort, columns),
+	});
+
+	async function handleSave() {
 		if (!tenantId || !canWrite) return;
 		setError(null);
 		try {
-			if (editing) {
+			if (editingId) {
 				await updateGuardian.mutateAsync({
-					guardianId: editing.id,
+					guardianId: editingId,
 					input: {
-						firstName,
-						lastName,
-						email: email || undefined,
-						phone: phone || undefined,
-						occupation: occupation || undefined,
-						preferredChannel: preferredChannel as Guardian["preferredChannel"],
+						firstName: form.firstName,
+						lastName: form.lastName,
+						email: form.email || undefined,
+						phone: form.phone || undefined,
+						occupation: form.occupation || undefined,
+						preferredChannel: form.preferredChannel,
 					},
 				});
 			} else {
 				await createGuardian.mutateAsync({
-					firstName,
-					lastName,
-					email: email || undefined,
-					phone: phone || undefined,
-					occupation: occupation || undefined,
-					preferredChannel: preferredChannel as Guardian["preferredChannel"],
+					firstName: form.firstName,
+					lastName: form.lastName,
+					email: form.email || undefined,
+					phone: form.phone || undefined,
+					occupation: form.occupation || undefined,
+					preferredChannel: form.preferredChannel,
 				});
 			}
-			resetForm();
+			setDrawerOpen(false);
+			setEditingId(null);
+			setForm(emptyForm);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Could not save guardian");
 		}
 	}
+
+	const saving = createGuardian.isPending || updateGuardian.isPending;
 
 	if (!tenantId) {
 		return (
@@ -108,15 +275,7 @@ export function GuardiansPage() {
 		);
 	}
 
-	if (permissionsLoading) {
-		return (
-			<div className="flex min-h-[240px] items-center justify-center">
-				<Spinner className="size-6" />
-			</div>
-		);
-	}
-
-	if (!canRead) {
+	if (!canRead && !permissionsLoading) {
 		return (
 			<Alert>
 				<AlertDescription>You do not have permission to view guardians.</AlertDescription>
@@ -125,151 +284,85 @@ export function GuardiansPage() {
 	}
 
 	return (
-		<div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
-			<header className="mb-6 border-dashboard-border border-b pb-5">
-				<div className="flex items-center gap-3">
-					<div className="flex size-10 items-center justify-center rounded-lg bg-dashboard-accent-soft text-dashboard-accent">
-						<HugeiconsIcon icon={UserMultiple02Icon} size={20} strokeWidth={1.8} />
-					</div>
-					<div>
-						<h1 className="font-semibold text-[24px] text-dashboard-text-primary">Guardians</h1>
-						<p className="text-[13px] text-dashboard-text-muted">
-							Parent and guardian contacts linked to students.
-						</p>
-					</div>
-				</div>
-			</header>
+		<AdminPageShell
+			title="Guardians"
+			description="Parent and guardian contacts linked to students."
+			icon={UserMultiple02Icon}
+			loading={permissionsLoading}
+		>
+			<DataTableShell
+				toolbar={
+					<DataTableToolbar
+						search={search}
+						onSearchChange={(value) => {
+							setSearch(value);
+							table.resetPage();
+						}}
+						searchPlaceholder="Search guardians…"
+						filters={[
+							{
+								id: "portal",
+								label: "Portal",
+								value: portalFilter,
+								onChange: (value) => {
+									setPortalFilter(value);
+									table.setFilter("portal", value);
+								},
+								items: [
+									{ label: "Linked account", value: "linked" },
+									{ label: "Contact only", value: "contact" },
+								],
+							},
+						]}
+						canAdd={canWrite}
+						onAdd={openCreate}
+						addLabel="Add guardian"
+					/>
+				}
+				footer={
+					<DataTablePagination
+						pageIndex={table.pageIndex}
+						pageCount={table.pageCount}
+						pageSize={table.pageSize}
+						totalRows={table.totalRows}
+						onPageChange={table.setPageIndex}
+						onPageSizeChange={(size) => {
+							table.setPageSize(size);
+							table.setPageIndex(0);
+						}}
+					/>
+				}
+			>
+				<DataTable
+					borderless
+					columns={columns}
+					rows={table.rows}
+					getRowId={(row) => row.id}
+					loading={query.isLoading}
+					sort={table.sort}
+					onSort={table.toggleSort}
+					emptyTitle="No guardians found"
+					emptyDescription="Add a guardian or adjust your filters."
+				/>
+			</DataTableShell>
 
-			{canWrite ? (
-				<form
-					onSubmit={handleSubmit}
-					className="mb-6 rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4"
-				>
-					<h2 className="mb-3 font-medium text-[14px] text-dashboard-text-primary">
-						{editing ? "Edit guardian" : "Add guardian"}
-					</h2>
-					<FieldGroup className="grid gap-3 sm:grid-cols-2">
-						<Field>
-							<FieldLabel htmlFor="guardian-first">First name</FieldLabel>
-							<Input
-								id="guardian-first"
-								value={firstName}
-								onChange={(e) => setFirstName(e.target.value)}
-								required
-							/>
-						</Field>
-						<Field>
-							<FieldLabel htmlFor="guardian-last">Last name</FieldLabel>
-							<Input
-								id="guardian-last"
-								value={lastName}
-								onChange={(e) => setLastName(e.target.value)}
-								required
-							/>
-						</Field>
-						<Field>
-							<FieldLabel htmlFor="guardian-email">Email</FieldLabel>
-							<Input
-								id="guardian-email"
-								type="email"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-							/>
-						</Field>
-						<Field>
-							<FieldLabel htmlFor="guardian-phone">Phone</FieldLabel>
-							<Input id="guardian-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-						</Field>
-						<Field>
-							<FieldLabel htmlFor="guardian-occupation">Occupation</FieldLabel>
-							<Input
-								id="guardian-occupation"
-								value={occupation}
-								onChange={(e) => setOccupation(e.target.value)}
-							/>
-						</Field>
-						<Field>
-							<FieldLabel htmlFor="guardian-channel">Preferred contact</FieldLabel>
-							<SelectField
-								id="guardian-channel"
-								value={preferredChannel}
-								onValueChange={setPreferredChannel}
-								items={channelItems}
-							/>
-						</Field>
-					</FieldGroup>
-					{error ? <p className="mt-3 text-[12px] text-destructive">{error}</p> : null}
-					<div className="mt-4 flex gap-2">
-						<Button type="submit" disabled={createGuardian.isPending || updateGuardian.isPending}>
-							{createGuardian.isPending || updateGuardian.isPending
-								? "Saving..."
-								: editing
-									? "Save changes"
-									: "Create guardian"}
-						</Button>
-						{editing ? (
-							<Button type="button" variant="outline" onClick={resetForm}>
-								Cancel
-							</Button>
-						) : null}
-					</div>
-				</form>
-			) : null}
-
-			{query.isLoading ? (
-				<div className="flex justify-center py-10">
-					<Spinner />
-				</div>
-			) : (
-				<div className="overflow-hidden rounded-[14px] border border-dashboard-border">
-					<table className="w-full text-[13px]">
-						<thead className="bg-dashboard-surface-strong text-left text-[11px] text-dashboard-text-muted uppercase">
-							<tr>
-								<th className="px-4 py-2.5">Name</th>
-								<th className="px-4 py-2.5">Phone</th>
-								<th className="px-4 py-2.5">Email</th>
-								<th className="px-4 py-2.5">Portal</th>
-								{canWrite ? <th className="px-4 py-2.5 text-right">Actions</th> : null}
-							</tr>
-						</thead>
-						<tbody>
-							{(query.data ?? []).map((guardian) => (
-								<tr key={guardian.id} className="border-dashboard-border-subtle border-t">
-									<td className="px-4 py-3 font-medium">{guardian.fullName}</td>
-									<td className="px-4 py-3 text-dashboard-text-secondary">
-										{guardian.phone ?? "—"}
-									</td>
-									<td className="px-4 py-3 text-dashboard-text-secondary">
-										{guardian.email ?? "—"}
-									</td>
-									<td className="px-4 py-3">
-										{guardian.membershipId ? (
-											<Badge variant="outline">Linked account</Badge>
-										) : (
-											<span className="text-dashboard-text-muted">Contact only</span>
-										)}
-									</td>
-									{canWrite ? (
-										<td className="px-4 py-3">
-											<div className="flex justify-end">
-												<Button
-													type="button"
-													size="icon-sm"
-													variant="outline"
-													aria-label={`Edit ${guardian.fullName}`}
-													onClick={() => startEdit(guardian)}
-												>
-													<HugeiconsIcon icon={Edit02Icon} strokeWidth={2} />
-												</Button>
-											</div>
-										</td>
-									) : null}
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
-			)}
-		</div>
+			<FormDrawer
+				open={drawerOpen}
+				onOpenChange={setDrawerOpen}
+				title={editingId ? "Edit guardian" : "Add guardian"}
+				description={
+					editingId
+						? "Update contact details for this guardian."
+						: "Create a guardian contact record for student linking."
+				}
+				onSubmit={() => void handleSave()}
+				submitLabel={editingId ? "Save changes" : "Create guardian"}
+				saving={saving}
+				error={error}
+				submitDisabled={!form.firstName.trim() || !form.lastName.trim()}
+			>
+				<GuardianFormFields value={form} onChange={setForm} />
+			</FormDrawer>
+		</AdminPageShell>
 	);
 }

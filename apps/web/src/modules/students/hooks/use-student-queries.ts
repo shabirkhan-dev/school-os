@@ -42,6 +42,26 @@ export function useStudentQuery(tenantId: string | null, studentId: string | nul
 	});
 }
 
+export function useTenantEnrollmentsQuery(
+	tenantId: string | null,
+	academicYearId: string | null,
+	enabled = true,
+) {
+	const { token } = useAuth();
+	return useQuery({
+		queryKey: studentQueryKeys.tenantEnrollments(tenantId ?? "", academicYearId ?? ""),
+		queryFn: () => {
+			if (!tenantId) throw new Error("Tenant id required");
+			return studentsService
+				.listEnrollments(requireToken(token), tenantId, {
+					academicYearId: academicYearId ?? undefined,
+				})
+				.then((response) => response.enrollments);
+		},
+		enabled: enabled && Boolean(token && tenantId && academicYearId),
+	});
+}
+
 export function useStudentEnrollmentsQuery(
 	tenantId: string | null,
 	studentId: string | null,
@@ -114,9 +134,14 @@ export function useCreateEnrollmentMutation(tenantId: string) {
 					return [...enrollments, data.enrollment];
 				},
 			);
-			await queryClient.invalidateQueries({
-				queryKey: studentQueryKeys.enrollments(tenantId, data.enrollment.studentId),
-			});
+			await Promise.all([
+				queryClient.invalidateQueries({
+					queryKey: studentQueryKeys.enrollments(tenantId, data.enrollment.studentId),
+				}),
+				queryClient.invalidateQueries({
+					queryKey: [...studentQueryKeys.all, tenantId, "tenant-enrollments"],
+				}),
+			]);
 		},
 	});
 }

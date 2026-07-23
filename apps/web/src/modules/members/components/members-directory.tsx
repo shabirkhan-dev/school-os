@@ -10,6 +10,14 @@ import {
 	DropdownMenuTrigger,
 } from "@school-os/ui/components/dropdown-menu";
 import { Skeleton } from "@school-os/ui/components/skeleton";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@school-os/ui/components/table";
 import { cn } from "@/lib/utils";
 import { membershipRoleLabels } from "@/modules/tenants";
 import type { ActorCapabilities, Member } from "../types/member.types";
@@ -78,7 +86,7 @@ export function MembersDirectory({
 			</ul>
 
 			<div className="hidden min-w-0 overflow-x-auto overscroll-x-contain md:block">
-				<table className="w-full min-w-[760px] table-fixed border-separate border-spacing-0 text-[13px]">
+				<Table className="min-w-[760px] table-fixed text-[13px]">
 					<colgroup>
 						<col style={{ width: "36%" }} />
 						<col style={{ width: "14%" }} />
@@ -87,28 +95,22 @@ export function MembersDirectory({
 						<col style={{ width: "14%" }} />
 						<col style={{ width: "52px" }} />
 					</colgroup>
-					<thead>
-						<tr className="text-left">
+					<TableHeader className="bg-muted/40">
+						<TableRow className="border-border hover:bg-transparent">
 							{["Member", "Role", "Campus", "Status", "Joined", ""].map((label) => (
-								<th
+								<TableHead
 									key={label || "actions"}
-									className="py-2.5 pr-3 font-medium text-[11px] text-dashboard-text-muted uppercase tracking-[0.06em] first:pl-4 last:pr-3"
+									className="h-10 text-[11px] text-muted-foreground uppercase tracking-[0.06em]"
 								>
 									{label ? label : <span className="sr-only">Actions</span>}
-								</th>
+								</TableHead>
 							))}
-						</tr>
-					</thead>
-					<tbody>
-						{members.map((member, index) => (
-							<tr
-								key={member.id}
-								className={cn(
-									"group/row transition-colors hover:bg-dashboard-hover",
-									index > 0 && "border-dashboard-border-subtle [&>td]:border-t",
-								)}
-							>
-								<td className="py-3 pr-3 pl-4 align-top">
+						</TableRow>
+					</TableHeader>
+					<TableBody className="bg-card">
+						{members.map((member) => (
+							<TableRow key={member.id} className="border-border">
+								<TableCell className="align-top">
 									<Button
 										type="button"
 										variant="ghost"
@@ -117,35 +119,35 @@ export function MembersDirectory({
 									>
 										<MemberIdentity member={member} isSelf={member.id === currentMembershipId} />
 									</Button>
-								</td>
-								<td className="py-3 pr-3 align-top">
+								</TableCell>
+								<TableCell className="align-top">
 									<MemberRoleBadge role={member.role} />
-								</td>
-								<td className="py-3 pr-3 align-top">
+								</TableCell>
+								<TableCell className="align-top">
 									<span className="block truncate text-[12.5px] text-dashboard-text-primary">
 										{member.campusName ?? "All campuses"}
 									</span>
-								</td>
-								<td className="py-3 pr-3 align-top">
+								</TableCell>
+								<TableCell className="align-top">
 									<MemberStatusBadge status={member.status} />
-								</td>
-								<td className="py-3 pr-3 align-top tabular-nums">
-									<span className="text-[12.5px] text-dashboard-text-secondary">
+								</TableCell>
+								<TableCell className="align-top tabular-nums">
+									<span className="text-[12.5px] text-muted-foreground">
 										{formatJoinedDate(member.createdAt)}
 									</span>
-								</td>
-								<td className="py-3 pr-3 align-top">
+								</TableCell>
+								<TableCell className="align-top">
 									<MemberRowMenu
 										member={member}
 										canResend={Boolean(actor?.canInvite && member.pendingInviteId)}
 										onOpen={() => onSelect(member)}
 										onResendInvite={onResendInvite}
 									/>
-								</td>
-							</tr>
+								</TableCell>
+							</TableRow>
 						))}
-					</tbody>
-				</table>
+					</TableBody>
+				</Table>
 			</div>
 		</div>
 	);

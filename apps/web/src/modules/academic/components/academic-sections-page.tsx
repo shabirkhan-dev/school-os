@@ -9,7 +9,17 @@ import { Field, FieldGroup, FieldLabel } from "@school-os/ui/components/field";
 import { Input } from "@school-os/ui/components/input";
 import { SelectField } from "@school-os/ui/components/select-field";
 import { Spinner } from "@school-os/ui/components/spinner";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { FormDrawer } from "@/components/admin";
+import {
+	DataTable,
+	type DataTableColumn,
+	DataTablePagination,
+	DataTableShell,
+	DataTableToolbar,
+	defaultSortFn,
+	useClientDataTable,
+} from "@/components/data-table";
 import {
 	useAcademicYearsQuery,
 	useClassesQuery,
@@ -28,6 +38,14 @@ const statusItems = [
 	{ label: "Active", value: "active" },
 	{ label: "Inactive", value: "inactive" },
 ];
+
+type SectionFormState = {
+	name: string;
+	academicYearId: string;
+	classId: string;
+	status: SectionStatus;
+	homeroomTeacherId: string;
+};
 
 export function AcademicSectionsPage() {
 	const { activeTenant, activeCampus, campuses } = useTenantContext();
@@ -76,65 +94,208 @@ export function AcademicSectionsPage() {
 		[teachersQuery.data],
 	);
 
-	const [editing, setEditing] = useState<Section | null>(null);
-	const [name, setName] = useState("");
-	const [academicYearId, setAcademicYearId] = useState("");
-	const [classId, setClassId] = useState("");
-	const [status, setStatus] = useState<SectionStatus>("active");
-	const [homeroomTeacherId, setHomeroomTeacherId] = useState("");
+	const [search, setSearch] = useState("");
+	const [yearFilter, setYearFilter] = useState("");
+	const [gradeFilter, setGradeFilter] = useState("");
+	const [statusFilter, setStatusFilter] = useState("");
+	const [drawerOpen, setDrawerOpen] = useState(false);
+	const [editingId, setEditingId] = useState<string | null>(null);
+	const [form, setForm] = useState<SectionFormState>({
+		name: "",
+		academicYearId: "",
+		classId: "",
+		status: "active",
+		homeroomTeacherId: "",
+	});
 	const [error, setError] = useState<string | null>(null);
 
-	function resetForm() {
-		setEditing(null);
-		setName("");
-		setAcademicYearId(yearItems[0]?.value ?? "");
-		setClassId(classItems[0]?.value ?? "");
-		setStatus("active");
-		setHomeroomTeacherId("");
+	const openEdit = useCallback((section: Section) => {
+		setEditingId(section.id);
+		setForm({
+			name: section.name,
+			academicYearId: section.academicYearId,
+			classId: section.classId,
+			status: section.status,
+			homeroomTeacherId: section.homeroomTeacherMembershipId ?? "",
+		});
+		setError(null);
+		setDrawerOpen(true);
+	}, []);
+
+	const columns = useMemo(
+		(): DataTableColumn<Section>[] => [
+			{
+				id: "section",
+				header: "Section",
+				sortable: true,
+				sortValue: (row) => row.name,
+				cell: (section) => (
+					<span className="font-medium">
+						{formatSectionLabel(
+							section,
+							classNameById.get(section.classId),
+							campuses.find((campus) => campus.id === section.campusId)?.name,
+						)}
+					</span>
+				),
+			},
+			{
+				id: "year",
+				header: "Year",
+				sortable: true,
+				sortValue: (row) => yearNameById.get(row.academicYearId) ?? "",
+				cell: (section) => (
+					<span className="text-dashboard-text-secondary">
+						{yearNameById.get(section.academicYearId) ?? section.academicYearId}
+					</span>
+				),
+			},
+			{
+				id: "grade",
+				header: "Grade",
+				sortable: true,
+				sortValue: (row) => classNameById.get(row.classId) ?? "",
+				cell: (section) => (
+					<span className="text-dashboard-text-secondary">
+						{classNameById.get(section.classId) ?? "Unknown grade"}
+					</span>
+				),
+			},
+			{
+				id: "homeroom",
+				header: "Homeroom",
+				cell: (section) => (
+					<span className="text-dashboard-text-secondary">
+						{section.homeroomTeacherMembershipId
+							? (teacherNameById.get(section.homeroomTeacherMembershipId) ?? "Assigned")
+							: "—"}
+					</span>
+				),
+			},
+			{
+				id: "status",
+				header: "Status",
+				sortable: true,
+				sortValue: (row) => row.status,
+				cell: (section) => (
+					<Badge variant="outline" className="capitalize">
+						{section.status}
+					</Badge>
+				),
+			},
+			{
+				id: "actions",
+				header: <span className="sr-only">Actions</span>,
+				headerClassName: "text-right",
+				className: "text-right",
+				cell: (section) =>
+					canWrite ? (
+						<div className="flex justify-end gap-1">
+							<Button
+								type="button"
+								size="icon-sm"
+								variant="outline"
+								aria-label={`Edit ${section.name}`}
+								onClick={() => openEdit(section)}
+							>
+								<HugeiconsIcon icon={Edit02Icon} strokeWidth={2} />
+							</Button>
+							<Button
+								type="button"
+								size="icon-sm"
+								variant="outline"
+								aria-label={`Delete ${section.name}`}
+								onClick={() => void deleteSection.mutateAsync(section.id).catch(() => undefined)}
+							>
+								<HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
+							</Button>
+						</div>
+					) : null,
+			},
+		],
+		[campuses, canWrite, classNameById, deleteSection, teacherNameById, yearNameById, openEdit],
+	);
+
+	const table = useClientDataTable({
+		data: sectionsQuery.data ?? [],
+		searchQuery: search,
+		searchFn: (row, queryText) => {
+			const label = formatSectionLabel(
+				row,
+				classNameById.get(row.classId),
+				campuses.find((campus) => campus.id === row.campusId)?.name,
+			);
+			const haystack = [
+				label,
+				row.name,
+				yearNameById.get(row.academicYearId),
+				classNameById.get(row.classId),
+				teacherNameById.get(row.homeroomTeacherMembershipId ?? ""),
+			]
+				.filter(Boolean)
+				.join(" ")
+				.toLowerCase();
+			return haystack.includes(queryText);
+		},
+		filterFn: (row, filters) => {
+			if (filters.year && row.academicYearId !== filters.year) return false;
+			if (filters.grade && row.classId !== filters.grade) return false;
+			if (filters.status && row.status !== filters.status) return false;
+			return true;
+		},
+		sortFn: (rows, sort) => defaultSortFn(rows, sort, columns),
+	});
+
+	function resetEditor() {
+		setEditingId(null);
+		setForm({
+			name: "",
+			academicYearId: yearItems[0]?.value ?? "",
+			classId: classItems[0]?.value ?? "",
+			status: "active",
+			homeroomTeacherId: "",
+		});
 		setError(null);
 	}
 
-	function startEdit(section: Section) {
-		setEditing(section);
-		setName(section.name);
-		setAcademicYearId(section.academicYearId);
-		setClassId(section.classId);
-		setStatus(section.status);
-		setHomeroomTeacherId(section.homeroomTeacherMembershipId ?? "");
-		setError(null);
+	function openCreate() {
+		resetEditor();
+		setDrawerOpen(true);
 	}
 
-	async function handleSubmit(event: React.FormEvent) {
-		event.preventDefault();
+	async function handleSave() {
 		if (!tenantId || !campusId || !canWrite) return;
 		setError(null);
 		try {
-			if (editing) {
-				await updateSection.mutateAsync({
-					sectionId: editing.id,
-					input: {
-						name,
-						status,
-						homeroomTeacherMembershipId: homeroomTeacherId || null,
-					},
-				});
-			} else {
-				if (!academicYearId || !classId) {
+			if (!editingId) {
+				if (!form.academicYearId || !form.classId) {
 					setError("Select an academic year and grade");
 					return;
 				}
 				await createSection.mutateAsync({
 					campusId,
-					academicYearId,
-					classId,
-					name,
+					academicYearId: form.academicYearId,
+					classId: form.classId,
+					name: form.name,
+				});
+			} else {
+				await updateSection.mutateAsync({
+					sectionId: editingId,
+					input: {
+						name: form.name,
+						status: form.status,
+						homeroomTeacherMembershipId: form.homeroomTeacherId || null,
+					},
 				});
 			}
-			resetForm();
+			setDrawerOpen(false);
+			resetEditor();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Could not save section");
 		}
 	}
+
+	const saving = createSection.isPending || updateSection.isPending;
 
 	if (!tenantId) {
 		return (
@@ -173,166 +334,176 @@ export function AcademicSectionsPage() {
 			title="Sections"
 			description="Sections belong to a campus, academic year, and grade. Switch campus from the sidebar to manage another site."
 		>
-			{canWrite ? (
-				<form
-					onSubmit={handleSubmit}
-					className="mb-6 rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4"
-				>
-					<h2 className="mb-3 font-medium text-[14px] text-dashboard-text-primary">
-						{editing ? "Edit section" : "Add section"}
-					</h2>
-					<FieldGroup className="grid gap-3 sm:grid-cols-2">
-						<Field className="sm:col-span-2">
-							<FieldLabel htmlFor="section-name">Section name</FieldLabel>
-							<Input
-								id="section-name"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								placeholder="5-A"
-								required
-							/>
-						</Field>
-						{!editing ? (
-							<>
-								<Field>
-									<FieldLabel htmlFor="section-year">Academic year</FieldLabel>
-									<SelectField
-										id="section-year"
-										value={academicYearId}
-										onValueChange={setAcademicYearId}
-										items={yearItems}
-										placeholder="Select year"
-									/>
-								</Field>
-								<Field>
-									<FieldLabel htmlFor="section-grade">Grade</FieldLabel>
-									<SelectField
-										id="section-grade"
-										value={classId}
-										onValueChange={setClassId}
-										items={classItems}
-										placeholder="Select grade"
-									/>
-								</Field>
-							</>
-						) : (
-							<>
-								<Field>
-									<FieldLabel htmlFor="section-status">Status</FieldLabel>
-									<SelectField
-										id="section-status"
-										value={status}
-										onValueChange={(value) => setStatus(value as SectionStatus)}
-										items={statusItems}
-									/>
-								</Field>
-								<Field className="sm:col-span-2">
-									<FieldLabel htmlFor="section-homeroom">Homeroom teacher</FieldLabel>
-									<SelectField
-										id="section-homeroom"
-										value={homeroomTeacherId}
-										onValueChange={setHomeroomTeacherId}
-										nullable
-										placeholder="No homeroom teacher"
-										items={teacherItems}
-									/>
-								</Field>
-							</>
-						)}
-					</FieldGroup>
-					{error ? <p className="mt-3 text-[12px] text-destructive">{error}</p> : null}
-					<div className="mt-4 flex gap-2">
-						<Button type="submit" disabled={createSection.isPending || updateSection.isPending}>
-							{createSection.isPending || updateSection.isPending ? (
-								<Spinner className="size-4" />
-							) : editing ? (
-								"Save changes"
-							) : (
-								"Create section"
-							)}
-						</Button>
-						{editing ? (
-							<Button type="button" variant="outline" onClick={resetForm}>
-								Cancel
-							</Button>
-						) : null}
-					</div>
-				</form>
-			) : null}
+			<DataTableShell
+				toolbar={
+					<DataTableToolbar
+						search={search}
+						onSearchChange={(value) => {
+							setSearch(value);
+							table.resetPage();
+						}}
+						searchPlaceholder="Search sections…"
+						filters={[
+							{
+								id: "year",
+								label: "Year",
+								value: yearFilter,
+								onChange: (value) => {
+									setYearFilter(value);
+									table.setFilter("year", value);
+								},
+								items: yearItems,
+							},
+							{
+								id: "grade",
+								label: "Grade",
+								value: gradeFilter,
+								onChange: (value) => {
+									setGradeFilter(value);
+									table.setFilter("grade", value);
+								},
+								items: classItems,
+							},
+							{
+								id: "status",
+								label: "Status",
+								value: statusFilter,
+								onChange: (value) => {
+									setStatusFilter(value);
+									table.setFilter("status", value);
+								},
+								items: statusItems,
+							},
+						]}
+						canAdd={canWrite}
+						onAdd={openCreate}
+						addLabel="Add section"
+					/>
+				}
+				footer={
+					<DataTablePagination
+						pageIndex={table.pageIndex}
+						pageCount={table.pageCount}
+						pageSize={table.pageSize}
+						totalRows={table.totalRows}
+						onPageChange={table.setPageIndex}
+						onPageSizeChange={(size) => {
+							table.setPageSize(size);
+							table.setPageIndex(0);
+						}}
+					/>
+				}
+			>
+				<DataTable
+					borderless
+					columns={columns}
+					rows={table.rows}
+					getRowId={(row) => row.id}
+					loading={sectionsQuery.isLoading}
+					sort={table.sort}
+					onSort={table.toggleSort}
+					emptyTitle="No sections found"
+					emptyDescription="Add a section or adjust your filters."
+				/>
+			</DataTableShell>
 
-			{sectionsQuery.isLoading ? (
-				<div className="flex justify-center py-10">
-					<Spinner />
-				</div>
-			) : (
-				<div className="overflow-hidden rounded-[14px] border border-dashboard-border">
-					<table className="w-full text-[13px]">
-						<thead className="bg-dashboard-surface-strong text-left text-[11px] text-dashboard-text-muted uppercase">
-							<tr>
-								<th className="px-4 py-2.5">Section</th>
-								<th className="px-4 py-2.5">Year</th>
-								<th className="px-4 py-2.5">Grade</th>
-								<th className="px-4 py-2.5">Homeroom</th>
-								<th className="px-4 py-2.5">Status</th>
-								{canWrite ? <th className="px-4 py-2.5 text-right">Actions</th> : null}
-							</tr>
-						</thead>
-						<tbody>
-							{(sectionsQuery.data ?? []).map((section) => (
-								<tr key={section.id} className="border-dashboard-border-subtle border-t">
-									<td className="px-4 py-3 font-medium">
-										{formatSectionLabel(
-											section,
-											classNameById.get(section.classId),
-											campuses.find((campus) => campus.id === section.campusId)?.name,
-										)}
-									</td>
-									<td className="px-4 py-3 text-dashboard-text-secondary">
-										{yearNameById.get(section.academicYearId) ?? section.academicYearId}
-									</td>
-									<td className="px-4 py-3 text-dashboard-text-secondary">
-										{classNameById.get(section.classId) ?? "Unknown grade"}
-									</td>
-									<td className="px-4 py-3 text-dashboard-text-secondary">
-										{section.homeroomTeacherMembershipId
-											? (teacherNameById.get(section.homeroomTeacherMembershipId) ?? "Assigned")
-											: "—"}
-									</td>
-									<td className="px-4 py-3">
-										<Badge variant="outline">{section.status}</Badge>
-									</td>
-									{canWrite ? (
-										<td className="px-4 py-3">
-											<div className="flex justify-end gap-1">
-												<Button
-													type="button"
-													size="icon-sm"
-													variant="outline"
-													aria-label={`Edit ${section.name}`}
-													onClick={() => startEdit(section)}
-												>
-													<HugeiconsIcon icon={Edit02Icon} strokeWidth={2} />
-												</Button>
-												<Button
-													type="button"
-													size="icon-sm"
-													variant="outline"
-													aria-label={`Delete ${section.name}`}
-													onClick={() =>
-														void deleteSection.mutateAsync(section.id).catch(() => undefined)
-													}
-												>
-													<HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-												</Button>
-											</div>
-										</td>
-									) : null}
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
-			)}
+			<FormDrawer
+				open={drawerOpen}
+				onOpenChange={setDrawerOpen}
+				title={editingId ? "Edit section" : "Add section"}
+				description={
+					editingId
+						? "Update section details, status, and homeroom teacher."
+						: "Create a section for the active campus, year, and grade."
+				}
+				onSubmit={() => void handleSave()}
+				submitLabel={editingId ? "Save changes" : "Create section"}
+				saving={saving}
+				error={error}
+				submitDisabled={!form.name.trim()}
+			>
+				<SectionFormFields
+					mode={editingId ? "edit" : "create"}
+					form={form}
+					setForm={setForm}
+					yearItems={yearItems}
+					classItems={classItems}
+					teacherItems={teacherItems}
+				/>
+			</FormDrawer>
 		</AcademicPageShell>
+	);
+}
+
+function SectionFormFields({
+	mode,
+	form,
+	setForm,
+	yearItems,
+	classItems,
+	teacherItems,
+}: {
+	mode: "create" | "edit";
+	form: SectionFormState;
+	setForm: (next: SectionFormState) => void;
+	yearItems: { label: string; value: string }[];
+	classItems: { label: string; value: string }[];
+	teacherItems: { label: string; value: string }[];
+}) {
+	return (
+		<FieldGroup className="grid gap-4">
+			<Field>
+				<FieldLabel>Section name</FieldLabel>
+				<Input
+					value={form.name}
+					onChange={(event) => setForm({ ...form, name: event.target.value })}
+					placeholder="5-A"
+					required
+				/>
+			</Field>
+			{mode === "create" ? (
+				<>
+					<Field>
+						<FieldLabel>Academic year</FieldLabel>
+						<SelectField
+							value={form.academicYearId}
+							onValueChange={(value) => setForm({ ...form, academicYearId: value })}
+							items={yearItems}
+							placeholder="Select year"
+						/>
+					</Field>
+					<Field>
+						<FieldLabel>Grade</FieldLabel>
+						<SelectField
+							value={form.classId}
+							onValueChange={(value) => setForm({ ...form, classId: value })}
+							items={classItems}
+							placeholder="Select grade"
+						/>
+					</Field>
+				</>
+			) : (
+				<>
+					<Field>
+						<FieldLabel>Status</FieldLabel>
+						<SelectField
+							value={form.status}
+							onValueChange={(value) => setForm({ ...form, status: value as SectionStatus })}
+							items={statusItems}
+						/>
+					</Field>
+					<Field>
+						<FieldLabel>Homeroom teacher</FieldLabel>
+						<SelectField
+							value={form.homeroomTeacherId}
+							onValueChange={(value) => setForm({ ...form, homeroomTeacherId: value })}
+							items={teacherItems}
+							nullable
+							placeholder="No homeroom teacher"
+						/>
+					</Field>
+				</>
+			)}
+		</FieldGroup>
 	);
 }
