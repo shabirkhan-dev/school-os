@@ -8,6 +8,7 @@ export * from './auth-identities.schema';
 export * from './campuses.schema';
 export * from './classes.schema';
 export * from './enrollments.schema';
+export * from './membership-invites.schema';
 export * from './memberships.schema';
 export * from './outbox-events.schema';
 export * from './passkeys.schema';

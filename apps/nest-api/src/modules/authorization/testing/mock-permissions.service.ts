@@ -9,6 +9,7 @@ const readOnlyTenantAccess = new Set<PermissionCode>([
 	PermissionCodes.ACADEMIC_READ,
 	PermissionCodes.STUDENTS_READ,
 	PermissionCodes.ATTENDANCE_READ,
+	PermissionCodes.TENANT_MEMBERSHIP_READ,
 ]);
 
 const teacherTenantAccess = new Set<PermissionCode>([

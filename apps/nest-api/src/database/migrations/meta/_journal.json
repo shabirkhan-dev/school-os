@@ -57,6 +57,34 @@
       "when": 1785100647371,
       "tag": "0007_tenant_config",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785200647371,
+      "tag": "0008_academic_structure",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785300647371,
+      "tag": "0009_students_enrollment",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785400647371,
+      "tag": "0010_attendance",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1785500647371,
+      "tag": "0011_membership_management",
+      "breakpoints": true
     }
   ]
 }
