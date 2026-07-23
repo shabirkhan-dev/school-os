@@ -9,6 +9,7 @@ import { DatePicker } from "@school-os/ui/components/date-picker";
 import { Field, FieldGroup, FieldLabel } from "@school-os/ui/components/field";
 import { SelectField } from "@school-os/ui/components/select-field";
 import { Spinner } from "@school-os/ui/components/spinner";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useClassesQuery, useSectionsQuery } from "@/modules/academic";
 import { formatSectionLabel } from "@/modules/academic/utils/format-section-label";
@@ -17,7 +18,10 @@ import {
 	useMarkAttendanceMutation,
 } from "@/modules/attendance/hooks/use-attendance-queries";
 import type { AttendanceMarkStatus } from "@/modules/attendance/types/attendance.types";
-import { useMyTeacherProfileQuery } from "@/modules/staff/hooks/use-staff-queries";
+import {
+	useMySectionStudentsQuery,
+	useMyTeacherProfileQuery,
+} from "@/modules/staff/hooks/use-staff-queries";
 import { useSectionEnrollmentsQuery, useStudentsQuery } from "@/modules/students";
 import {
 	PermissionCodes,
@@ -36,6 +40,9 @@ import { AttendanceSmartToolbar } from "./attendance-smart-toolbar";
 import { AttendanceSummaryStrip } from "./attendance-summary-strip";
 
 export function AttendancePage() {
+	const searchParams = useSearchParams();
+	const initialSectionId = searchParams.get("sectionId") ?? "";
+	const initialSessionDate = searchParams.get("sessionDate") ?? "";
 	const { activeTenant, activeCampus, campuses } = useTenantContext();
 	const { can, role, isLoading: permissionsLoading } = usePermissions();
 	const tenantId = activeTenant?.id ?? null;
@@ -48,7 +55,7 @@ export function AttendancePage() {
 	const sectionsQuery = useSectionsQuery(tenantId, campusId, canRead && !isTeacherScoped);
 	const classesQuery = useClassesQuery(tenantId, canReadAcademic);
 	const myProfileQuery = useMyTeacherProfileQuery(tenantId, canRead && isTeacherScoped);
-	const studentsQuery = useStudentsQuery(tenantId, campusId, canRead);
+	const studentsQuery = useStudentsQuery(tenantId, campusId, canRead && !isTeacherScoped);
 	const orgConfigQuery = useOrganizationConfigQuery(tenantId, canRead);
 
 	const classNameById = useMemo(
@@ -62,12 +69,24 @@ export function AttendancePage() {
 
 	const selectableSections = useMemo(() => {
 		if (isTeacherScoped) {
-			return myProfileQuery.data?.homeroomSections ?? [];
+			return (
+				myProfileQuery.data?.homeroomSections ??
+				myProfileQuery.data?.accessibleSections.filter(
+					(section) => section.accessType === "homeroom",
+				) ??
+				[]
+			);
 		}
 		return (sectionsQuery.data ?? []).filter(
 			(section) => !campusId || section.campusId === campusId,
 		);
-	}, [campusId, isTeacherScoped, myProfileQuery.data?.homeroomSections, sectionsQuery.data]);
+	}, [
+		campusId,
+		isTeacherScoped,
+		myProfileQuery.data?.accessibleSections,
+		myProfileQuery.data?.homeroomSections,
+		sectionsQuery.data,
+	]);
 
 	const sectionSelectItems = useMemo(
 		() =>
@@ -82,8 +101,10 @@ export function AttendancePage() {
 		[campusNameById, classNameById, selectableSections],
 	);
 
-	const [sectionId, setSectionId] = useState("");
-	const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
+	const [sectionId, setSectionId] = useState(initialSectionId);
+	const [sessionDate, setSessionDate] = useState(
+		() => initialSessionDate || new Date().toLocaleDateString("en-CA"),
+	);
 	const [sessionId, setSessionId] = useState<string | null>(null);
 	const [savedMarks, setSavedMarks] = useState<Record<string, AttendanceMarkStatus>>({});
 	const [markDraft, setMarkDraft] = useState<Record<string, AttendanceMarkStatus>>({});
@@ -97,10 +118,18 @@ export function AttendancePage() {
 	const [error, setError] = useState<string | null>(null);
 	const autoLoadedKey = useRef<string | null>(null);
 
+	const canMarkThisSection =
+		canMark && (!isTeacherScoped || selectableSections.some((section) => section.id === sectionId));
+
 	const enrollmentsQuery = useSectionEnrollmentsQuery(
 		tenantId,
 		sectionId || null,
-		Boolean(sectionId),
+		Boolean(sectionId) && !isTeacherScoped,
+	);
+	const sectionStudentsQuery = useMySectionStudentsQuery(
+		tenantId,
+		sectionId || null,
+		Boolean(sectionId) && isTeacherScoped,
 	);
 	const loadSession = useGetOrCreateSessionMutation(tenantId ?? "");
 	const markAttendance = useMarkAttendanceMutation(tenantId ?? "", sessionId ?? "");
@@ -113,7 +142,20 @@ export function AttendancePage() {
 		setSectionId(sectionSelectItems[0]?.value ?? "");
 	}, [sectionId, sectionSelectItems]);
 
+	useEffect(() => {
+		if (!initialSectionId || sectionId) return;
+		if (sectionSelectItems.some((item) => item.value === initialSectionId)) {
+			setSectionId(initialSectionId);
+		}
+	}, [initialSectionId, sectionId, sectionSelectItems]);
+
 	const rosterStudents = useMemo(() => {
+		if (isTeacherScoped) {
+			return (sectionStudentsQuery.data ?? [])
+				.map((row) => row.student)
+				.sort((a, b) => a.fullName.localeCompare(b.fullName));
+		}
+
 		const students = studentsQuery.data ?? [];
 		const studentMap = new Map(students.map((student) => [student.id, student]));
 		return (enrollmentsQuery.data ?? [])
@@ -121,7 +163,7 @@ export function AttendancePage() {
 			.map((enrollment) => studentMap.get(enrollment.studentId))
 			.filter((student): student is NonNullable<typeof student> => Boolean(student))
 			.sort((a, b) => a.fullName.localeCompare(b.fullName));
-	}, [enrollmentsQuery.data, studentsQuery.data]);
+	}, [enrollmentsQuery.data, isTeacherScoped, sectionStudentsQuery.data, studentsQuery.data]);
 
 	const rosterIds = useMemo(() => rosterStudents.map((student) => student.id), [rosterStudents]);
 
@@ -277,8 +319,8 @@ export function AttendancePage() {
 			setError("Load a session first");
 			return;
 		}
-		if (!canMark) {
-			setError("You do not have permission to mark attendance");
+		if (!canMarkThisSection) {
+			setError("You do not have permission to mark attendance for this section");
 			return;
 		}
 		const marks = rosterIds.map((studentId) => ({
@@ -414,12 +456,14 @@ export function AttendancePage() {
 							onScanSubmit={handleScanSubmit}
 							onMarkAllPresent={handleMarkAllPresent}
 							onMarkUnmarkedAbsent={handleMarkUnmarkedAbsent}
-							canMark={canMark}
+							canMark={canMarkThisSection}
 							lastScanMessage={lastScanMessage}
 						/>
 
 						<div className="mt-4">
-							{enrollmentsQuery.isLoading || studentsQuery.isLoading ? (
+							{enrollmentsQuery.isLoading ||
+							studentsQuery.isLoading ||
+							sectionStudentsQuery.isLoading ? (
 								<div className="flex justify-center py-12">
 									<Spinner className="size-6" />
 								</div>
@@ -437,7 +481,7 @@ export function AttendancePage() {
 										roster={filteredRoster}
 										markDraft={markDraft}
 										highlightStudentId={highlightStudentId}
-										canMark={canMark}
+										canMark={canMarkThisSection}
 										onStatusChange={(studentId, status) =>
 											setMarkDraft((current) => ({ ...current, [studentId]: status }))
 										}
@@ -447,7 +491,7 @@ export function AttendancePage() {
 						</div>
 					</div>
 
-					{canMark && rosterStudents.length > 0 ? (
+					{canMarkThisSection && rosterStudents.length > 0 ? (
 						<div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-dashboard-border bg-dashboard-surface/95 px-4 py-3 shadow-lg backdrop-blur-sm">
 							<p className="text-[12px] text-dashboard-text-secondary">
 								<span className="font-medium tabular-nums text-dashboard-text-primary">

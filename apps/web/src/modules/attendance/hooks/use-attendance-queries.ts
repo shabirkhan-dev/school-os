@@ -59,7 +59,10 @@ export function useMarkAttendanceMutation(tenantId: string, sessionId: string) {
 		mutationFn: (input: MarkAttendanceInput) =>
 			attendanceService.markAttendance(requireToken(token), tenantId, sessionId, input),
 		onSuccess: async () => {
-			await queryClient.invalidateQueries({ queryKey: ["attendance", "session", tenantId] });
+			await Promise.all([
+				queryClient.invalidateQueries({ queryKey: ["attendance", "session", tenantId] }),
+				queryClient.invalidateQueries({ queryKey: ["staff", tenantId, "me", "dashboard"] }),
+			]);
 		},
 	});
 }

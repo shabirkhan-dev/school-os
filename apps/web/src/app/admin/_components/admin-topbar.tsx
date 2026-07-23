@@ -37,6 +37,9 @@ function crumbsForPath(pathname: string): Crumb[] {
 			{ label: "Security" },
 		];
 	}
+	if (pathname.startsWith("/admin/timetable")) {
+		return [{ label: "Dashboard", href: "/admin" }, { label: "Timetable" }];
+	}
 	return defaultCrumbs;
 }
 
