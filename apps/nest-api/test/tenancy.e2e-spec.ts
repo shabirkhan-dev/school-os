@@ -177,6 +177,58 @@ describe('Tenancy (e2e)', () => {
 		expect(patchConfig.body.data.config.communicationPolicy.notifyAllGuardians).toBe(true);
 	});
 
+	it('creates academic years, classes, and sections for tenant owners', async () => {
+		const campuses = await request(app.getHttpServer())
+			.get(`/api/v1/tenants/${tenantId}/campuses`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.expect(200);
+
+		const campusId = campuses.body.data.campuses[0].id as string;
+
+		const createYear = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/academic-years`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({
+				name: '2026–27',
+				startsOn: '2026-04-01',
+				endsOn: '2027-03-31',
+				status: 'active',
+			})
+			.expect(201);
+
+		const academicYearId = createYear.body.data.academicYear.id as string;
+		expect(createYear.body.data.academicYear.status).toBe('active');
+
+		const createClass = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/classes`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({ name: 'Grade 7', sortOrder: 7 })
+			.expect(201);
+
+		const classId = createClass.body.data.class.id as string;
+
+		const createSection = await request(app.getHttpServer())
+			.post(`/api/v1/tenants/${tenantId}/sections`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.send({
+				campusId,
+				classId,
+				academicYearId,
+				name: '7-B',
+			})
+			.expect(201);
+
+		expect(createSection.body.data.section.name).toBe('7-B');
+
+		const listSections = await request(app.getHttpServer())
+			.get(`/api/v1/tenants/${tenantId}/sections`)
+			.set('Authorization', `Bearer ${accessToken}`)
+			.query({ campusId, academicYearId })
+			.expect(200);
+
+		expect(listSections.body.data.sections).toHaveLength(1);
+	});
+
 	it('returns validation errors for invalid tenant input', async () => {
 		const response = await request(app.getHttpServer())
 			.post('/api/v1/tenants')

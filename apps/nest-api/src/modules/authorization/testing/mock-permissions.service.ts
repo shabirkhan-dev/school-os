@@ -4,7 +4,10 @@ import { type PermissionCode, PermissionCodes } from '../permission-codes';
 import { PermissionsService, permissionDenied } from '../permissions.service';
 
 const fullTenantAccess = new Set<PermissionCode>(Object.values(PermissionCodes));
-const readOnlyTenantAccess = new Set<PermissionCode>([PermissionCodes.TENANT_SETTINGS_READ]);
+const readOnlyTenantAccess = new Set<PermissionCode>([
+	PermissionCodes.TENANT_SETTINGS_READ,
+	PermissionCodes.ACADEMIC_READ,
+]);
 
 const roleMatrix: Record<MembershipRecord['role'], ReadonlySet<PermissionCode>> = {
 	owner: fullTenantAccess,
