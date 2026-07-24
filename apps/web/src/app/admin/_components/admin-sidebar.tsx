@@ -231,10 +231,7 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 												return (
 													<DropdownMenuItem
 														key={s.id}
-														onClick={() => {
-															if (activeTenant) setActiveTenantId(activeTenant.id);
-															setActiveCampusId(s.id);
-														}}
+														onClick={() => setActiveCampusId(s.id)}
 														className="gap-3 focus:bg-dashboard-hover-strong"
 													>
 														<div className="flex size-8 items-center justify-center rounded-md bg-dashboard-accent-soft font-bold text-[13px] text-dashboard-accent">
