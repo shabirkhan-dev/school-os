@@ -2,6 +2,7 @@
 
 import { ArrowDown01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
 import { Skeleton } from "@school-os/ui/components/skeleton";
 import {
 	Table,
@@ -99,17 +100,18 @@ export function DataTable<T>({
 								)}
 							>
 								{column.sortable && onSort ? (
-									<button
-										type="button"
-										className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-foreground"
+									<Button
+										variant="ghost"
+										size="sm"
 										onClick={() => onSort(column.id)}
+										className="h-auto gap-1.5 p-0 text-xs hover:bg-transparent hover:text-foreground"
 									>
 										{column.header}
 										<SortIndicator
 											active={sort?.id === column.id}
 											direction={sort?.id === column.id ? sort.direction : undefined}
 										/>
-									</button>
+									</Button>
 								) : (
 									column.header
 								)}

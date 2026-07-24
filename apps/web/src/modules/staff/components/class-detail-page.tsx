@@ -179,14 +179,17 @@ export function ClassDetailPage({ sectionId }: Props) {
 				sortable: true,
 				sortValue: (row) => row.student.fullName,
 				cell: (row) => (
-					<button
-						type="button"
-						className="min-w-[140px] text-start hover:underline"
+					<Button
+						variant="link"
+						size="sm"
+						className="h-auto min-w-[140px] flex-col items-start gap-0 whitespace-normal p-0 text-start"
 						onClick={() => openProfile(row.student.id)}
 					>
-						<p className="font-medium text-foreground">{row.student.fullName}</p>
-						<p className="font-mono text-[12px] text-muted-foreground">{row.student.studentCode}</p>
-					</button>
+						<span className="font-medium text-sm text-foreground">{row.student.fullName}</span>
+						<span className="block font-mono text-[12px] text-muted-foreground">
+							{row.student.studentCode}
+						</span>
+					</Button>
 				),
 			},
 			{

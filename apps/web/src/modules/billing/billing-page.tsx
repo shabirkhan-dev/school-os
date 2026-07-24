@@ -4,11 +4,13 @@ import {
 	ArrowRight01Icon,
 	CheckmarkCircle02Icon,
 	CreditCardIcon,
-	Loading03Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Badge } from "@school-os/ui/components/badge";
 import { Button, buttonVariants } from "@school-os/ui/components/button";
+import { Skeleton } from "@school-os/ui/components/skeleton";
+import { Spinner } from "@school-os/ui/components/spinner";
+import { ToggleGroup, ToggleGroupItem } from "@school-os/ui/components/toggle-group";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -249,9 +251,9 @@ export function BillingPageContent() {
 													{plan.label}
 												</p>
 												{plan.recommended ? (
-													<span className="rounded-md bg-dashboard-text-primary px-1.5 py-0.5 font-medium text-[10px] text-dashboard-bg">
+													<Badge className="h-auto rounded-md bg-dashboard-text-primary px-1.5 py-0.5 text-[10px] text-dashboard-bg">
 														Popular
-													</span>
+													</Badge>
 												) : null}
 											</div>
 											<p className="mt-1 text-[12px] text-dashboard-text-muted leading-5">
@@ -422,11 +424,7 @@ export function BillingPageContent() {
 								>
 									{busy ? (
 										<>
-											<HugeiconsIcon
-												icon={Loading03Icon}
-												className="size-4 animate-spin"
-												strokeWidth={1.8}
-											/>
+											<Spinner />
 											Redirecting…
 										</>
 									) : (
@@ -470,20 +468,27 @@ function IntervalToggle({
 	onChange: (next: BillingInterval) => void;
 }) {
 	return (
-		<fieldset className="m-0 inline-flex rounded-lg border border-dashboard-border bg-dashboard-surface-elevated p-0.5">
-			<legend className="sr-only">Billing interval</legend>
+		<ToggleGroup
+			value={[value]}
+			onValueChange={(next) => {
+				const selected = next[0] as BillingInterval | undefined;
+				if (selected) onChange(selected);
+			}}
+			aria-label="Billing interval"
+			spacing={0}
+			className="rounded-lg border border-dashboard-border bg-dashboard-surface-elevated p-0.5"
+		>
 			{(["monthly", "yearly"] as const).map((interval) => {
 				const active = value === interval;
 				return (
-					<button
+					<ToggleGroupItem
 						key={interval}
-						type="button"
-						onClick={() => onChange(interval)}
+						value={interval}
 						className={cn(
-							"relative h-8 rounded-md px-3 text-[12px] capitalize transition-colors",
+							"relative h-8 rounded-md! px-3! text-[12px] capitalize transition-colors",
 							active
-								? "bg-dashboard-text-primary font-medium text-dashboard-bg"
-								: "text-dashboard-text-secondary hover:text-dashboard-text-primary",
+								? "bg-dashboard-text-primary font-medium text-dashboard-bg hover:bg-dashboard-text-primary hover:text-dashboard-bg aria-pressed:bg-dashboard-text-primary aria-pressed:text-dashboard-bg"
+								: "text-dashboard-text-secondary hover:bg-transparent hover:text-dashboard-text-primary",
 						)}
 					>
 						{interval}
@@ -499,10 +504,10 @@ function IntervalToggle({
 								Save 17%
 							</span>
 						) : null}
-					</button>
+					</ToggleGroupItem>
 				);
 			})}
-		</fieldset>
+		</ToggleGroup>
 	);
 }
 
@@ -591,13 +596,13 @@ function BillingSkeleton() {
 	return (
 		<div className="min-h-[calc(100vh-4rem)] bg-dashboard-bg">
 			<div className="mx-auto w-full max-w-[1120px] px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
-				<div className="h-20 animate-pulse rounded-lg bg-dashboard-surface" />
+				<Skeleton className="h-20 rounded-lg bg-dashboard-surface" />
 				<div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
 					<div className="space-y-5">
-						<div className="h-24 animate-pulse rounded-[16px] bg-dashboard-surface" />
-						<div className="h-80 animate-pulse rounded-[16px] bg-dashboard-surface" />
+						<Skeleton className="h-24 rounded-[16px] bg-dashboard-surface" />
+						<Skeleton className="h-80 rounded-[16px] bg-dashboard-surface" />
 					</div>
-					<div className="h-72 animate-pulse rounded-[16px] bg-dashboard-surface" />
+					<Skeleton className="h-72 rounded-[16px] bg-dashboard-surface" />
 				</div>
 			</div>
 		</div>

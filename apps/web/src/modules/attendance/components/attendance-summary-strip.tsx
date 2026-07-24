@@ -1,5 +1,6 @@
 "use client";
 
+import { Toggle } from "@school-os/ui/components/toggle";
 import { cn } from "@/lib/utils";
 import type { AttendanceStatusCounts } from "../types/attendance.types";
 import type { AttendanceStatusFilter } from "../utils/attendance-ui.utils";
@@ -58,14 +59,14 @@ export function AttendanceSummaryStrip({ summary, activeFilter, onFilterChange }
 					const tone = card.status ? ATTENDANCE_STATUS_CONFIG[card.status].tone : "";
 
 					return (
-						<button
+						<Toggle
 							key={card.key}
-							type="button"
-							onClick={() => onFilterChange(card.key)}
+							pressed={isActive}
+							onPressedChange={() => onFilterChange(card.key)}
 							className={cn(
-								"rounded-[12px] border px-3 py-2.5 text-left transition-colors",
+								"h-auto flex-col items-start justify-start rounded-[12px] border px-3 py-2.5 text-left whitespace-normal",
 								isActive
-									? "border-dashboard-accent bg-dashboard-accent-soft ring-1 ring-dashboard-accent/30"
+									? "border-dashboard-accent bg-dashboard-accent-soft ring-1 ring-dashboard-accent/30 aria-pressed:bg-dashboard-accent-soft"
 									: "border-dashboard-border bg-dashboard-surface hover:bg-dashboard-surface-hover",
 							)}
 						>
@@ -80,7 +81,7 @@ export function AttendanceSummaryStrip({ summary, activeFilter, onFilterChange }
 							>
 								{count}
 							</p>
-						</button>
+						</Toggle>
 					);
 				})}
 			</div>

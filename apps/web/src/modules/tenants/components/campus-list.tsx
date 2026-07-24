@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@school-os/ui/components/badge";
+import { Button } from "@school-os/ui/components/button";
 import { Spinner } from "@school-os/ui/components/spinner";
 import type { Campus } from "../types/tenant.types";
 
@@ -37,10 +38,10 @@ export function CampusList({ campuses, loading, activeCampusId, onSelect }: Camp
 				const active = campus.id === activeCampusId;
 				return (
 					<li key={campus.id}>
-						<button
-							type="button"
+						<Button
+							variant="ghost"
 							onClick={() => onSelect?.(campus.id)}
-							className="flex w-full items-start gap-4 px-4 py-4 text-left transition-colors hover:bg-dashboard-hover"
+							className="h-auto w-full items-start justify-start gap-4 rounded-none px-4 py-4 text-left whitespace-normal hover:bg-dashboard-hover"
 						>
 							<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-dashboard-accent-soft font-bold text-[13px] text-dashboard-accent">
 								{campus.code.slice(0, 2)}
@@ -61,7 +62,7 @@ export function CampusList({ campuses, loading, activeCampusId, onSelect }: Camp
 									<p className="mt-1 text-[12px] text-dashboard-text-muted">{campus.address}</p>
 								) : null}
 							</div>
-						</button>
+						</Button>
 					</li>
 				);
 			})}
