@@ -136,4 +136,13 @@ export class AppConfigService {
 	get aiServiceToken(): string {
 		return this.config.aiServiceToken;
 	}
+	get outboxWorkerEnabled(): boolean {
+		return this.config.outboxWorkerEnabled;
+	}
+	get outboxPollIntervalMs(): number {
+		return this.config.outboxPollIntervalMs;
+	}
+	get outboxBatchSize(): number {
+		return this.config.outboxBatchSize;
+	}
 }

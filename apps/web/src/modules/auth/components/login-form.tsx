@@ -137,10 +137,14 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 								onSubmit={(event) => {
 									event.preventDefault();
 									clearError();
-									const input = loginSchema.parse({ email, password });
-									login.mutate(input, {
-										onSuccess: (result) => {
-											if ("requiresTwoFactor" in result) setChallenge(result);
+									const result = loginSchema.safeParse({ email, password });
+									if (!result.success) {
+										setNotice(result.error.issues[0]?.message ?? "Invalid input");
+										return;
+									}
+									login.mutate(result.data, {
+										onSuccess: (loginResult) => {
+											if ("requiresTwoFactor" in loginResult) setChallenge(loginResult);
 											else finish();
 										},
 									});

@@ -60,7 +60,7 @@ type Props = {
 export function TopbarActions({
 	avatarSrc,
 	avatarFallback,
-	unreadNotifications = true,
+	unreadNotifications = false,
 	className,
 }: Props) {
 	const { user } = useAuth();

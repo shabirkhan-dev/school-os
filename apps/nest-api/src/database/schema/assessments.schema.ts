@@ -7,6 +7,7 @@ import {
 	pgTable,
 	text,
 	timestamp,
+	uniqueIndex,
 	uuid,
 	varchar,
 } from 'drizzle-orm/pg-core';
@@ -55,6 +56,7 @@ export const assessments = pgTable(
 		index('assessments_tenant_id_idx').on(table.tenantId),
 		index('assessments_section_subject_id_idx').on(table.sectionSubjectId),
 		index('assessments_assessed_on_idx').on(table.tenantId, table.assessedOn),
+		index('assessments_status_idx').on(table.status),
 	],
 );
 
@@ -79,6 +81,10 @@ export const assessmentResults = pgTable(
 	(table) => [
 		index('assessment_results_tenant_id_idx').on(table.tenantId),
 		index('assessment_results_assessment_id_idx').on(table.assessmentId),
+		uniqueIndex('assessment_results_assessment_student_idx').on(
+			table.assessmentId,
+			table.studentId,
+		),
 	],
 );
 

@@ -1,10 +1,12 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import type { AccessTokenPayload } from '@/modules/auth/auth.types';
 import { CurrentUser } from '@/modules/auth/current-user.decorator';
 import { JwtAuthGuard } from '@/modules/auth/jwt-auth.guard';
+import { TenantGuard } from '@/modules/tenants/tenant.guard';
 import {
 	AcademicDraftRequestDto,
 	AssistRequestDto,
@@ -15,7 +17,8 @@ import { AiService } from './ai.service';
 
 @ApiTags('AI')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
+@Throttle({ default: { limit: 10, ttl: 60_000 } })
 @Controller({ path: 'ai', version: '1' })
 export class AiController {
 	constructor(private readonly ai: AiService) {}

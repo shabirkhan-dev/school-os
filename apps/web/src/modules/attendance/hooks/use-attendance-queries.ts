@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { requireToken } from "@/lib/api/require-token";
 import { useAuth } from "@/modules/auth/context/auth-context";
 import { attendanceQueryKeys } from "../queries/attendance-query-keys";
 import { attendanceService } from "../services/attendance.service";
@@ -10,11 +11,6 @@ import type {
 	CreateAttendanceSessionInput,
 	MarkAttendanceInput,
 } from "../types/attendance.types";
-
-function requireToken(token: string | null): string {
-	if (!token) throw new Error("Authentication required");
-	return token;
-}
 
 export function useAttendanceSessionQuery(
 	tenantId: string | null,

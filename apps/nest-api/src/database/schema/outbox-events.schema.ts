@@ -26,6 +26,7 @@ export const outboxEvents = pgTable(
 	},
 	(table) => [
 		index('outbox_events_tenant_status_idx').on(table.tenantId, table.status),
+		index('outbox_events_status_created_idx').on(table.status, table.createdAt),
 		index('outbox_events_created_at_idx').on(table.createdAt),
 	],
 );

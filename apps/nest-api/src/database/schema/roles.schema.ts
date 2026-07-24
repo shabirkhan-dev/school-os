@@ -1,4 +1,4 @@
-import { index, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { index, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
 
 import { tenants } from './tenants.schema';
 
@@ -16,6 +16,7 @@ export const roles = pgTable(
 	(table) => [
 		index('roles_tenant_id_idx').on(table.tenantId),
 		index('roles_code_idx').on(table.code),
+		uniqueIndex('roles_tenant_code_idx').on(table.tenantId, table.code),
 	],
 );
 

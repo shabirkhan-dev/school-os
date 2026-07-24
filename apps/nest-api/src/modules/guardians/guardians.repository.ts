@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 
+import type { Database } from '@/database/database.service';
 import { DatabaseService } from '@/database/database.service';
 import { guardians, studentGuardians, students } from '@/database/schema';
 
@@ -33,6 +34,11 @@ export class GuardiansRepository {
 
 	async createGuardian(input: typeof guardians.$inferInsert) {
 		const [row] = await this.database.db.insert(guardians).values(input).returning();
+		return row;
+	}
+
+	async createGuardianWithTx(tx: Database, input: typeof guardians.$inferInsert) {
+		const [row] = await tx.insert(guardians).values(input).returning();
 		return row;
 	}
 
@@ -74,6 +80,11 @@ export class GuardiansRepository {
 
 	async linkStudentGuardian(input: typeof studentGuardians.$inferInsert) {
 		const [row] = await this.database.db.insert(studentGuardians).values(input).returning();
+		return row;
+	}
+
+	async linkStudentGuardianWithTx(tx: Database, input: typeof studentGuardians.$inferInsert) {
+		const [row] = await tx.insert(studentGuardians).values(input).returning();
 		return row;
 	}
 

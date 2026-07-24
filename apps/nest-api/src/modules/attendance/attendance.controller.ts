@@ -110,7 +110,13 @@ export class AttendanceController {
 		@Param('studentId', new ParseUUIDPipe({ version: '4' })) studentId: string,
 		@Query('limit') limit?: string,
 	) {
-		const parsedLimit = limit ? Number.parseInt(limit, 10) : undefined;
+		let parsedLimit = 50;
+		if (limit) {
+			const n = Number.parseInt(limit, 10);
+			if (!Number.isNaN(n) && n >= 1 && n <= 200) {
+				parsedLimit = n;
+			}
+		}
 		return this.attendance.getStudentHistory(user.sub, tenantId, studentId, parsedLimit);
 	}
 }

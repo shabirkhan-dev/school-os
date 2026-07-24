@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { requireToken } from "@/lib/api/require-token";
 import { useAuth } from "@/modules/auth/context/auth-context";
 import { academicQueryKeys } from "../queries/academic-query-keys";
 import { academicService } from "../services/academic.service";
@@ -15,11 +16,6 @@ import type {
 	UpdateClassInput,
 	UpdateSectionInput,
 } from "../types/academic.types";
-
-function requireToken(token: string | null): string {
-	if (!token) throw new Error("Authentication required");
-	return token;
-}
 
 export function useAcademicYearsQuery(tenantId: string | null, enabled = true) {
 	const { token } = useAuth();

@@ -1,16 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { requireToken } from "@/lib/api/require-token";
 import { useAuth } from "@/modules/auth/context/auth-context";
 import { tenantQueryKeys } from "../queries/tenant-query-keys";
 import { campusesService } from "../services/campuses.service";
 import { organizationConfigService } from "../services/organization-config.service";
 import { tenantsService } from "../services/tenants.service";
-
-function requireToken(token: string | null): string {
-	if (!token) throw new Error("Authentication required");
-	return token;
-}
 
 export function useTenantsQuery(enabled = true) {
 	const { token } = useAuth();
