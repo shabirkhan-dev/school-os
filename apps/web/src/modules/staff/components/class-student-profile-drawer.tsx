@@ -21,6 +21,7 @@ import {
 	formatStudentGender,
 	studentStatusBadgeVariant,
 } from "@/modules/students/utils/student-ui.utils";
+import { TeacherStudentInsights } from "./teacher-student-insights";
 
 type Props = {
 	open: boolean;
@@ -81,6 +82,8 @@ export function ClassStudentProfileDrawer({
 								academicYearLabel={academicYearLabel}
 								className="mx-auto"
 							/>
+
+							<TeacherStudentInsights tenantId={tenantId} studentId={student.id} enabled={open} />
 
 							<div className="flex flex-wrap gap-2">
 								<Button

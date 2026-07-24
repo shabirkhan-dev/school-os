@@ -22,6 +22,8 @@ type Props = {
 	onScanSubmit: () => void;
 	onMarkAllPresent: () => void;
 	onMarkUnmarkedAbsent: () => void;
+	onConfirmAllPresentSave?: () => void;
+	confirmAllPending?: boolean;
 	canMark: boolean;
 	lastScanMessage: string | null;
 };
@@ -36,6 +38,8 @@ export function AttendanceSmartToolbar({
 	onScanSubmit,
 	onMarkAllPresent,
 	onMarkUnmarkedAbsent,
+	onConfirmAllPresentSave,
+	confirmAllPending = false,
 	canMark,
 	lastScanMessage,
 }: Props) {
@@ -51,6 +55,18 @@ export function AttendanceSmartToolbar({
 				/>
 				{canMark ? (
 					<>
+						{onConfirmAllPresentSave ? (
+							<Button
+								type="button"
+								size="sm"
+								className="gap-1.5"
+								onClick={onConfirmAllPresentSave}
+								disabled={confirmAllPending}
+							>
+								<HugeiconsIcon icon={CheckmarkCircle02Icon} size={15} strokeWidth={2} />
+								{confirmAllPending ? "Saving…" : "Confirm & save all present"}
+							</Button>
+						) : null}
 						<Button
 							type="button"
 							variant="outline"

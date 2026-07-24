@@ -19,10 +19,11 @@ import {
 import { Spinner } from "@school-os/ui/components/spinner";
 import { Textarea } from "@school-os/ui/components/textarea";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { AdminPageShell } from "@/components/admin/admin-page-shell";
 import { DataTable, type DataTableColumn } from "@/components/data-table/data-table";
+import { ApiError } from "@/lib/api/client";
 import { formatSectionLabel } from "@/modules/academic/utils/format-section-label";
 import { AssignTargetPanel } from "@/modules/academics/components/assign-target-panel";
 import { useSectionSubjectOptions } from "@/modules/academics/hooks/use-section-subject-options";
@@ -67,8 +68,25 @@ function statusBadge(status: HomeworkStatus) {
 	return <Badge variant={variant}>{status}</Badge>;
 }
 
+function homeworkListErrorMessage(error: unknown): string {
+	if (error instanceof ApiError) {
+		if (error.statusCode === 500) {
+			const hint =
+				"If you recently pulled homework or assessments code, apply API migrations: bun --cwd apps/nest-api run db:migrate — then restart the Nest API.";
+			return error.detail?.includes("does not exist")
+				? `${error.detail}. ${hint}`
+				: `${error.message}. ${hint}`;
+		}
+		return error.message;
+	}
+	if (error instanceof Error) return error.message;
+	return "Failed to load homework";
+}
+
 export function HomeworkPage() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const initialStatus = searchParams.get("status");
 	const { token } = useAuth();
 	const { activeTenant, activeCampus, campuses } = useTenantContext();
 	const { can, isLoading: permissionsLoading } = usePermissions();
@@ -78,7 +96,15 @@ export function HomeworkPage() {
 	const canWrite = can(PermissionCodes.HOMEWORK_WRITE);
 
 	const [sectionSubjectFilter, setSectionSubjectFilter] = useState("all");
-	const [statusFilter, setStatusFilter] = useState("all");
+	const [statusFilter, setStatusFilter] = useState(() =>
+		initialStatus === "draft" || initialStatus === "published" ? initialStatus : "all",
+	);
+
+	useEffect(() => {
+		if (initialStatus === "draft" || initialStatus === "published") {
+			setStatusFilter(initialStatus);
+		}
+	}, [initialStatus]);
 	const [sheetOpen, setSheetOpen] = useState(false);
 	const [editing, setEditing] = useState<HomeworkAssignment | null>(null);
 	const [title, setTitle] = useState("");
@@ -390,9 +416,7 @@ export function HomeworkPage() {
 
 			{listQuery.error ? (
 				<Alert variant="destructive" className="mb-4">
-					<AlertDescription>
-						{listQuery.error instanceof Error ? listQuery.error.message : "Failed to load homework"}
-					</AlertDescription>
+					<AlertDescription>{homeworkListErrorMessage(listQuery.error)}</AlertDescription>
 				</Alert>
 			) : null}
 

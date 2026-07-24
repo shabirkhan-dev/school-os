@@ -1,6 +1,11 @@
 "use client";
 
-import { ArrowRight01Icon, BookOpen01Icon, Calendar03Icon } from "@hugeicons/core-free-icons";
+import {
+	ArrowRight01Icon,
+	BookOpen01Icon,
+	BookOpen02Icon,
+	Calendar03Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Badge } from "@school-os/ui/components/badge";
 import { Button } from "@school-os/ui/components/button";
@@ -133,7 +138,7 @@ export function TeacherClassCard({ section, label, campusName, metrics, classNam
 						nativeButton={false}
 						render={
 							<Link
-								href={`/admin/attendance?sectionId=${section.id}`}
+								href={`/admin/attendance?sectionId=${section.id}&confirmAll=1`}
 								aria-label="Mark attendance"
 							/>
 						}
@@ -141,7 +146,23 @@ export function TeacherClassCard({ section, label, campusName, metrics, classNam
 						<HugeiconsIcon icon={Calendar03Icon} size={16} strokeWidth={2} />
 						Attendance
 					</Button>
-				) : null}
+				) : (
+					<Button
+						size="sm"
+						variant="ghost"
+						className="flex-1 sm:flex-none"
+						nativeButton={false}
+						render={
+							<Link
+								href={`/admin/my-classes/${section.id}?assignHomework=1`}
+								aria-label="Assign homework"
+							/>
+						}
+					>
+						<HugeiconsIcon icon={BookOpen02Icon} size={16} strokeWidth={2} />
+						Homework
+					</Button>
+				)}
 			</div>
 		</article>
 	);

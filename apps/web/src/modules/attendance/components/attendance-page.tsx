@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useClassesQuery, useSectionsQuery } from "@/modules/academic";
 import { formatSectionLabel } from "@/modules/academic/utils/format-section-label";
 import {
+	useConfirmAllPresentMutation,
 	useGetOrCreateSessionMutation,
 	useMarkAttendanceMutation,
 } from "@/modules/attendance/hooks/use-attendance-queries";
@@ -43,6 +44,7 @@ export function AttendancePage() {
 	const searchParams = useSearchParams();
 	const initialSectionId = searchParams.get("sectionId") ?? "";
 	const initialSessionDate = searchParams.get("sessionDate") ?? "";
+	const wantConfirmAll = searchParams.get("confirmAll") === "1";
 	const { activeTenant, activeCampus, campuses } = useTenantContext();
 	const { can, role, isLoading: permissionsLoading } = usePermissions();
 	const tenantId = activeTenant?.id ?? null;
@@ -117,6 +119,7 @@ export function AttendancePage() {
 	const [message, setMessage] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const autoLoadedKey = useRef<string | null>(null);
+	const confirmAllRan = useRef(false);
 
 	const canMarkThisSection =
 		canMark && (!isTeacherScoped || selectableSections.some((section) => section.id === sectionId));
@@ -133,6 +136,20 @@ export function AttendancePage() {
 	);
 	const loadSession = useGetOrCreateSessionMutation(tenantId ?? "");
 	const markAttendance = useMarkAttendanceMutation(tenantId ?? "", sessionId ?? "");
+	const confirmAllPresent = useConfirmAllPresentMutation(tenantId ?? "");
+
+	const applySessionView = useCallback(
+		(result: Awaited<ReturnType<typeof loadSession.mutateAsync>>) => {
+			setSessionId(result.session.id);
+			const existing: Record<string, AttendanceMarkStatus> = {};
+			for (const mark of result.marks) {
+				existing[mark.studentId] = mark.status;
+			}
+			setSavedMarks(existing);
+			setMarkDraft(existing);
+		},
+		[],
+	);
 
 	const graceMinutes = orgConfigQuery.data?.settings.attendanceGraceMinutes ?? 15;
 	const selectedSection = selectableSections.find((section) => section.id === sectionId);
@@ -205,18 +222,13 @@ export function AttendancePage() {
 		setMessage(null);
 		try {
 			const result = await loadSession.mutateAsync({ sectionId, sessionDate });
-			setSessionId(result.session.id);
-			const existing: Record<string, AttendanceMarkStatus> = {};
-			for (const mark of result.marks) {
-				existing[mark.studentId] = mark.status;
-			}
-			setSavedMarks(existing);
+			applySessionView(result);
 			setStatusFilter("all");
 			setMessage(`Session ready · ${result.session.sessionDate}`);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Could not load attendance session");
 		}
-	}, [loadSession, sectionId, sessionDate]);
+	}, [applySessionView, loadSession, sectionId, sessionDate]);
 
 	useEffect(() => {
 		if (!sectionId || !sessionDate || !tenantId) return;
@@ -233,6 +245,43 @@ export function AttendancePage() {
 		if (!sessionId || rosterIds.length === 0) return;
 		setMarkDraft(buildSmartDefaultDraft(rosterIds, savedMarks));
 	}, [sessionId, rosterIds, savedMarks]);
+
+	const handleConfirmAllPresentSave = useCallback(async () => {
+		if (!sessionId) {
+			setError("Load a session first");
+			return;
+		}
+		if (!canMarkThisSection) {
+			setError("You do not have permission to mark attendance for this section");
+			return;
+		}
+		if (rosterIds.length === 0) {
+			setError("No enrolled students found for this section");
+			return;
+		}
+		setError(null);
+		setMessage(null);
+		try {
+			const result = await confirmAllPresent.mutateAsync({ sessionId });
+			applySessionView(result);
+			setMessage("All students marked present and saved · parent alerts queue when enabled");
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Could not confirm attendance");
+		}
+	}, [applySessionView, canMarkThisSection, confirmAllPresent, rosterIds.length, sessionId]);
+
+	useEffect(() => {
+		if (!wantConfirmAll || !sessionId || !canMarkThisSection || rosterIds.length === 0) return;
+		if (confirmAllRan.current) return;
+		confirmAllRan.current = true;
+		void handleConfirmAllPresentSave();
+	}, [
+		wantConfirmAll,
+		sessionId,
+		canMarkThisSection,
+		rosterIds.length,
+		handleConfirmAllPresentSave,
+	]);
 
 	if (!tenantId) {
 		return (
@@ -456,6 +505,8 @@ export function AttendancePage() {
 							onScanSubmit={handleScanSubmit}
 							onMarkAllPresent={handleMarkAllPresent}
 							onMarkUnmarkedAbsent={handleMarkUnmarkedAbsent}
+							onConfirmAllPresentSave={() => void handleConfirmAllPresentSave()}
+							confirmAllPending={confirmAllPresent.isPending}
 							canMark={canMarkThisSection}
 							lastScanMessage={lastScanMessage}
 						/>
@@ -509,13 +560,21 @@ export function AttendancePage() {
 							</p>
 							<Button
 								type="button"
+								variant="outline"
 								onClick={() => void handleSaveMarks()}
 								disabled={markAttendance.isPending}
 							>
-								{markAttendance.isPending ? (
+								{markAttendance.isPending ? <Spinner className="size-4" /> : "Save changes"}
+							</Button>
+							<Button
+								type="button"
+								onClick={() => void handleConfirmAllPresentSave()}
+								disabled={confirmAllPresent.isPending}
+							>
+								{confirmAllPresent.isPending ? (
 									<Spinner className="size-4" />
 								) : (
-									"Save & notify guardians"
+									"Confirm all present"
 								)}
 							</Button>
 						</div>

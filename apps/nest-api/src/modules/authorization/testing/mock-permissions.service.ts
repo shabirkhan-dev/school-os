@@ -23,13 +23,27 @@ const teacherTenantAccess = new Set<PermissionCode>([
 	PermissionCodes.ASSESSMENTS_WRITE,
 ]);
 
+const studentTenantAccess = new Set<PermissionCode>([
+	PermissionCodes.TENANT_SETTINGS_READ,
+	PermissionCodes.HOMEWORK_READ,
+	PermissionCodes.ASSESSMENTS_READ,
+]);
+
+const parentTenantAccess = new Set<PermissionCode>([
+	PermissionCodes.TENANT_SETTINGS_READ,
+	PermissionCodes.GUARDIANS_READ,
+	PermissionCodes.HOMEWORK_READ,
+	PermissionCodes.ASSESSMENTS_READ,
+	PermissionCodes.ACADEMIC_READ,
+]);
+
 const roleMatrix: Record<MembershipRecord['role'], ReadonlySet<PermissionCode>> = {
 	owner: fullTenantAccess,
 	principal: fullTenantAccess,
 	admin: fullTenantAccess,
 	teacher: teacherTenantAccess,
-	parent: readOnlyTenantAccess,
-	student: readOnlyTenantAccess,
+	parent: parentTenantAccess,
+	student: studentTenantAccess,
 };
 
 export function createMockPermissionsService(): PermissionsService {

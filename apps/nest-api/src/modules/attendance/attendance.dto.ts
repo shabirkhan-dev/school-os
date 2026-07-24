@@ -43,5 +43,17 @@ export class MarkAttendanceDto {
 	marks!: Array<{ studentId: string; status: z.infer<typeof markStatusSchema> }>;
 }
 
+export const confirmAllPresentSchema = z
+	.object({
+		exceptStudentIds: z.array(z.string().uuid()).max(200).optional(),
+	})
+	.strict();
+
+export class ConfirmAllPresentDto {
+	static schema = confirmAllPresentSchema;
+	exceptStudentIds?: string[];
+}
+
 export type CreateAttendanceSessionInput = z.infer<typeof createAttendanceSessionSchema>;
 export type MarkAttendanceInput = z.infer<typeof markAttendanceSchema>;
+export type ConfirmAllPresentInput = z.infer<typeof confirmAllPresentSchema>;

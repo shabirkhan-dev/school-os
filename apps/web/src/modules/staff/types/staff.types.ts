@@ -97,6 +97,30 @@ export type TeacherDashboardAlert = {
 	consecutiveDays: number;
 };
 
+export type TeacherDashboardUpcomingPeriod = {
+	periodName: string;
+	startsAt: string;
+	endsAt: string;
+	sectionId: string;
+	sectionName: string;
+	subjectName: string | null;
+	subjectCode: string | null;
+	roomName: string | null;
+};
+
+export type TeacherDashboardYesterdaySection = {
+	sectionId: string;
+	sectionName: string;
+	classId: string;
+};
+
+export type TeacherDashboardMorningDigest = {
+	draftHomeworkCount: number;
+	dueTodayHomeworkCount: number;
+	upcomingPeriod: TeacherDashboardUpcomingPeriod | null;
+	yesterdayUnmarkedSections: TeacherDashboardYesterdaySection[];
+};
+
 export type TeacherDashboard = {
 	sessionDate: string;
 	teacher: TeacherDetail["teacher"];
@@ -118,6 +142,7 @@ export type TeacherDashboard = {
 	priorityActions: TeacherDashboardPriorityAction[];
 	alerts: TeacherDashboardAlert[];
 	todaySchedule: TeacherDaySchedule | null;
+	morningDigest: TeacherDashboardMorningDigest;
 };
 
 export type TeacherSectionStudent = {

@@ -2,6 +2,7 @@
 
 import {
 	ArrowLeft01Icon,
+	BookOpen02Icon,
 	Calendar03Icon,
 	Copy01Icon,
 	CreditCardIcon,
@@ -21,7 +22,8 @@ import {
 import { Spinner } from "@school-os/ui/components/spinner";
 import { ToggleGroup, ToggleGroupItem } from "@school-os/ui/components/toggle-group";
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdminPageShell } from "@/components/admin";
 import {
 	DataTable,
@@ -44,6 +46,8 @@ import {
 import { PermissionCodes, usePermissions, useTenantContext } from "@/modules/tenants";
 import { useMySectionStudentsQuery, useMyTeacherProfileQuery } from "../hooks/use-staff-queries";
 import type { TeacherSectionStudent } from "../types/staff.types";
+import { ClassAssessmentScheduleSheet } from "./class-assessment-schedule-sheet";
+import { ClassHomeworkAssignSheet } from "./class-homework-assign-sheet";
 import { ClassRosterQuickActions } from "./class-roster-quick-actions";
 import { ClassStudentProfileDrawer } from "./class-student-profile-drawer";
 
@@ -54,10 +58,18 @@ type Props = {
 type RosterView = "table" | "cards";
 
 export function ClassDetailPage({ sectionId }: Props) {
-	const { activeTenant, campuses } = useTenantContext();
+	const searchParams = useSearchParams();
+	const wantAssignHomework = searchParams.get("assignHomework") === "1";
+	const wantScheduleAssessment = searchParams.get("assignAssessment") === "1";
+	const assignHomeworkOpened = useRef(false);
+	const assignAssessmentOpened = useRef(false);
+	const { activeTenant, campuses, activeCampus } = useTenantContext();
 	const { can } = usePermissions();
 	const tenantId = activeTenant?.id ?? null;
+	const campusId = activeCampus?.id ?? campuses[0]?.id ?? null;
 	const canReadStudents = can(PermissionCodes.STUDENTS_READ);
+	const canWriteHomework = can(PermissionCodes.HOMEWORK_WRITE);
+	const canWriteAssessments = can(PermissionCodes.ASSESSMENTS_WRITE);
 
 	const profileQuery = useMyTeacherProfileQuery(tenantId);
 	const studentsQuery = useMySectionStudentsQuery(tenantId, sectionId);
@@ -69,6 +81,8 @@ export function ClassDetailPage({ sectionId }: Props) {
 	const [statusFilter, setStatusFilter] = useState("");
 	const [profileStudentId, setProfileStudentId] = useState<string | null>(null);
 	const [profileOpen, setProfileOpen] = useState(false);
+	const [homeworkSheetOpen, setHomeworkSheetOpen] = useState(false);
+	const [assessmentSheetOpen, setAssessmentSheetOpen] = useState(false);
 
 	const classNameById = useMemo(
 		() => new Map((classesQuery.data ?? []).map((item) => [item.id, item.name])),
@@ -103,6 +117,27 @@ export function ClassDetailPage({ sectionId }: Props) {
 				?.id ?? null
 		);
 	}, [profileQuery.data?.subjectAssignments, section, sectionId]);
+
+	useEffect(() => {
+		if (!wantAssignHomework || !canWriteHomework || !section || assignHomeworkOpened.current) {
+			return;
+		}
+		assignHomeworkOpened.current = true;
+		setHomeworkSheetOpen(true);
+	}, [wantAssignHomework, canWriteHomework, section]);
+
+	useEffect(() => {
+		if (
+			!wantScheduleAssessment ||
+			!canWriteAssessments ||
+			!section ||
+			assignAssessmentOpened.current
+		) {
+			return;
+		}
+		assignAssessmentOpened.current = true;
+		setAssessmentSheetOpen(true);
+	}, [wantScheduleAssessment, canWriteAssessments, section]);
 
 	const rosterRows = useMemo(
 		() => (studentsQuery.data ?? []).map((row) => row.student),
@@ -325,10 +360,21 @@ export function ClassDetailPage({ sectionId }: Props) {
 						<Button
 							size="sm"
 							nativeButton={false}
-							render={<Link href={`/admin/attendance?sectionId=${sectionId}`} />}
+							render={<Link href={`/admin/attendance?sectionId=${sectionId}&confirmAll=1`} />}
 						>
 							<HugeiconsIcon icon={Calendar03Icon} data-icon="inline-start" strokeWidth={2} />
 							Mark attendance
+						</Button>
+					) : null}
+					{canWriteHomework ? (
+						<Button size="sm" onClick={() => setHomeworkSheetOpen(true)}>
+							<HugeiconsIcon icon={BookOpen02Icon} data-icon="inline-start" strokeWidth={2} />
+							Assign homework
+						</Button>
+					) : null}
+					{canWriteAssessments ? (
+						<Button size="sm" variant="secondary" onClick={() => setAssessmentSheetOpen(true)}>
+							Schedule test
 						</Button>
 					) : null}
 				</div>
@@ -355,7 +401,34 @@ export function ClassDetailPage({ sectionId }: Props) {
 				section={section}
 				sectionSubjectId={sectionSubjectId}
 				onShowIdCards={() => setRosterView("cards")}
+				onAssignHomework={canWriteHomework ? () => setHomeworkSheetOpen(true) : undefined}
+				onScheduleAssessment={canWriteAssessments ? () => setAssessmentSheetOpen(true) : undefined}
 			/>
+
+			{tenantId && canWriteHomework ? (
+				<ClassHomeworkAssignSheet
+					open={homeworkSheetOpen}
+					onOpenChange={setHomeworkSheetOpen}
+					tenantId={tenantId}
+					campusId={campusId}
+					sectionId={sectionId}
+					sectionSubjectId={sectionSubjectId}
+					classLabel={sectionLabel}
+					subjectName={section.subjectName}
+				/>
+			) : null}
+			{tenantId && canWriteAssessments ? (
+				<ClassAssessmentScheduleSheet
+					open={assessmentSheetOpen}
+					onOpenChange={setAssessmentSheetOpen}
+					tenantId={tenantId}
+					campusId={campusId}
+					sectionId={sectionId}
+					sectionSubjectId={sectionSubjectId}
+					classLabel={sectionLabel}
+					subjectName={section.subjectName}
+				/>
+			) : null}
 
 			<DataTableShell
 				toolbar={

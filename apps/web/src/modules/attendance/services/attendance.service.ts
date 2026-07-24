@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/api/client";
 import type {
 	AttendanceSessionView,
+	ConfirmAllPresentInput,
 	CreateAttendanceSessionInput,
 	MarkAttendanceInput,
 	StudentAttendanceHistoryEntry,
@@ -39,6 +40,17 @@ export const attendanceService = {
 			marks: AttendanceSessionView["marks"];
 			summary: AttendanceSessionView["summary"];
 		}>(`/tenants/${tenantId}/attendance/sessions/${sessionId}/marks`, input, { accessToken }),
+	confirmAllPresent: (
+		accessToken: string,
+		tenantId: string,
+		sessionId: string,
+		input: ConfirmAllPresentInput = {},
+	) =>
+		apiClient.post<AttendanceSessionView>(
+			`/tenants/${tenantId}/attendance/sessions/${sessionId}/confirm-all-present`,
+			input,
+			{ accessToken },
+		),
 	getStudentHistory: (accessToken: string, tenantId: string, studentId: string) =>
 		apiClient.get<{ history: StudentAttendanceHistoryEntry[] }>(
 			`/tenants/${tenantId}/attendance/students/${studentId}/history`,

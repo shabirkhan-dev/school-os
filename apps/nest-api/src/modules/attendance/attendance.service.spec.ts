@@ -186,6 +186,70 @@ describe('AttendanceService', () => {
 		expect(result.summary.present).toBe(1);
 	});
 
+	it('confirmAllPresent marks every enrolled student present', async () => {
+		membershipsRepository.findActiveByTenantAndUser.mockResolvedValue({
+			id: 'teacher-membership-1',
+			tenantId: 'tenant-1',
+			userId: 'user-1',
+			role: 'teacher',
+			status: 'active',
+		});
+		attendanceRepository.findSessionById.mockResolvedValue(sessionRecord);
+		academicRepository.findSectionById.mockResolvedValue(sectionRecord);
+		staffRepository.teacherHasHomeroomAccess.mockResolvedValue(true);
+		studentsRepository.listEnrollments.mockResolvedValue([
+			{
+				id: 'enrollment-1',
+				studentId: 'student-1',
+				sectionId: 'section-1',
+				status: 'active',
+			},
+			{
+				id: 'enrollment-2',
+				studentId: 'student-2',
+				sectionId: 'section-1',
+				status: 'active',
+			},
+		]);
+		attendanceRepository.markStudents.mockResolvedValue([]);
+		attendanceRepository.listMarksForSession.mockResolvedValue([
+			{
+				id: 'mark-1',
+				tenantId: 'tenant-1',
+				sessionId: 'session-1',
+				studentId: 'student-1',
+				status: 'present',
+				markedAt: new Date('2026-07-23T08:00:00.000Z'),
+				markedByMembershipId: 'teacher-membership-1',
+				createdAt: new Date('2026-07-23T08:00:00.000Z'),
+				updatedAt: new Date('2026-07-23T08:00:00.000Z'),
+			},
+			{
+				id: 'mark-2',
+				tenantId: 'tenant-1',
+				sessionId: 'session-1',
+				studentId: 'student-2',
+				status: 'present',
+				markedAt: new Date('2026-07-23T08:00:00.000Z'),
+				markedByMembershipId: 'teacher-membership-1',
+				createdAt: new Date('2026-07-23T08:00:00.000Z'),
+				updatedAt: new Date('2026-07-23T08:00:00.000Z'),
+			},
+		]);
+
+		const result = await service.confirmAllPresent('user-1', 'tenant-1', 'session-1', {});
+
+		expect(attendanceRepository.markStudents).toHaveBeenCalledWith(
+			expect.objectContaining({
+				marks: [
+					{ studentId: 'student-1', status: 'present' },
+					{ studentId: 'student-2', status: 'present' },
+				],
+			}),
+		);
+		expect(result.summary.present).toBe(2);
+	});
+
 	it('rejects invalid student ids', async () => {
 		membershipsRepository.findActiveByTenantAndUser.mockResolvedValue({
 			id: 'membership-1',

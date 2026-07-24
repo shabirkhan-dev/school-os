@@ -17,7 +17,11 @@ import { PermissionCodes } from '@/modules/authorization/permission-codes';
 import { PermissionsGuard } from '@/modules/authorization/permissions.guard';
 import { RequirePermissions } from '@/modules/authorization/require-permissions.decorator';
 import { TenantGuard } from '@/modules/tenants/tenant.guard';
-import { CreateAttendanceSessionDto, MarkAttendanceDto } from './attendance.dto';
+import {
+	ConfirmAllPresentDto,
+	CreateAttendanceSessionDto,
+	MarkAttendanceDto,
+} from './attendance.dto';
 import { AttendanceService } from './attendance.service';
 
 @ApiTags('Attendance')
@@ -71,6 +75,18 @@ export class AttendanceController {
 		@Body() body: MarkAttendanceDto,
 	) {
 		return this.attendance.markAttendance(user.sub, tenantId, sessionId, body);
+	}
+
+	@Post('sessions/:sessionId/confirm-all-present')
+	@RequirePermissions(PermissionCodes.ATTENDANCE_MARK)
+	@ApiOperation({ summary: 'Mark all enrolled students present (optional exceptions)' })
+	confirmAllPresent(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Param('sessionId', new ParseUUIDPipe({ version: '4' })) sessionId: string,
+		@Body() body: ConfirmAllPresentDto,
+	) {
+		return this.attendance.confirmAllPresent(user.sub, tenantId, sessionId, body);
 	}
 
 	@Get('students/:studentId/history')

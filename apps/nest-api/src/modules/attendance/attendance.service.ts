@@ -12,7 +12,11 @@ import { hasManagementRole, managementRoles } from '@/modules/memberships/member
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { StaffRepository } from '@/modules/staff/staff.repository';
 import { StudentsRepository } from '@/modules/students/students.repository';
-import type { CreateAttendanceSessionInput, MarkAttendanceInput } from './attendance.dto';
+import type {
+	ConfirmAllPresentInput,
+	CreateAttendanceSessionInput,
+	MarkAttendanceInput,
+} from './attendance.dto';
 import { AttendanceRepository } from './attendance.repository';
 import { countMarksByStatus, toPublicMark, toPublicSession } from './attendance.types';
 
@@ -145,6 +149,67 @@ export class AttendanceService {
 			marks: marks.map(toPublicMark),
 			summary: countMarksByStatus(marks),
 		};
+	}
+
+	async confirmAllPresent(
+		userId: string,
+		tenantId: string,
+		sessionId: string,
+		input: ConfirmAllPresentInput = {},
+	) {
+		const membership = await this.requireMark(userId, tenantId);
+		const session = await this.requireSession(tenantId, sessionId);
+		const section = session.sectionId
+			? await this.requireSection(tenantId, session.sectionId)
+			: null;
+
+		if (section) {
+			await this.requireSectionMarkAccess(tenantId, membership, section);
+		}
+
+		if (!session.sectionId) {
+			throw new BadRequestException({
+				code: 'ATTENDANCE_SECTION_REQUIRED',
+				message: 'Bulk confirm requires a section attendance session',
+			});
+		}
+
+		const enrolled = await this.students.listEnrollments(tenantId, {
+			sectionId: session.sectionId,
+		});
+		const activeStudentIds = enrolled
+			.filter((row) => row.status === 'active')
+			.map((row) => row.studentId);
+
+		if (activeStudentIds.length === 0) {
+			throw new BadRequestException({
+				code: 'ATTENDANCE_ROSTER_EMPTY',
+				message: 'No actively enrolled students in this section',
+			});
+		}
+
+		const exceptSet = new Set(input.exceptStudentIds ?? []);
+		for (const studentId of exceptSet) {
+			if (!activeStudentIds.includes(studentId)) {
+				throw new BadRequestException({
+					code: 'STUDENT_NOT_ENROLLED',
+					message: `Student ${studentId} is not actively enrolled in this section`,
+				});
+			}
+		}
+
+		const marks = activeStudentIds
+			.filter((studentId) => !exceptSet.has(studentId))
+			.map((studentId) => ({ studentId, status: 'present' as const }));
+
+		await this.attendance.markStudents({
+			tenantId,
+			session,
+			marks,
+			markedByMembershipId: membership.id,
+		});
+
+		return this.buildSessionResponse(tenantId, session);
 	}
 
 	async getStudentHistory(userId: string, tenantId: string, studentId: string, limit?: number) {

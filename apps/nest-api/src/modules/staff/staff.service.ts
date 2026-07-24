@@ -31,6 +31,7 @@ import {
 	toPublicSubjectAssignment,
 } from './staff.types';
 import { findConsecutiveAbsenceAlerts, subtractWeekdays } from './teacher-attendance-alerts';
+import { findUpcomingClassPeriod } from './teacher-dashboard-digest';
 
 @Injectable()
 export class StaffService {
@@ -248,6 +249,39 @@ export class StaffService {
 
 		const pendingTaskCount = priorityActions.length;
 
+		const sectionSubjectIds = detail.subjectAssignments.map((row) => row.id);
+		const yesterdayDate = subtractWeekdays(sessionDate, 1);
+		const [draftHomeworkCount, dueTodayHomeworkCount, yesterdaySessions] = await Promise.all([
+			this.staff.countHomeworkForSectionSubjects(tenant.tenantId, sectionSubjectIds, {
+				status: 'draft',
+			}),
+			this.staff.countHomeworkForSectionSubjects(tenant.tenantId, sectionSubjectIds, {
+				dueOnDate: sessionDate,
+			}),
+			homeroomSectionIds.length > 0
+				? this.staff.findSessionsBySectionsAndDate(
+						tenant.tenantId,
+						homeroomSectionIds,
+						yesterdayDate,
+					)
+				: Promise.resolve([]),
+		]);
+
+		const yesterdayMarkedSectionIds = new Set(
+			yesterdaySessions
+				.map((session) => session.sectionId)
+				.filter((sectionId): sectionId is string => sectionId != null),
+		);
+		const yesterdayUnmarkedSections = homeroomSections
+			.filter((section) => !yesterdayMarkedSectionIds.has(section.id))
+			.map((section) => ({
+				sectionId: section.id,
+				sectionName: section.name,
+				classId: section.classId,
+			}));
+
+		const upcomingPeriod = findUpcomingClassPeriod(todaySchedule, sessionDate);
+
 		return {
 			sessionDate,
 			teacher: detail.teacher,
@@ -272,6 +306,12 @@ export class StaffService {
 			priorityActions,
 			alerts: absenceAlerts,
 			todaySchedule,
+			morningDigest: {
+				draftHomeworkCount,
+				dueTodayHomeworkCount,
+				upcomingPeriod,
+				yesterdayUnmarkedSections,
+			},
 		};
 	}
 

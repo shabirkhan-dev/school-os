@@ -17,6 +17,8 @@ type Props = {
 	section: TeacherAccessibleSection;
 	sectionSubjectId?: string | null;
 	onShowIdCards?: () => void;
+	onAssignHomework?: () => void;
+	onScheduleAssessment?: () => void;
 	className?: string;
 };
 
@@ -25,17 +27,86 @@ export function ClassRosterQuickActions({
 	section,
 	sectionSubjectId,
 	onShowIdCards,
+	onAssignHomework,
+	onScheduleAssessment,
 	className,
 }: Props) {
 	const isHomeroom = section.accessType === "homeroom";
-	const homeworkHref = sectionSubjectId ? "/admin/homework" : "/admin/homework";
-	const assessmentsHref = sectionSubjectId ? "/admin/assessments" : "/admin/assessments";
+	const attendanceHref = `/admin/attendance?sectionId=${sectionId}&confirmAll=1`;
+
+	const homeworkCard = onAssignHomework ? (
+		<button
+			type="button"
+			onClick={onAssignHomework}
+			className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-start shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
+		>
+			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-teal-500/10 text-teal-700 dark:text-teal-300">
+				<HugeiconsIcon icon={BookOpen02Icon} size={20} strokeWidth={2} />
+			</span>
+			<span className="min-w-0">
+				<span className="block font-medium text-sm">Assign homework</span>
+				<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
+					{sectionSubjectId
+						? `AI draft for ${section.subjectName ?? "this class"} — stay on roster.`
+						: "Pick a subject and publish with AI assist."}
+				</span>
+			</span>
+		</button>
+	) : (
+		<Link
+			href="/admin/homework"
+			className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
+		>
+			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-teal-500/10 text-teal-700 dark:text-teal-300">
+				<HugeiconsIcon icon={BookOpen02Icon} size={20} strokeWidth={2} />
+			</span>
+			<span className="min-w-0">
+				<span className="block font-medium text-sm">Assign homework</span>
+				<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
+					Open homework to assign class work.
+				</span>
+			</span>
+		</Link>
+	);
+
+	const assessmentCard = onScheduleAssessment ? (
+		<button
+			type="button"
+			onClick={onScheduleAssessment}
+			className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-start shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
+		>
+			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300">
+				<HugeiconsIcon icon={File02Icon} size={20} strokeWidth={2} />
+			</span>
+			<span className="min-w-0">
+				<span className="block font-medium text-sm">Schedule test</span>
+				<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
+					Quiz or exam for this class — synced to test planner.
+				</span>
+			</span>
+		</button>
+	) : (
+		<Link
+			href="/admin/assessments"
+			className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
+		>
+			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300">
+				<HugeiconsIcon icon={File02Icon} size={20} strokeWidth={2} />
+			</span>
+			<span className="min-w-0">
+				<span className="block font-medium text-sm">Schedule test</span>
+				<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
+					Add an assessment or exam for this class.
+				</span>
+			</span>
+		</Link>
+	);
 
 	return (
 		<section className={cn("grid gap-2 sm:grid-cols-2 xl:grid-cols-4", className)}>
 			{isHomeroom ? (
 				<Link
-					href={`/admin/attendance?sectionId=${sectionId}`}
+					href={attendanceHref}
 					className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
 				>
 					<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -50,37 +121,9 @@ export function ClassRosterQuickActions({
 				</Link>
 			) : null}
 
-			<Link
-				href={homeworkHref}
-				className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
-			>
-				<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-teal-500/10 text-teal-700 dark:text-teal-300">
-					<HugeiconsIcon icon={BookOpen02Icon} size={20} strokeWidth={2} />
-				</span>
-				<span className="min-w-0">
-					<span className="block font-medium text-sm">Assign homework</span>
-					<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
-						{sectionSubjectId
-							? `Create work for ${section.subjectName ?? "this class"}.`
-							: "Open homework to assign class work."}
-					</span>
-				</span>
-			</Link>
+			{homeworkCard}
 
-			<Link
-				href={assessmentsHref}
-				className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
-			>
-				<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300">
-					<HugeiconsIcon icon={File02Icon} size={20} strokeWidth={2} />
-				</span>
-				<span className="min-w-0">
-					<span className="block font-medium text-sm">Schedule test</span>
-					<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
-						Add an assessment or exam for this class.
-					</span>
-				</span>
-			</Link>
+			{assessmentCard}
 
 			<Link
 				href="/admin/test-planner"

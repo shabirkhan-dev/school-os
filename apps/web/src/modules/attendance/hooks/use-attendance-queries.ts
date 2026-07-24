@@ -6,6 +6,7 @@ import { attendanceQueryKeys } from "../queries/attendance-query-keys";
 import { attendanceService } from "../services/attendance.service";
 import type {
 	AttendanceSessionView,
+	ConfirmAllPresentInput,
 	CreateAttendanceSessionInput,
 	MarkAttendanceInput,
 } from "../types/attendance.types";
@@ -64,5 +65,38 @@ export function useMarkAttendanceMutation(tenantId: string, sessionId: string) {
 				queryClient.invalidateQueries({ queryKey: ["staff", tenantId, "me", "dashboard"] }),
 			]);
 		},
+	});
+}
+
+export function useConfirmAllPresentMutation(tenantId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({ sessionId, ...input }: ConfirmAllPresentInput & { sessionId: string }) =>
+			attendanceService.confirmAllPresent(requireToken(token), tenantId, sessionId, input),
+		onSuccess: async () => {
+			await Promise.all([
+				queryClient.invalidateQueries({ queryKey: ["attendance", "session", tenantId] }),
+				queryClient.invalidateQueries({ queryKey: ["staff", tenantId, "me", "dashboard"] }),
+			]);
+		},
+	});
+}
+
+export function useStudentAttendanceHistoryQuery(
+	tenantId: string | null,
+	studentId: string | null,
+	enabled = true,
+) {
+	const { token } = useAuth();
+	return useQuery({
+		queryKey: attendanceQueryKeys.studentHistory(tenantId ?? "", studentId ?? ""),
+		queryFn: () => {
+			if (!tenantId || !studentId) throw new Error("Tenant and student required");
+			return attendanceService
+				.getStudentHistory(requireToken(token), tenantId, studentId)
+				.then((response) => response.history);
+		},
+		enabled: enabled && Boolean(token && tenantId && studentId),
 	});
 }

@@ -38,9 +38,10 @@ export function TeacherPriorityActions({ actions, sessionDate, className }: Prop
 			</div>
 			<ul className="grid gap-2">
 				{actions.map((action) => {
+					const confirmSuffix = action.type === "mark_attendance" ? "&confirmAll=1" : "";
 					const href =
 						action.type === "mark_attendance"
-							? `/admin/attendance?sectionId=${action.sectionId}&sessionDate=${sessionDate}`
+							? `/admin/attendance?sectionId=${action.sectionId}&sessionDate=${sessionDate}${confirmSuffix}`
 							: `/admin/my-classes/${action.sectionId}`;
 
 					return (
@@ -59,7 +60,7 @@ export function TeacherPriorityActions({ actions, sessionDate, className }: Prop
 								nativeButton={false}
 								render={<Link href={href} />}
 							>
-								{action.type === "mark_attendance" ? "Mark attendance" : "Review class"}
+								{action.type === "mark_attendance" ? "Confirm all present" : "Review class"}
 								<HugeiconsIcon icon={ArrowRight01Icon} data-icon="inline-end" strokeWidth={2} />
 							</Button>
 						</li>

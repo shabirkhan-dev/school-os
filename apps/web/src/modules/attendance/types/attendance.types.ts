@@ -57,6 +57,10 @@ export type MarkAttendanceInput = {
 	marks: Array<{ studentId: string; status: AttendanceMarkStatus }>;
 };
 
+export type ConfirmAllPresentInput = {
+	exceptStudentIds?: string[];
+};
+
 export type StudentAttendanceHistoryEntry = {
 	mark: AttendanceMark;
 	session: AttendanceSession;

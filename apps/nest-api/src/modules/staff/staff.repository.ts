@@ -7,6 +7,7 @@ import {
 	attendanceSessions,
 	classes,
 	enrollments,
+	homeworkAssignments,
 	memberships,
 	sectionSubjects,
 	sections,
@@ -417,5 +418,38 @@ export class StaffRepository {
 				),
 			)
 			.orderBy(desc(attendanceSessions.sessionDate));
+	}
+
+	async countHomeworkForSectionSubjects(
+		tenantId: string,
+		sectionSubjectIds: string[],
+		filters: {
+			status?: (typeof homeworkAssignments.$inferSelect)['status'];
+			dueOnDate?: string;
+		},
+	): Promise<number> {
+		if (sectionSubjectIds.length === 0) return 0;
+
+		const conditions = [
+			eq(homeworkAssignments.tenantId, tenantId),
+			inArray(homeworkAssignments.sectionSubjectId, sectionSubjectIds),
+		];
+
+		if (filters.status) {
+			conditions.push(eq(homeworkAssignments.status, filters.status));
+		}
+
+		if (filters.dueOnDate) {
+			conditions.push(
+				sql`${homeworkAssignments.dueAt} IS NOT NULL AND ${homeworkAssignments.dueAt}::date = ${filters.dueOnDate}::date`,
+			);
+		}
+
+		const [row] = await this.database.db
+			.select({ count: sql<number>`count(*)::int` })
+			.from(homeworkAssignments)
+			.where(and(...conditions));
+
+		return row?.count ?? 0;
 	}
 }

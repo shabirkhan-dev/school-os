@@ -9,6 +9,7 @@ interface ApiFailure {
 	statusCode: number;
 	code?: string;
 	message?: string;
+	detail?: string;
 	errors?: ReadonlyArray<{ path?: string; message?: string }>;
 }
 
@@ -18,6 +19,7 @@ export class ApiError extends Error {
 		readonly statusCode: number,
 		readonly code?: string,
 		readonly issues?: ApiFailure["errors"],
+		readonly detail?: string,
 	) {
 		super(message);
 		this.name = "ApiError";
@@ -81,14 +83,15 @@ async function request<T>(
 	const payload: unknown = await response.json().catch(() => ({}));
 	if (!response.ok) {
 		const failure = payload as ApiFailure;
-		throw new ApiError(
+		const message =
 			typeof failure.message === "string"
 				? failure.message
-				: response.statusText || "Request failed",
-			response.status,
-			failure.code,
-			failure.errors,
-		);
+				: response.statusText || "Request failed";
+		const withDetail =
+			typeof failure.detail === "string" && failure.detail.length > 0
+				? `${message} (${failure.detail})`
+				: message;
+		throw new ApiError(withDetail, response.status, failure.code, failure.errors, failure.detail);
 	}
 	return isSuccess<T>(payload) ? payload.data : (payload as T);
 }

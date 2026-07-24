@@ -110,6 +110,30 @@ export type PublicTeacherDashboardAlert = {
 	consecutiveDays: number;
 };
 
+export type PublicTeacherDashboardUpcomingPeriod = {
+	periodName: string;
+	startsAt: string;
+	endsAt: string;
+	sectionId: string;
+	sectionName: string;
+	subjectName: string | null;
+	subjectCode: string | null;
+	roomName: string | null;
+};
+
+export type PublicTeacherDashboardYesterdaySection = {
+	sectionId: string;
+	sectionName: string;
+	classId: string;
+};
+
+export type PublicTeacherDashboardDigest = {
+	draftHomeworkCount: number;
+	dueTodayHomeworkCount: number;
+	upcomingPeriod: PublicTeacherDashboardUpcomingPeriod | null;
+	yesterdayUnmarkedSections: PublicTeacherDashboardYesterdaySection[];
+};
+
 export type PublicTeacherDashboard = {
 	sessionDate: string;
 	teacher: PublicTeacher;
@@ -131,6 +155,7 @@ export type PublicTeacherDashboard = {
 	priorityActions: PublicTeacherDashboardPriorityAction[];
 	alerts: PublicTeacherDashboardAlert[];
 	todaySchedule: PublicTeacherDaySchedule | null;
+	morningDigest: PublicTeacherDashboardDigest;
 };
 
 export type PublicSubject = {
