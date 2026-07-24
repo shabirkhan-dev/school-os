@@ -27,6 +27,7 @@ export type PublicStudent = {
 	emergencyContactPhone: string | null;
 	admittedOn: string | null;
 	previousSchool: string | null;
+	photoUrl: string | null;
 	status: StudentRecord['status'];
 	createdAt: string;
 	updatedAt: string;
@@ -79,6 +80,7 @@ export function toPublicStudent(student: StudentRecord): PublicStudent {
 		emergencyContactPhone: student.emergencyContactPhone,
 		admittedOn: student.admittedOn,
 		previousSchool: student.previousSchool,
+		photoUrl: student.photoUrl,
 		status: student.status,
 		createdAt: student.createdAt.toISOString(),
 		updatedAt: student.updatedAt.toISOString(),

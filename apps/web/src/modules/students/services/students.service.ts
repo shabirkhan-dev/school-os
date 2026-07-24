@@ -59,4 +59,13 @@ export const studentsService = {
 			input,
 			{ accessToken },
 		),
+	uploadPhoto: (accessToken: string, tenantId: string, studentId: string, file: File) => {
+		const body = new FormData();
+		body.append("file", file);
+		return apiClient.postForm<{ student: Student }>(
+			`/tenants/${tenantId}/students/${studentId}/photo`,
+			body,
+			{ accessToken },
+		);
+	},
 };

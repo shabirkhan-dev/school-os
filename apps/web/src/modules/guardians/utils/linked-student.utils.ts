@@ -30,6 +30,7 @@ export function linkedStudentToCardStudent(
 		emergencyContactPhone: null,
 		admittedOn: child.admittedOn,
 		previousSchool: null,
+		photoUrl: null,
 		status: child.status,
 		createdAt: now,
 		updatedAt: now,

@@ -1,3 +1,4 @@
+export { AdmissionsPage } from "./components/admissions-page";
 export { StudentsPage } from "./components/students-page";
 export {
 	useCreateEnrollmentMutation,

@@ -58,6 +58,7 @@ export const students = pgTable(
 		emergencyContactPhone: varchar('emergency_contact_phone', { length: 32 }),
 		admittedOn: date('admitted_on'),
 		previousSchool: varchar('previous_school', { length: 255 }),
+		photoUrl: text('photo_url'),
 		status: studentStatus('status').notNull().default('active'),
 		membershipId: uuid('membership_id').references(() => memberships.id, { onDelete: 'set null' }),
 		deletedAt: timestamp('deleted_at', { withTimezone: true }),

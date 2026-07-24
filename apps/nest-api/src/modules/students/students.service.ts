@@ -14,6 +14,7 @@ import { GuardiansRepository } from '@/modules/guardians/guardians.repository';
 import { toPublicStudentGuardianLink } from '@/modules/guardians/guardians.types';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { StaffRepository } from '@/modules/staff/staff.repository';
+import { StudentPhotoStorageService } from './student-photo-storage.service';
 import type {
 	CreateEnrollmentInput,
 	CreateStudentInput,
@@ -32,6 +33,7 @@ export class StudentsService {
 		private readonly guardians: GuardiansRepository,
 		private readonly membershipAccess: MembershipsService,
 		private readonly staff: StaffRepository,
+		private readonly studentPhotos: StudentPhotoStorageService,
 	) {}
 
 	async listStudents(
@@ -162,6 +164,24 @@ export class StudentsService {
 		}
 
 		return { student: toPublicStudent(student) };
+	}
+
+	async uploadStudentPhoto(
+		userId: string,
+		tenantId: string,
+		studentId: string,
+		file: Express.Multer.File | undefined,
+		origin: string,
+	) {
+		await this.requireWrite(userId, tenantId);
+		await this.requireStudent(tenantId, studentId);
+		const valid = this.studentPhotos.assertValidUpload(file);
+		const photoUrl = this.studentPhotos.publicUrl(origin, valid.filename);
+		const updated = await this.students.updateStudent(tenantId, studentId, { photoUrl });
+		if (!updated) {
+			throw new NotFoundException({ code: 'STUDENT_NOT_FOUND', message: 'Student not found' });
+		}
+		return { student: toPublicStudent(updated) };
 	}
 
 	async updateStudent(

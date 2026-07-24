@@ -26,6 +26,7 @@ export type Student = {
 	emergencyContactPhone: string | null;
 	admittedOn: string | null;
 	previousSchool: string | null;
+	photoUrl: string | null;
 	status: StudentStatus;
 	createdAt: string;
 	updatedAt: string;

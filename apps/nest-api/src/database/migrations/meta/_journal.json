@@ -136,10 +136,10 @@
       "breakpoints": true
     },
     {
-      "idx": 20,
+      "idx": 21,
       "version": "7",
-      "when": 1786400647371,
-      "tag": "0020_vice_principal_role",
+      "when": 1786500647371,
+      "tag": "0021_student_photo_url",
       "breakpoints": true
     }
   ]

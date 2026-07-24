@@ -7,9 +7,14 @@ import {
 	Patch,
 	Post,
 	Query,
+	Req,
+	UploadedFile,
 	UseGuards,
+	UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
 
 import type { StudentRecord } from '@/database/schema';
 import type { AccessTokenPayload } from '@/modules/auth/auth.types';
@@ -19,6 +24,7 @@ import { PermissionCodes } from '@/modules/authorization/permission-codes';
 import { PermissionsGuard } from '@/modules/authorization/permissions.guard';
 import { RequirePermissions } from '@/modules/authorization/require-permissions.decorator';
 import { TenantGuard } from '@/modules/tenants/tenant.guard';
+import { createStudentPhotoMulterOptions, resolveRequestOrigin } from './student-photo-upload';
 import {
 	CreateEnrollmentDto,
 	CreateStudentDto,
@@ -55,6 +61,27 @@ export class StudentsController {
 		@Body() body: CreateStudentDto,
 	) {
 		return this.students.createStudent(user.sub, tenantId, body);
+	}
+
+	@Post('students/:studentId/photo')
+	@RequirePermissions(PermissionCodes.STUDENTS_WRITE)
+	@ApiOperation({ summary: 'Upload a student ID photo' })
+	@ApiConsumes('multipart/form-data')
+	@UseInterceptors(FileInterceptor('file', createStudentPhotoMulterOptions()))
+	uploadStudentPhoto(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Param('studentId', new ParseUUIDPipe({ version: '4' })) studentId: string,
+		@UploadedFile() file: Express.Multer.File | undefined,
+		@Req() req: Request,
+	) {
+		return this.students.uploadStudentPhoto(
+			user.sub,
+			tenantId,
+			studentId,
+			file,
+			resolveRequestOrigin(req),
+		);
 	}
 
 	@Get('students/me')

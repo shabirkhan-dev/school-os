@@ -48,7 +48,6 @@ import { formatSectionLabel } from "@/modules/academic/utils/format-section-labe
 import { useGuardiansQuery, useLinkStudentGuardianMutation } from "@/modules/guardians";
 import {
 	useCreateEnrollmentMutation,
-	useCreateStudentMutation,
 	useStudentEnrollmentsQuery,
 	useStudentQuery,
 	useStudentsQuery,
@@ -57,49 +56,12 @@ import {
 import type { Student } from "@/modules/students/types/student.types";
 import { PermissionCodes, usePermissions, useTenantContext } from "@/modules/tenants";
 import { formatStudentGender, studentStatusBadgeVariant } from "../utils/student-ui.utils";
+import { AdmitStudentWizard } from "./admit-student-wizard";
 import { StudentAvatar } from "./student-avatar";
 import { StudentIdCard } from "./student-id-card";
 import { StudentRosterCards } from "./student-roster-cards";
 
 type RosterView = "table" | "cards";
-
-type AdmitFormState = {
-	studentCode: string;
-	firstName: string;
-	lastName: string;
-	dateOfBirth: string;
-	gender: string;
-	email: string;
-	phone: string;
-	addressLine1: string;
-	city: string;
-	emergencyContactName: string;
-	emergencyContactPhone: string;
-	previousSchool: string;
-	guardianFirstName: string;
-	guardianLastName: string;
-	guardianPhone: string;
-	guardianRelationship: string;
-};
-
-const emptyAdmitForm: AdmitFormState = {
-	studentCode: "",
-	firstName: "",
-	lastName: "",
-	dateOfBirth: "",
-	gender: "",
-	email: "",
-	phone: "",
-	addressLine1: "",
-	city: "",
-	emergencyContactName: "",
-	emergencyContactPhone: "",
-	previousSchool: "",
-	guardianFirstName: "",
-	guardianLastName: "",
-	guardianPhone: "",
-	guardianRelationship: "father",
-};
 
 export function StudentsPage() {
 	const { activeTenant, activeCampus, campuses } = useTenantContext();
@@ -111,13 +73,13 @@ export function StudentsPage() {
 	const canRead = can(PermissionCodes.STUDENTS_READ);
 	const canReadGuardians = can(PermissionCodes.GUARDIANS_READ);
 	const canReadAcademic = can(PermissionCodes.ACADEMIC_READ);
+	const canInviteParent = can(PermissionCodes.TENANT_MEMBERSHIP_INVITE);
 
 	const studentsQuery = useStudentsQuery(tenantId, campusId, canRead);
 	const guardiansQuery = useGuardiansQuery(tenantId, canReadGuardians);
 	const yearsQuery = useAcademicYearsQuery(tenantId, canReadAcademic);
 	const sectionsQuery = useSectionsQuery(tenantId, campusId, canReadAcademic);
 	const classesQuery = useClassesQuery(tenantId, canReadAcademic);
-	const createStudent = useCreateStudentMutation(tenantId ?? "", campusId);
 	const createEnrollment = useCreateEnrollmentMutation(tenantId ?? "");
 
 	const [rosterView, setRosterView] = useState<RosterView>("table");
@@ -127,7 +89,6 @@ export function StudentsPage() {
 	const [error, setError] = useState<string | null>(null);
 
 	const [admitOpen, setAdmitOpen] = useState(false);
-	const [admitForm, setAdmitForm] = useState<AdmitFormState>(emptyAdmitForm);
 	const searchParams = useSearchParams();
 
 	useEffect(() => {
@@ -422,56 +383,6 @@ export function StudentsPage() {
 		);
 	}
 
-	async function handleAdmitStudent() {
-		if (!campusId || !canWrite) return;
-		setError(null);
-		setMessage(null);
-		try {
-			const result = await createStudent.mutateAsync({
-				campusId,
-				studentCode: admitForm.studentCode,
-				firstName: admitForm.firstName,
-				lastName: admitForm.lastName,
-				dateOfBirth: admitForm.dateOfBirth || undefined,
-				gender: admitForm.gender
-					? (admitForm.gender as "male" | "female" | "other" | "prefer_not_to_say")
-					: undefined,
-				email: admitForm.email || undefined,
-				phone: admitForm.phone || undefined,
-				addressLine1: admitForm.addressLine1 || undefined,
-				city: admitForm.city || undefined,
-				emergencyContactName: admitForm.emergencyContactName || undefined,
-				emergencyContactPhone: admitForm.emergencyContactPhone || undefined,
-				previousSchool: admitForm.previousSchool || undefined,
-				admittedOn: new Date().toISOString().slice(0, 10),
-				guardians:
-					admitForm.guardianFirstName && admitForm.guardianLastName
-						? [
-								{
-									firstName: admitForm.guardianFirstName,
-									lastName: admitForm.guardianLastName,
-									phone: admitForm.guardianPhone || undefined,
-									relationship: admitForm.guardianRelationship as
-										| "father"
-										| "mother"
-										| "guardian"
-										| "step_parent"
-										| "grandparent"
-										| "sibling"
-										| "other",
-									isPrimary: true,
-								},
-							]
-						: undefined,
-			});
-			setAdmitOpen(false);
-			setAdmitForm(emptyAdmitForm);
-			setMessage(`Student ${result.student.fullName} admitted`);
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Could not admit student");
-		}
-	}
-
 	async function handleCreateEnrollment() {
 		setError(null);
 		setMessage(null);
@@ -588,10 +499,7 @@ export function StudentsPage() {
 							},
 						]}
 						canAdd={canWrite}
-						onAdd={() => {
-							setAdmitForm(emptyAdmitForm);
-							setAdmitOpen(true);
-						}}
+						onAdd={() => setAdmitOpen(true)}
 						addLabel="Admit student"
 					>
 						<ToggleGroup
@@ -658,20 +566,24 @@ export function StudentsPage() {
 				)}
 			</DataTableShell>
 
-			<FormDrawer
-				open={admitOpen}
-				onOpenChange={setAdmitOpen}
-				title="Admit student"
-				description="Capture student details and an optional primary guardian at admission."
-				onSubmit={() => void handleAdmitStudent()}
-				submitLabel="Admit student"
-				saving={createStudent.isPending}
-				submitDisabled={
-					!campusId || !admitForm.studentCode.trim() || !admitForm.firstName || !admitForm.lastName
-				}
-			>
-				<AdmitStudentFields value={admitForm} onChange={setAdmitForm} />
-			</FormDrawer>
+			{tenantId ? (
+				<AdmitStudentWizard
+					open={admitOpen}
+					onOpenChange={setAdmitOpen}
+					tenantId={tenantId}
+					campusId={campusId}
+					canWrite={canWrite}
+					canInviteParent={canInviteParent}
+					onAdmitted={(text) => {
+						setError(null);
+						setMessage(text);
+					}}
+					onError={(text) => {
+						setMessage(null);
+						setError(text);
+					}}
+				/>
+			) : null}
 
 			<FormDrawer
 				open={enrollOpen}
@@ -930,169 +842,5 @@ export function StudentsPage() {
 				</DrawerContent>
 			</Drawer>
 		</AdminPageShell>
-	);
-}
-
-function AdmitStudentFields({
-	value,
-	onChange,
-}: {
-	value: AdmitFormState;
-	onChange: (next: AdmitFormState) => void;
-}) {
-	return (
-		<FieldGroup className="grid gap-4">
-			<Field>
-				<FieldLabel>Admission number</FieldLabel>
-				<Input
-					value={value.studentCode}
-					onChange={(event) => onChange({ ...value, studentCode: event.target.value })}
-					placeholder="AKES-2026-001"
-					required
-				/>
-			</Field>
-			<div className="grid gap-4 sm:grid-cols-2">
-				<Field>
-					<FieldLabel>First name</FieldLabel>
-					<Input
-						value={value.firstName}
-						onChange={(event) => onChange({ ...value, firstName: event.target.value })}
-						required
-					/>
-				</Field>
-				<Field>
-					<FieldLabel>Last name</FieldLabel>
-					<Input
-						value={value.lastName}
-						onChange={(event) => onChange({ ...value, lastName: event.target.value })}
-						required
-					/>
-				</Field>
-			</div>
-			<div className="grid gap-4 sm:grid-cols-2">
-				<Field>
-					<FieldLabel>Date of birth</FieldLabel>
-					<Input
-						type="date"
-						value={value.dateOfBirth}
-						onChange={(event) => onChange({ ...value, dateOfBirth: event.target.value })}
-					/>
-				</Field>
-				<Field>
-					<FieldLabel>Gender</FieldLabel>
-					<SelectField
-						value={value.gender}
-						onValueChange={(gender) => onChange({ ...value, gender })}
-						nullable
-						placeholder="Select gender"
-						items={[
-							{ label: "Male", value: "male" },
-							{ label: "Female", value: "female" },
-							{ label: "Other", value: "other" },
-							{ label: "Prefer not to say", value: "prefer_not_to_say" },
-						]}
-					/>
-				</Field>
-			</div>
-			<div className="grid gap-4 sm:grid-cols-2">
-				<Field>
-					<FieldLabel>Email</FieldLabel>
-					<Input
-						type="email"
-						value={value.email}
-						onChange={(event) => onChange({ ...value, email: event.target.value })}
-					/>
-				</Field>
-				<Field>
-					<FieldLabel>Phone</FieldLabel>
-					<Input
-						value={value.phone}
-						onChange={(event) => onChange({ ...value, phone: event.target.value })}
-					/>
-				</Field>
-			</div>
-			<Field>
-				<FieldLabel>Address</FieldLabel>
-				<Input
-					value={value.addressLine1}
-					onChange={(event) => onChange({ ...value, addressLine1: event.target.value })}
-				/>
-			</Field>
-			<Field>
-				<FieldLabel>City</FieldLabel>
-				<Input
-					value={value.city}
-					onChange={(event) => onChange({ ...value, city: event.target.value })}
-				/>
-			</Field>
-			<div className="grid gap-4 sm:grid-cols-2">
-				<Field>
-					<FieldLabel>Emergency contact</FieldLabel>
-					<Input
-						value={value.emergencyContactName}
-						onChange={(event) => onChange({ ...value, emergencyContactName: event.target.value })}
-					/>
-				</Field>
-				<Field>
-					<FieldLabel>Emergency phone</FieldLabel>
-					<Input
-						value={value.emergencyContactPhone}
-						onChange={(event) => onChange({ ...value, emergencyContactPhone: event.target.value })}
-					/>
-				</Field>
-			</div>
-			<Field>
-				<FieldLabel>Previous school</FieldLabel>
-				<Input
-					value={value.previousSchool}
-					onChange={(event) => onChange({ ...value, previousSchool: event.target.value })}
-				/>
-			</Field>
-			<div className="rounded-lg border border-border p-3">
-				<p className="mb-3 font-medium text-sm">Primary guardian (optional)</p>
-				<FieldGroup className="gap-3">
-					<div className="grid gap-3 sm:grid-cols-2">
-						<Field>
-							<FieldLabel>First name</FieldLabel>
-							<Input
-								value={value.guardianFirstName}
-								onChange={(event) => onChange({ ...value, guardianFirstName: event.target.value })}
-							/>
-						</Field>
-						<Field>
-							<FieldLabel>Last name</FieldLabel>
-							<Input
-								value={value.guardianLastName}
-								onChange={(event) => onChange({ ...value, guardianLastName: event.target.value })}
-							/>
-						</Field>
-					</div>
-					<Field>
-						<FieldLabel>Phone</FieldLabel>
-						<Input
-							value={value.guardianPhone}
-							onChange={(event) => onChange({ ...value, guardianPhone: event.target.value })}
-						/>
-					</Field>
-					<Field>
-						<FieldLabel>Relationship</FieldLabel>
-						<SelectField
-							value={value.guardianRelationship}
-							onValueChange={(relationship) =>
-								onChange({ ...value, guardianRelationship: relationship })
-							}
-							items={[
-								{ label: "Father", value: "father" },
-								{ label: "Mother", value: "mother" },
-								{ label: "Guardian", value: "guardian" },
-								{ label: "Step parent", value: "step_parent" },
-								{ label: "Grandparent", value: "grandparent" },
-								{ label: "Other", value: "other" },
-							]}
-						/>
-					</Field>
-				</FieldGroup>
-			</div>
-		</FieldGroup>
 	);
 }

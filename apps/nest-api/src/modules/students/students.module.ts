@@ -8,6 +8,7 @@ import { GuardiansModule } from '@/modules/guardians/guardians.module';
 import { MembershipsModule } from '@/modules/memberships/memberships.module';
 import { StaffModule } from '@/modules/staff/staff.module';
 import { TenantsModule } from '@/modules/tenants/tenants.module';
+import { StudentPhotoStorageService } from './student-photo-storage.service';
 import { StudentsController } from './students.controller';
 import { StudentsRepository } from './students.repository';
 import { StudentsService } from './students.service';
@@ -24,7 +25,7 @@ import { StudentsService } from './students.service';
 		StaffModule,
 	],
 	controllers: [StudentsController],
-	providers: [StudentsRepository, StudentsService],
+	providers: [StudentsRepository, StudentsService, StudentPhotoStorageService],
 	exports: [StudentsService, StudentsRepository],
 })
 export class StudentsModule {}

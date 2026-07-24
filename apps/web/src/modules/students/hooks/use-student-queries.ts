@@ -117,6 +117,23 @@ export function useCreateStudentMutation(tenantId: string, campusId: string | nu
 	});
 }
 
+export function useUploadStudentPhotoMutation(tenantId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({ studentId, file }: { studentId: string; file: File }) =>
+			studentsService.uploadPhoto(requireToken(token), tenantId, studentId, file),
+		onSuccess: async (data) => {
+			await queryClient.invalidateQueries({
+				queryKey: studentQueryKeys.detail(tenantId, data.student.id),
+			});
+			await queryClient.invalidateQueries({
+				queryKey: studentQueryKeys.list(tenantId, data.student.campusId),
+			});
+		},
+	});
+}
+
 export function useCreateEnrollmentMutation(tenantId: string) {
 	const { token } = useAuth();
 	const queryClient = useQueryClient();

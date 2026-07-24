@@ -5,7 +5,7 @@ import type { Student } from "../types/student.types";
 import { studentInitials } from "../utils/student-ui.utils";
 
 type Props = {
-	student: Pick<Student, "firstName" | "lastName">;
+	student: Pick<Student, "firstName" | "lastName" | "photoUrl">;
 	size?: "sm" | "md" | "lg";
 	className?: string;
 };
@@ -17,6 +17,21 @@ const sizeClasses = {
 };
 
 export function StudentAvatar({ student, size = "md", className }: Props) {
+	if (student.photoUrl) {
+		return (
+			// biome-ignore lint/a11y/useAltText: portrait with adjacent name in UI
+			// biome-ignore lint/performance/noImgElement: tenant-hosted photo URLs are dynamic
+			<img
+				src={student.photoUrl}
+				className={cn(
+					"inline-flex shrink-0 object-cover ring-1 ring-border",
+					sizeClasses[size],
+					className,
+				)}
+			/>
+		);
+	}
+
 	return (
 		<span
 			aria-hidden
