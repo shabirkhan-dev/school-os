@@ -1,5 +1,6 @@
 "use client";
 
+import { Tabs, TabsList, TabsTrigger } from "@school-os/ui/components/tabs";
 import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import {
@@ -184,47 +185,49 @@ function BillingToggle({
 	const reduceMotion = useReducedMotion();
 
 	return (
-		<div
-			role="tablist"
+		<Tabs
+			value={billing}
+			onValueChange={(value) => onChange(value as Billing)}
 			aria-label="Billing period"
-			className="inline-flex items-center gap-1 rounded-full bg-secondary p-1"
+			className="w-fit flex-row items-center"
 		>
-			<LayoutGroup id="pricing-billing">
-				{(
-					[
-						{ id: "monthly" as const, label: "Monthly" },
-						{ id: "yearly" as const, label: "Yearly" },
-					] as const
-				).map((option) => {
-					const selected = billing === option.id;
-					return (
-						<div key={option.id} className="relative">
-							{selected ? (
-								<motion.span
-									layoutId={reduceMotion ? undefined : "pricing-billing-pill"}
-									className="absolute inset-0 rounded-full bg-primary shadow-sm"
-									transition={springSnappy}
-									style={{ borderRadius: 9999 }}
-								/>
-							) : null}
-							<button
-								type="button"
-								role="tab"
-								aria-selected={selected}
-								onClick={() => onChange(option.id)}
-								className={cn(
-									"relative z-10 inline-flex items-center justify-center whitespace-nowrap rounded-full bg-transparent px-3.5 py-1.5 font-medium text-sm outline-none transition-colors",
-									selected ? "text-primary-foreground" : "text-foreground/80 hover:text-foreground",
-								)}
-							>
-								{option.label}
-							</button>
-						</div>
-					);
-				})}
-			</LayoutGroup>
-			<span className="pr-3 pl-1 font-medium text-primary text-xs">2 months free</span>
-		</div>
+			<TabsList className="h-auto items-center gap-1 rounded-full bg-secondary p-1">
+				<LayoutGroup id="pricing-billing">
+					{(
+						[
+							{ id: "monthly" as const, label: "Monthly" },
+							{ id: "yearly" as const, label: "Yearly" },
+						] as const
+					).map((option) => {
+						const selected = billing === option.id;
+						return (
+							<div key={option.id} className="relative">
+								{selected ? (
+									<motion.span
+										layoutId={reduceMotion ? undefined : "pricing-billing-pill"}
+										className="absolute inset-0 rounded-full bg-primary shadow-sm"
+										transition={springSnappy}
+										style={{ borderRadius: 9999 }}
+									/>
+								) : null}
+								<TabsTrigger
+									value={option.id}
+									className={cn(
+										"relative z-10 rounded-full bg-transparent px-3.5 py-1.5 text-sm data-active:bg-transparent dark:data-active:bg-transparent",
+										selected
+											? "text-primary-foreground hover:text-primary-foreground data-active:text-primary-foreground dark:text-primary-foreground dark:data-active:text-primary-foreground"
+											: "text-foreground/80 hover:text-foreground dark:text-foreground/80 dark:hover:text-foreground",
+									)}
+								>
+									{option.label}
+								</TabsTrigger>
+							</div>
+						);
+					})}
+				</LayoutGroup>
+				<span className="pr-3 pl-1 font-medium text-primary text-xs">2 months free</span>
+			</TabsList>
+		</Tabs>
 	);
 }
 

@@ -2,6 +2,7 @@
 
 import { QrCodeIcon, SentIcon, Tick02Icon, WhatsappIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Tabs, TabsList, TabsTrigger } from "@school-os/ui/components/tabs";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -93,52 +94,52 @@ type StepperProps = {
 
 function WalkthroughStepper({ currentIndex, onSelect, reduceMotion }: StepperProps) {
 	return (
-		<div
-			className="-mx-1 flex snap-x snap-mandatory items-center gap-1.5 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0"
-			role="tablist"
+		<Tabs
+			value={currentIndex}
+			onValueChange={(value) => onSelect(Number(value))}
 			aria-label="Attendance demo steps"
+			className="w-full flex-row"
 		>
-			{WALKTHROUGH_PHASES.map((step, index) => {
-				const isActive = index === currentIndex;
-				const isDone = index < currentIndex;
+			<TabsList className="-mx-1 h-auto w-full snap-x snap-mandatory items-center justify-start gap-1.5 overflow-x-auto rounded-none bg-transparent p-0 px-1 pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0">
+				{WALKTHROUGH_PHASES.map((step, index) => {
+					const isActive = index === currentIndex;
+					const isDone = index < currentIndex;
 
-				return (
-					<button
-						key={step.id}
-						type="button"
-						role="tab"
-						aria-selected={isActive}
-						onClick={() => onSelect(index)}
-						className={cn(
-							"relative inline-flex shrink-0 snap-center items-center gap-1 rounded-full px-2.5 py-1.5 font-medium text-[10px] transition-colors sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-[11px]",
-							isActive
-								? "bg-card/95 text-primary shadow-sm ring-1 ring-border/80"
-								: isDone
-									? "bg-foreground/12 text-foreground/90"
-									: "bg-foreground/8 text-foreground/70 hover:bg-foreground/12",
-						)}
-					>
-						{isDone ? (
-							<span className="grid size-3.5 place-items-center rounded-full bg-emerald-500 text-white">
-								<HugeiconsIcon icon={Tick02Icon} className="size-2" aria-hidden={true} />
-							</span>
-						) : (
-							<span
-								className={cn(
-									"size-1.5 rounded-full",
-									isActive ? "bg-primary atlas-live-dot" : "bg-foreground/35",
-								)}
-							/>
-						)}
-						<span className="sm:hidden">{step.shortLabel}</span>
-						<span className="hidden sm:inline">{step.label}</span>
-						{isActive && !reduceMotion ? (
-							<span className="pointer-events-none absolute inset-x-2 -bottom-0.5 h-0.5 rounded-full bg-primary/60" />
-						) : null}
-					</button>
-				);
-			})}
-		</div>
+					return (
+						<TabsTrigger
+							key={step.id}
+							value={index}
+							className={cn(
+								"relative shrink-0 snap-center gap-1 rounded-full px-2.5 py-1.5 text-[10px] data-active:bg-transparent sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-[11px]",
+								isActive
+									? "bg-card/95 text-primary shadow-sm ring-1 ring-border/80 hover:bg-card/95 hover:text-primary data-active:text-primary dark:bg-card/95 dark:text-primary dark:data-active:bg-card/95 dark:data-active:text-primary"
+									: isDone
+										? "bg-foreground/12 text-foreground/90 hover:bg-foreground/12 hover:text-foreground/90 data-active:text-foreground/90 dark:text-foreground/90 dark:data-active:bg-foreground/12 dark:data-active:text-foreground/90"
+										: "bg-foreground/8 text-foreground/70 hover:bg-foreground/12 data-active:text-foreground/70 dark:text-foreground/70 dark:data-active:bg-foreground/8 dark:data-active:text-foreground/70",
+							)}
+						>
+							{isDone ? (
+								<span className="grid size-3.5 place-items-center rounded-full bg-emerald-500 text-white">
+									<HugeiconsIcon icon={Tick02Icon} className="size-2" aria-hidden={true} />
+								</span>
+							) : (
+								<span
+									className={cn(
+										"size-1.5 rounded-full",
+										isActive ? "bg-primary atlas-live-dot" : "bg-foreground/35",
+									)}
+								/>
+							)}
+							<span className="sm:hidden">{step.shortLabel}</span>
+							<span className="hidden sm:inline">{step.label}</span>
+							{isActive && !reduceMotion ? (
+								<span className="pointer-events-none absolute inset-x-2 -bottom-0.5 h-0.5 rounded-full bg-primary/60" />
+							) : null}
+						</TabsTrigger>
+					);
+				})}
+			</TabsList>
+		</Tabs>
 	);
 }
 

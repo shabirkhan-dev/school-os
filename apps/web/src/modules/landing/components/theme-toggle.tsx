@@ -2,6 +2,7 @@
 
 import { Moon01Icon, Sun01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
 import type { AtlasTheme } from "../lib/theme";
 import { cn } from "../lib/utils";
 
@@ -16,26 +17,28 @@ export function ThemeToggle({ theme, onToggle, className, mounted = true }: Them
 	const isDark = theme === "dark";
 
 	return (
-		<button
+		<Button
 			type="button"
+			variant="ghost"
+			size="icon"
 			onClick={onToggle}
 			aria-label={
 				mounted ? (isDark ? "Switch to light theme" : "Switch to dark theme") : "Toggle theme"
 			}
 			className={cn(
-				"inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/60 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+				"size-9 rounded-full border border-border/70 bg-background/60 text-muted-foreground hover:bg-muted hover:text-foreground",
 				className,
 			)}
 		>
 			{mounted ? (
 				<HugeiconsIcon
 					icon={isDark ? Sun01Icon : Moon01Icon}
-					className="h-4 w-4"
+					className="size-4"
 					strokeWidth={1.75}
 				/>
 			) : (
 				<span className="inline-block size-4" aria-hidden={true} />
 			)}
-		</button>
+		</Button>
 	);
 }

@@ -3,6 +3,15 @@
 import { ArrowDown01Icon, Cancel01Icon, Menu01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { SchoolOsBrand } from "@school-os/ui";
+import { Button } from "@school-os/ui/components/button";
+import {
+	NavigationMenu,
+	NavigationMenuContent,
+	NavigationMenuItem,
+	NavigationMenuLink,
+	NavigationMenuList,
+	NavigationMenuTrigger,
+} from "@school-os/ui/components/navigation-menu";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useId, useState } from "react";
@@ -14,7 +23,6 @@ import { LandingAuthActions } from "./landing-auth-actions";
 import { ThemeToggle } from "./theme-toggle";
 
 export function SiteHeader() {
-	const [openMenu, setOpenMenu] = useState<string | null>(null);
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [mobileSection, setMobileSection] = useState<string | null>("Resources");
 	const reduceMotion = useReducedMotion();
@@ -38,34 +46,38 @@ export function SiteHeader() {
 						<SchoolOsBrand markClassName="size-7 sm:size-8" nameClassName="text-base sm:text-lg" />
 					</Link>
 
-					<nav className="-translate-x-1/2 absolute left-1/2 hidden items-center gap-0.5 lg:flex">
-						{NAV_ITEMS.map((item) => {
-							if (item.items) {
-								return (
-									<DesktopDropdown
-										key={item.label}
-										item={item}
-										items={item.items}
-										open={openMenu === item.label}
-										onOpen={() => setOpenMenu(item.label)}
-										onClose={() => setOpenMenu(null)}
-										reduceMotion={!!reduceMotion}
-									/>
-								);
-							}
+					<NavigationMenu
+						align="center"
+						className="absolute left-1/2 hidden flex-none -translate-x-1/2 lg:flex"
+					>
+						<NavigationMenuList className="gap-0.5">
+							{NAV_ITEMS.map((item) => {
+								if (item.items) {
+									return (
+										<DesktopDropdown
+											key={item.label}
+											item={item}
+											items={item.items}
+											reduceMotion={!!reduceMotion}
+										/>
+									);
+								}
 
-							return (
-								<motion.div key={item.label} whileHover={{ y: -1 }} transition={springSnappy}>
-									<Link
-										href={item.href}
-										className="relative z-10 rounded-lg px-3 py-2 font-medium text-foreground/80 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-foreground/30 hover:text-foreground"
-									>
-										{item.label}
-									</Link>
-								</motion.div>
-							);
-						})}
-					</nav>
+								return (
+									<NavigationMenuItem key={item.label}>
+										<motion.div whileHover={{ y: -1 }} transition={springSnappy}>
+											<Link
+												href={item.href}
+												className="relative z-10 rounded-lg px-3 py-2 font-medium text-foreground/80 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-foreground/30 hover:text-foreground"
+											>
+												{item.label}
+											</Link>
+										</motion.div>
+									</NavigationMenuItem>
+								);
+							})}
+						</NavigationMenuList>
+					</NavigationMenu>
 
 					<div className="flex items-center gap-2">
 						<ThemeToggle
@@ -75,19 +87,23 @@ export function SiteHeader() {
 							className="hidden sm:inline-flex"
 						/>
 						<LandingAuthActions />
-						<button
+						<Button
 							type="button"
+							variant="outline"
+							size="icon"
 							aria-label={mobileOpen ? "Close menu" : "Open menu"}
 							aria-expanded={mobileOpen}
 							onClick={() => setMobileOpen((prev) => !prev)}
-							className="grid size-9 place-items-center rounded-lg border border-border/60 bg-card text-foreground outline-none focus-visible:ring-2 focus-visible:ring-foreground/30 lg:hidden"
+							className={cn(
+								"size-9 rounded-lg border-border/60 bg-card focus-visible:ring-2 focus-visible:ring-foreground/30 dark:bg-card lg:hidden",
+							)}
 						>
 							{mobileOpen ? (
-								<HugeiconsIcon icon={Cancel01Icon} className="size-4" strokeWidth={2} />
+								<HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />
 							) : (
-								<HugeiconsIcon icon={Menu01Icon} className="size-4" strokeWidth={2} />
+								<HugeiconsIcon icon={Menu01Icon} strokeWidth={2} />
 							)}
-						</button>
+						</Button>
 					</div>
 				</motion.div>
 
@@ -225,114 +241,65 @@ function MobileAccordion({
 type DesktopDropdownProps = {
 	item: NavItem;
 	items: NavSubItem[];
-	open: boolean;
-	onOpen: () => void;
-	onClose: () => void;
 	reduceMotion: boolean;
 };
 
-function DesktopDropdown({
-	item,
-	items,
-	open,
-	onOpen,
-	onClose,
-	reduceMotion,
-}: DesktopDropdownProps) {
-	const menuId = useId();
+function DesktopDropdown({ item, items, reduceMotion }: DesktopDropdownProps) {
+	return (
+		<NavigationMenuItem value={item.label}>
+			<motion.div whileHover={{ y: -1 }} transition={springSnappy}>
+				<NavigationMenuTrigger className="h-auto px-3 py-2 text-foreground/80 hover:bg-transparent hover:text-foreground focus:bg-transparent focus-visible:ring-2 focus-visible:ring-foreground/30 focus-visible:outline-none data-open:bg-transparent data-open:hover:bg-transparent data-open:focus:bg-transparent data-popup-open:bg-transparent data-popup-open:hover:bg-transparent">
+					{item.label}
+				</NavigationMenuTrigger>
+			</motion.div>
+			<NavigationMenuContent className="w-[min(20rem,calc(100vw-2rem))] p-2">
+				<NavMenuPanel label={item.label} items={items} reduceMotion={reduceMotion} />
+			</NavigationMenuContent>
+		</NavigationMenuItem>
+	);
+}
+
+type NavMenuPanelProps = {
+	label: string;
+	items: NavSubItem[];
+	reduceMotion: boolean;
+};
+
+/**
+ * Rendered inside `NavigationMenuContent`, which mounts only while the menu is
+ * open — so the hover highlight always starts on the first item per open.
+ */
+function NavMenuPanel({ label, items, reduceMotion }: NavMenuPanelProps) {
 	const [hovered, setHovered] = useState<string | null>(items[0]?.label ?? null);
 
 	return (
-		// biome-ignore lint/a11y/noStaticElementInteractions: hover bridge for dropdown + keyboard via trigger
-		<div
-			className="relative"
-			onMouseEnter={onOpen}
-			onMouseLeave={() => {
-				onClose();
-				setHovered(items[0]?.label ?? null);
-			}}
-			onFocus={onOpen}
-			onBlur={(event) => {
-				if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-					onClose();
+		<LayoutGroup id={`${label}-menu-items`}>
+			<motion.div
+				initial="hidden"
+				animate="visible"
+				variants={
+					reduceMotion
+						? undefined
+						: {
+								hidden: {},
+								visible: {
+									transition: { staggerChildren: 0.04, delayChildren: 0.03 },
+								},
+							}
 				}
-			}}
-		>
-			<motion.button
-				type="button"
-				aria-expanded={open}
-				aria-haspopup="menu"
-				aria-controls={menuId}
-				onClick={() => (open ? onClose() : onOpen())}
-				className={cn(
-					"relative z-10 flex items-center gap-1 rounded-lg px-3 py-2 font-medium text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-foreground/30",
-					open ? "text-foreground" : "text-foreground/80 hover:text-foreground",
-				)}
-				whileHover={{ y: -1 }}
-				transition={springSnappy}
+				className="flex flex-col"
 			>
-				{item.label}
-				<motion.span
-					animate={{ rotate: open ? 180 : 0 }}
-					transition={springSnappy}
-					className="inline-flex"
-				>
-					<HugeiconsIcon
-						icon={ArrowDown01Icon}
-						className="size-3.5"
-						strokeWidth={2}
-						aria-hidden={true}
+				{items.map((sub) => (
+					<NavMenuItem
+						key={sub.label}
+						item={sub}
+						hovered={hovered === sub.label}
+						onHoverStart={() => setHovered(sub.label)}
+						reduceMotion={reduceMotion}
 					/>
-				</motion.span>
-			</motion.button>
-
-			<AnimatePresence>
-				{open ? (
-					<motion.div
-						id={menuId}
-						key={`${item.label}-menu`}
-						role="menu"
-						aria-label={item.label}
-						initial={reduceMotion ? false : { opacity: 0, y: 8, scale: 0.98 }}
-						animate={{ opacity: 1, y: 0, scale: 1 }}
-						exit={{ opacity: 0, y: 6, scale: 0.98 }}
-						transition={reduceMotion ? { duration: 0 } : springSnappy}
-						className="absolute top-full left-1/2 w-[min(20rem,calc(100vw-2rem))] origin-top -translate-x-1/2 pt-3"
-						style={{ transformOrigin: "50% 0%" }}
-					>
-						<div className="rounded-2xl border border-border/50 bg-popover p-2 shadow-[0_18px_50px_-24px_rgba(0,0,0,0.55)]">
-							<LayoutGroup id={`${item.label}-menu-items`}>
-								<motion.div
-									initial="hidden"
-									animate="visible"
-									variants={
-										reduceMotion
-											? undefined
-											: {
-													hidden: {},
-													visible: {
-														transition: { staggerChildren: 0.04, delayChildren: 0.03 },
-													},
-												}
-									}
-									className="flex flex-col"
-								>
-									{items.map((sub) => (
-										<NavMenuItem
-											key={sub.label}
-											item={sub}
-											hovered={hovered === sub.label}
-											onHoverStart={() => setHovered(sub.label)}
-											reduceMotion={reduceMotion}
-										/>
-									))}
-								</motion.div>
-							</LayoutGroup>
-						</div>
-					</motion.div>
-				) : null}
-			</AnimatePresence>
-		</div>
+				))}
+			</motion.div>
+		</LayoutGroup>
 	);
 }
 
@@ -362,16 +329,15 @@ function NavMenuItem({ item, hovered, onHoverStart, reduceMotion }: NavMenuItemP
 				)
 			) : null}
 
-			<Link
-				href={item.href}
-				role="menuitem"
-				className="relative z-10 block rounded-xl px-3.5 py-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+			<NavigationMenuLink
+				render={<Link href={item.href} />}
+				className="relative z-10 block rounded-xl px-3.5 py-3 hover:bg-transparent focus:bg-transparent focus-visible:ring-2 focus-visible:ring-ring in-data-[slot=navigation-menu-content]:rounded-xl"
 			>
 				<span className="block font-medium text-foreground text-sm leading-5">{item.label}</span>
 				<span className="mt-0.5 block text-muted-foreground text-xs leading-5">
 					{item.description}
 				</span>
-			</Link>
+			</NavigationMenuLink>
 		</motion.div>
 	);
 }
