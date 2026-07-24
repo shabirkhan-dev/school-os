@@ -184,6 +184,7 @@ Recent admin and teacher surfaces wired to the Nest API:
 | Homework | `/admin/homework`, detail by id | Whole-class or selected students, AI draft assist |
 | Assessments | `/admin/assessments` | Scheduling, targeting, links to planner |
 | Test planner | `/admin/test-planner` | Week view of scheduled assessments |
+| Teacher home | `/admin` (teacher role) | **Command center** — digest, instant actions, prefs, student insights in roster drawer |
 
 Migrations `0017_homework_assessments` and `0018_homework_assessments_v2` add homework/assessment tables,
 recipients, planner fields, and role permissions. Apply with `bun --cwd apps/nest-api run db:migrate`.
@@ -191,6 +192,6 @@ recipients, planner fields, and role permissions. Apply with `bun --cwd apps/nes
 ## Related docs
 
 - `README.md` - quick start and high-level navigation
-- Docs app (`apps/docs`): `/docs/product-vision`, `/docs/product-system-design`, `/docs/qol`, `/docs/production-roadmap`
+- Docs app (`apps/docs`): `/docs/product-vision`, `/docs/teacher-experience`, `/docs/academics-homework-assessments`, `/docs/production-roadmap`
 - `scripts/README.md` - script usage and structure
 - `apps/*/README.md` - per-app setup and workflows

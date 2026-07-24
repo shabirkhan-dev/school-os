@@ -1,0 +1,160 @@
+---
+title: User roles & principal dashboard
+description: Target role hierarchy for School OS, what exists today, and how the principal command center maps to the product spec.
+---
+
+This page aligns the **School OS role model** (platform → business → school → class → family) with
+what the codebase implements **now** and what is **planned**. Use it as the canonical product
+reference when adding staff types, permissions, or dashboards.
+
+## Are we flowing this spec?
+
+**Yes — as the north star.** The architecture (tenant isolation, owner vs principal scope, parent/student
+portals, teacher command center) matches your hierarchy. We implement it in **phases** inside the
+modular monolith — not all 16 role types or finance/transport modules exist yet.
+
+| Verdict | Meaning |
+|---------|---------|
+| **Direction** | Matches [Product system design](/docs/product-system-design) and [Master plan](/docs/master-plan) |
+| **Today** | 7 membership roles + platform operators (implicit super admin via infra, not a product UI yet) |
+| **Next** | Principal pulse → admissions wizard → finance → extended staff roles |
+
+---
+
+## Part 1 — Role catalog (target vs today)
+
+| # | Role (your spec) | In product today | Membership / notes |
+|---|------------------|------------------|---------------------|
+| 1 | Super Admin | Partial | Platform ops (deploy, DB, no `/admin` super-tenant UI yet) |
+| 2 | Owner | **Yes** | `owner` — multiple schools (tenants), portfolio dashboard (ops metrics; rollup UI evolving) |
+| 3 | Principal | **Yes** | `principal` — [Principal command center](/docs/user-roles-and-dashboards#principal-command-center) |
+| 4 | Vice Principal | Planned | Map to `principal` + delegated permissions or new role + `membership_roles` |
+| 5 | Admin / office staff | **Yes** | `admin` — students, members, campuses, admissions (wizard improving) |
+| 6 | Accountant / finance | Planned | New role + `finance.*` permissions (fee snapshot on principal pulse = placeholder) |
+| 7 | Teacher | **Yes** | `teacher` — classes, attendance, homework, assessments |
+| 8 | Substitute teacher | Planned | `teacher` + short-lived assignment or `substitute` role |
+| 9 | Counselor | Planned | Staff profile + `counselor` role, student wellbeing module |
+| 10 | Librarian | Planned | Resource module |
+| 11 | Transport manager | Planned | Transport module |
+| 12 | Security / gate | Planned | Gate scan events (no guard app — QR/NFC at gate/teacher roster) |
+| 13 | Receptionist | Planned | Visitors module |
+| 14 | Parent / guardian | **Yes** | `parent` — `/admin/my-children`, all campuses in one view |
+| 15 | Student | **Yes** | `student` — learner home, single campus, linked `students.membership_id` |
+| 16 | IT admin | Planned | `admin` subset or `it_admin` for config-only |
+
+**Database enum today:** `owner`, `principal`, `admin`, `teacher`, `parent`, `student` (see Nest
+`membership_role`). Secondary roles use `membership_roles` (e.g. teacher who is also a parent).
+
+---
+
+## Part 2 — Hierarchy (tenant model)
+
+```text
+SUPER ADMIN (platform)
+└── OWNER (tenant = school network / business)
+    ├── Campus A  ← principal operates at school + campus switch
+    ├── Campus B
+    └── Campus C
+
+PRINCIPAL scope: one tenant (one “school” org), all campuses in that tenant unless restricted later.
+OWNER scope: multiple tenants (multiple schools) via organization switcher.
+```
+
+Parents and students **never** switch campus to “see another school”; parents see **all linked
+children** across campuses in one dashboard. Students are pinned to **one campus** via their student
+record.
+
+---
+
+## Part 3 — Feature matrix (honest status)
+
+Legend: **Live** = shipped in web + API · **Partial** = UI or API only · **Planned** = spec only
+
+| Feature | Owner | Principal | Admin | Teacher | Parent | Student |
+|---------|:-----:|:---------:|:-----:|:-------:|:------:|:-------:|
+| All schools (portfolio) | Partial | — | — | — | — | — |
+| One school / tenant | Live | Live | Live | Partial | — | — |
+| All students | Live | Live | Live | Own classes | Own children | Self |
+| Staff directory | Live | Live | Live | — | — | — |
+| Attendance (school-wide) | Partial | Partial | Partial | Live (class) | Partial | Partial |
+| Homework / assessments | Live | Live | Live | Live | Live | Live |
+| Finance / fees | Planned | Planned | Planned | — | Planned | — |
+| Announcements | Planned | Planned | Partial | Partial | Receive | Receive |
+| AI school health | Partial | Partial | — | Partial | — | — |
+| Admissions wizard (photos, invite) | — | Partial | Planned | — | — | — |
+
+---
+
+## Part 4 — Principal command center
+
+**Product intent:** The principal is the **CEO of one school** — full operational visibility inside
+their tenant, reporting upward to the owner.
+
+**What principals see first in the app (live):**
+
+| Section | Status | Source |
+|---------|--------|--------|
+| School health score | Partial | Heuristic from enrollment, staff, invites (not full AI yet) |
+| Students enrolled | Live | Student + enrollment APIs |
+| Staff on duty | Live | Staff directory / teacher profiles |
+| Attendance today | Planned | Aggregated gate + session marks |
+| Revenue snapshot | Planned | Finance module |
+| Ops pulse strip | Live | Same pipeline as owner ops dashboard |
+| AI summary | Partial | Rule-based suggestions until AI API wired |
+| Quick actions | Live | Links to attendance, students, members, homework |
+| Enrollment detail | Live | Charts + recent admissions below the fold |
+
+Log in as `seed.principal@northwood.demo` (after `db:seed-demo-logins`) and open **`/admin`**.
+
+**Principal powers (spec vs code):**
+
+| Power | Today |
+|-------|--------|
+| View all students in tenant | Yes (with `students.read`) |
+| Manage members / invite staff | Yes (with membership permissions) |
+| Approve admissions (full wizard) | Partial — admin creates records; wizard + photos next |
+| Fee waivers / finance | Not yet |
+| Emergency alerts | Not yet |
+| Override teacher decisions | Not yet (workflow layer) |
+| See other tenants | No (owner only) |
+
+---
+
+## Part 5 — Principal vs owner
+
+| | Principal | Owner |
+|---|-----------|-------|
+| Scope | One **tenant** (school org) | One or **many tenants** (schools) |
+| Sidebar | Campus switch within tenant | Organization switch + campuses |
+| Dashboard | Principal command center + school metrics | Ops dashboard (portfolio per tenant) |
+| Finance | Planned school budget | Planned cross-school revenue |
+
+---
+
+## Part 6 — Implementation phases (recommended)
+
+1. **Done / in progress:** Role-based home routes, parent all-campus children, student learner home,
+   principal pulse, homework/assessments spine, demo logins.
+2. **Phase A — Principal ops:** School-wide attendance %, discipline log stub, announcement composer.
+3. **Phase B — Admin admissions:** Single-campus enrollment, photo, guardian + student invite, required
+   fields; no multi-campus student until policy changes.
+4. **Phase C — Finance:** Fee structure, collections, principal revenue snapshot.
+5. **Phase D — Extended roles:** VP, accountant, counselor, transport, security event ingest.
+6. **Phase E — AI:** School health model, predictive alerts, principal daily digest approval flow.
+
+---
+
+## Part 7 — What principals cannot do (by design)
+
+- View another owner’s tenant or another school’s data (RLS + tenant guard).
+- Change platform-wide settings (super admin / deployment).
+- Delete audit logs (when audit module ships).
+
+---
+
+## Related docs
+
+- [Production roadmap](/docs/production-roadmap) — engineering phases
+- [Academics, homework & assessments](/docs/academics-homework-assessments)
+- [Teacher experience](/docs/teacher-experience)
+- [Multi-tenancy](/docs/multi-tenancy)
