@@ -17,7 +17,10 @@ export class CsrfGuard implements CanActivate {
 
 		const origin = request.headers.origin;
 		if (!origin) {
-			return true;
+			throw new ForbiddenException({
+				code: 'AUTH_CSRF_REJECTED',
+				message: 'Request origin is required for state-changing methods',
+			});
 		}
 
 		const requestedWith = request.headers['x-requested-with'];

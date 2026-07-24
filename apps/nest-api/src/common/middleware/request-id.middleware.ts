@@ -20,5 +20,5 @@ export function requestIdMiddleware(
 }
 
 function isValidRequestId(value: string | undefined): value is string {
-	return typeof value === 'string' && value.trim().length > 0 && value.length <= 128;
+	return typeof value === 'string' && /^[A-Za-z0-9._-]{1,128}$/.test(value);
 }

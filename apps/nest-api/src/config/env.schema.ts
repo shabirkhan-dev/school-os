@@ -45,7 +45,7 @@ export const envSchema = z
 		TRUST_PROXY: booleanFromString,
 		AUTH_DEV_EXPOSE_CODES: z
 			.enum(['true', 'false'])
-			.default('true')
+			.default('false')
 			.transform((value) => value === 'true'),
 		RESEND_API_KEY: z.string().min(1).optional(),
 		AUTH_EMAIL_FROM: z.string().min(3).default('Starter <auth@example.com>'),
@@ -69,6 +69,9 @@ export const envSchema = z
 		RAZORPAY_PLAN_ENTERPRISE_YEARLY: z.string().min(1).optional(),
 		AI_API_URL: z.url().default('http://localhost:8000'),
 		AI_SERVICE_TOKEN: z.string().min(16).default('development-only-ai-service-token-change-me'),
+		OUTBOX_WORKER_ENABLED: z.enum(['true', 'false']).optional(),
+		OUTBOX_POLL_INTERVAL_MS: z.coerce.number().int().min(1000).max(300_000).default(5000),
+		OUTBOX_BATCH_SIZE: z.coerce.number().int().min(1).max(500).default(25),
 	})
 	.superRefine((env, context) => {
 		if (env.NODE_ENV !== 'production') {

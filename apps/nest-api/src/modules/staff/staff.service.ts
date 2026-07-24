@@ -404,8 +404,7 @@ export class StaffService {
 	}
 
 	private async buildTeacherDetail(tenantId: string, membershipId: string) {
-		const rows = await this.staff.listTeachers(tenantId);
-		const row = rows.find((item) => item.membership.id === membershipId);
+		const row = await this.staff.findTeacherByMembershipId(tenantId, membershipId);
 		if (!row) {
 			throw new NotFoundException({
 				code: 'TEACHER_NOT_FOUND',

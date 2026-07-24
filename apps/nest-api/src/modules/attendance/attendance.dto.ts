@@ -54,6 +54,33 @@ export class ConfirmAllPresentDto {
 	exceptStudentIds?: string[];
 }
 
+export const studentHistoryQuerySchema = z.object({
+	limit: z.coerce.number().int().min(1).max(200).default(50).optional(),
+});
+
+export const sessionDateQuerySchema = z
+	.object({
+		sessionDate: z
+			.string()
+			.trim()
+			.regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+			.optional(),
+	})
+	.strict();
+
+export const findSessionQuerySchema = z
+	.object({
+		sectionId: z.string().uuid(),
+		sessionDate: z
+			.string()
+			.trim()
+			.regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
+	})
+	.strict();
+
 export type CreateAttendanceSessionInput = z.infer<typeof createAttendanceSessionSchema>;
 export type MarkAttendanceInput = z.infer<typeof markAttendanceSchema>;
 export type ConfirmAllPresentInput = z.infer<typeof confirmAllPresentSchema>;
+export type StudentHistoryQuery = z.infer<typeof studentHistoryQuerySchema>;
+export type SessionDateQuery = z.infer<typeof sessionDateQuerySchema>;
+export type FindSessionQuery = z.infer<typeof findSessionQuerySchema>;

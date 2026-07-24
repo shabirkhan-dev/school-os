@@ -1,9 +1,16 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+	CanActivate,
+	ExecutionContext,
+	ForbiddenException,
+	Injectable,
+	UnauthorizedException,
+} from '@nestjs/common';
 import type { AuthenticatedRequest } from '@/modules/auth/jwt-auth.guard';
 import { PermissionsService } from '@/modules/authorization/permissions.service';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 
 import type { TenantContext } from './tenant-context.types';
+import { TenantsRepository } from './tenants.repository';
 
 export type TenantScopedRequest = AuthenticatedRequest & { tenant?: TenantContext };
 
@@ -12,6 +19,7 @@ export class TenantGuard implements CanActivate {
 	constructor(
 		private readonly memberships: MembershipsService,
 		private readonly permissions: PermissionsService,
+		private readonly tenantsRepository: TenantsRepository,
 	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -29,7 +37,15 @@ export class TenantGuard implements CanActivate {
 		}
 
 		const membership = await this.memberships.requireActiveMembership(request.user.sub, tenantId);
-		await this.permissions.ensureCacheFresh();
+
+		const tenant = await this.tenantsRepository.findById(tenantId);
+		if (!tenant || !this.tenantsRepository.isActive(tenant)) {
+			throw new ForbiddenException({
+				code: 'TENANT_INACTIVE',
+				message: 'This organization is suspended or no longer active',
+			});
+		}
+
 		const roleRows = await this.memberships.listRolesForMembership(membership.id);
 		const roles =
 			roleRows.length > 0 ? roleRows.map((row) => row.role) : ([membership.role] as const);

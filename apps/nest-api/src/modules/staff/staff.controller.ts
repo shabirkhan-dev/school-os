@@ -14,6 +14,9 @@ import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import type { AccessTokenPayload } from '@/modules/auth/auth.types';
 import { CurrentUser } from '@/modules/auth/current-user.decorator';
 import { JwtAuthGuard } from '@/modules/auth/jwt-auth.guard';
+import { PermissionCodes } from '@/modules/authorization/permission-codes';
+import { PermissionsGuard } from '@/modules/authorization/permissions.guard';
+import { RequirePermissions } from '@/modules/authorization/require-permissions.decorator';
 import { CurrentTenant } from '@/modules/tenants/current-tenant.decorator';
 import { TenantGuard } from '@/modules/tenants/tenant.guard';
 import type { TenantContext } from '@/modules/tenants/tenant-context.types';
@@ -22,12 +25,13 @@ import { StaffService } from './staff.service';
 
 @ApiTags('Staff')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, TenantGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, PermissionsGuard)
 @Controller({ path: 'tenants/:tenantId', version: '1' })
 export class StaffController {
 	constructor(private readonly staff: StaffService) {}
 
 	@Get('teachers')
+	@RequirePermissions(PermissionCodes.STAFF_READ)
 	@ApiOperation({ summary: 'List teachers with profile summaries' })
 	listTeachers(
 		@CurrentUser() user: AccessTokenPayload,
@@ -71,6 +75,7 @@ export class StaffController {
 	}
 
 	@Get('teachers/:membershipId')
+	@RequirePermissions(PermissionCodes.STAFF_READ)
 	@ApiOperation({ summary: 'Get teacher profile, homeroom sections, and subject assignments' })
 	getTeacher(
 		@CurrentUser() user: AccessTokenPayload,
@@ -81,6 +86,7 @@ export class StaffController {
 	}
 
 	@Patch('teachers/:membershipId/profile')
+	@RequirePermissions(PermissionCodes.STAFF_WRITE)
 	@ApiOperation({ summary: 'Create or update teacher staff profile' })
 	upsertProfile(
 		@CurrentUser() user: AccessTokenPayload,
@@ -92,6 +98,7 @@ export class StaffController {
 	}
 
 	@Get('subjects')
+	@RequirePermissions(PermissionCodes.STAFF_READ)
 	@ApiOperation({ summary: 'List subject catalog' })
 	listSubjects(
 		@CurrentUser() user: AccessTokenPayload,
@@ -101,6 +108,7 @@ export class StaffController {
 	}
 
 	@Post('subjects')
+	@RequirePermissions(PermissionCodes.STAFF_WRITE)
 	@ApiOperation({ summary: 'Create a subject' })
 	createSubject(
 		@CurrentUser() user: AccessTokenPayload,
@@ -111,6 +119,7 @@ export class StaffController {
 	}
 
 	@Get('section-subjects')
+	@RequirePermissions(PermissionCodes.STAFF_READ)
 	@ApiOperation({ summary: 'List class subject assignments for homework and assessments' })
 	listSectionSubjects(
 		@CurrentUser() user: AccessTokenPayload,
@@ -121,6 +130,7 @@ export class StaffController {
 	}
 
 	@Post('section-subjects')
+	@RequirePermissions(PermissionCodes.STAFF_WRITE)
 	@ApiOperation({ summary: 'Assign a teacher to teach a subject in a section' })
 	assignSectionSubject(
 		@CurrentUser() user: AccessTokenPayload,

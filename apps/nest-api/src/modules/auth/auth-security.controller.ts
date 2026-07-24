@@ -15,6 +15,7 @@ import { MfaService } from '@/modules/mfa/mfa.service';
 import { PasskeysService } from '@/modules/passkeys/passkeys.service';
 import { SocialAuthService } from '@/modules/social-auth/social-auth.service';
 import type { AccessTokenPayload } from './auth.types';
+import { CsrfGuard } from './csrf.guard';
 import { CurrentUser } from './current-user.decorator';
 import {
 	GoogleCredentialBodyDto,
@@ -25,7 +26,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 
 @ApiTags('Account security')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, CsrfGuard)
 @Controller({ path: 'auth/security', version: '1' })
 export class AuthSecurityController {
 	constructor(

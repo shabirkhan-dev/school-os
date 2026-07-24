@@ -195,7 +195,7 @@ export function defaultSortFn<T>(
 	const column = columns.find((item) => item.id === sort.id);
 	if (!column?.sortValue) return rows;
 
-	return rows.sort((left, right) => {
+	return [...rows].sort((left, right) => {
 		const leftValue = column.sortValue?.(left);
 		const rightValue = column.sortValue?.(right);
 		if (leftValue == null && rightValue == null) return 0;

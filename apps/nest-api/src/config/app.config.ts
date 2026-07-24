@@ -51,6 +51,9 @@ export type AppConfig = {
 	};
 	aiApiUrl: string;
 	aiServiceToken: string;
+	outboxWorkerEnabled: boolean;
+	outboxPollIntervalMs: number;
+	outboxBatchSize: number;
 };
 
 export function createAppConfig(env: Env = parseEnv()): AppConfig {
@@ -130,5 +133,11 @@ export function createAppConfig(env: Env = parseEnv()): AppConfig {
 		},
 		aiApiUrl: env.AI_API_URL.replace(/\/$/, ''),
 		aiServiceToken: env.AI_SERVICE_TOKEN,
+		outboxWorkerEnabled:
+			env.OUTBOX_WORKER_ENABLED !== undefined
+				? env.OUTBOX_WORKER_ENABLED === 'true'
+				: env.NODE_ENV !== 'test',
+		outboxPollIntervalMs: env.OUTBOX_POLL_INTERVAL_MS,
+		outboxBatchSize: env.OUTBOX_BATCH_SIZE,
 	};
 }

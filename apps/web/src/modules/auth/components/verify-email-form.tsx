@@ -15,12 +15,12 @@ import { Spinner } from "@school-os/ui/components/spinner";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import * as api from "@/lib/api-client";
 import {
 	buildAuthRedirectUrl,
 	readDevCodeFromSearchParams,
 	readInviteTokenFromSearchParams,
 } from "@/modules/auth/lib/dev-auth-code";
+import { authService } from "@/modules/auth/services";
 
 export function VerifyEmailForm() {
 	const router = useRouter();
@@ -42,7 +42,7 @@ export function VerifyEmailForm() {
 		setError(null);
 		setSubmitting(true);
 		try {
-			await api.verifyEmail({ email, code });
+			await authService.verifyEmail({ email, code });
 			const loginParams = new URLSearchParams({ verified: "true" });
 			if (inviteToken) loginParams.set("invite", inviteToken);
 			router.push(`/login?${loginParams.toString()}`);
@@ -57,7 +57,7 @@ export function VerifyEmailForm() {
 		setError(null);
 		setResending(true);
 		try {
-			const result = await api.resendVerification(email);
+			const result = await authService.resendVerification(email);
 			if (result.developmentCode) {
 				setDevelopmentCode(result.developmentCode);
 				router.replace(

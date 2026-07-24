@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import type { AccessTokenPayload } from '@/modules/auth/auth.types';
 import { CurrentUser } from '@/modules/auth/current-user.decorator';
 import { JwtAuthGuard } from '@/modules/auth/jwt-auth.guard';
@@ -18,7 +19,12 @@ import { PermissionCodes } from '@/modules/authorization/permission-codes';
 import { PermissionsGuard } from '@/modules/authorization/permissions.guard';
 import { RequirePermissions } from '@/modules/authorization/require-permissions.decorator';
 import { TenantGuard } from '@/modules/tenants/tenant.guard';
-import { CreateHomeworkDto, UpdateHomeworkDto } from './homework.dto';
+import {
+	CreateHomeworkDto,
+	type ListHomeworkQuery,
+	listHomeworkQuerySchema,
+	UpdateHomeworkDto,
+} from './homework.dto';
 import { HomeworkService } from './homework.service';
 
 @ApiTags('Homework')
@@ -34,11 +40,9 @@ export class HomeworkController {
 	list(
 		@CurrentUser() user: AccessTokenPayload,
 		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
-		@Query('sectionSubjectId') sectionSubjectId?: string,
-		@Query('status') status?: 'draft' | 'published' | 'closed',
-		@Query('studentId') studentId?: string,
+		@Query(new ZodValidationPipe(listHomeworkQuerySchema)) query: ListHomeworkQuery,
 	) {
-		return this.homework.list(user.sub, tenantId, { sectionSubjectId, status, studentId });
+		return this.homework.list(user.sub, tenantId, query);
 	}
 
 	@Get(':homeworkId')

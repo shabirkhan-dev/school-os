@@ -1,5 +1,6 @@
 "use client";
 
+import { DirectionProvider } from "@school-os/ui/components/direction";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -17,18 +18,20 @@ type Props = {
 function DashboardI18nRoot({ children, className }: Props) {
 	const { locale, dir } = useDashboardI18n();
 	return (
-		<div
-			data-dashboard-shell
-			dir={dir}
-			lang={locale === "ur" ? "ur" : "en"}
-			className={cn(
-				className,
-				dashboardLocaleClassName(locale),
-				locale === "ur" && "dashboard-locale-ur",
-			)}
-		>
-			{children}
-		</div>
+		<DirectionProvider direction={dir}>
+			<div
+				data-dashboard-shell
+				dir={dir}
+				lang={locale === "ur" ? "ur" : "en"}
+				className={cn(
+					className,
+					dashboardLocaleClassName(locale),
+					locale === "ur" && "dashboard-locale-ur",
+				)}
+			>
+				{children}
+			</div>
+		</DirectionProvider>
 	);
 }
 

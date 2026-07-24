@@ -111,7 +111,7 @@ export function PixelGridChart({ months, highlightMonth, className }: Props) {
 				<div className="flex w-[68px] shrink-0 flex-col-reverse justify-between py-1">
 					{yTicks.map((tick) => (
 						<div key={tick} className="flex items-center gap-1.5 leading-none">
-							<span className="w-7 text-right font-medium text-[10.5px] text-dashboard-text-muted">
+							<span className="w-7 text-end font-medium text-[10.5px] text-dashboard-text-muted">
 								{tick}
 							</span>
 							<span
@@ -232,7 +232,7 @@ export function PixelGridChart({ months, highlightMonth, className }: Props) {
 											style={{ backgroundColor: COLOR_NEW }}
 										/>
 										<span className="text-[13.5px] text-dashboard-text-muted">New admissions</span>
-										<span className="ml-auto font-semibold text-[15px] text-dashboard-text-primary tabular-nums">
+										<span className="ms-auto font-semibold text-[15px] text-dashboard-text-primary tabular-nums">
 											{tip.newAdmissions}
 										</span>
 									</div>
@@ -243,7 +243,7 @@ export function PixelGridChart({ months, highlightMonth, className }: Props) {
 											style={{ backgroundColor: COLOR_EXISTING }}
 										/>
 										<span className="text-[13.5px] text-dashboard-text-muted">Returning</span>
-										<span className="ml-auto font-semibold text-[15px] text-dashboard-text-primary tabular-nums">
+										<span className="ms-auto font-semibold text-[15px] text-dashboard-text-primary tabular-nums">
 											{tip.returning}
 										</span>
 									</div>
@@ -255,7 +255,7 @@ export function PixelGridChart({ months, highlightMonth, className }: Props) {
 			</div>
 
 			<div
-				className="mt-3 ml-[68px] grid"
+				className="mt-3 ms-[68px] grid"
 				style={{ gridTemplateColumns: `repeat(${monthLabels.length}, minmax(0, 1fr))` }}
 			>
 				{monthLabels.map((month, index) => {

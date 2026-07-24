@@ -1,13 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { requireToken } from "@/lib/api/require-token";
 import { attendanceService } from "@/modules/attendance/services/attendance.service";
 import { useAuth } from "@/modules/auth/context/auth-context";
-
-function requireToken(token: string | null): string {
-	if (!token) throw new Error("Authentication required");
-	return token;
-}
 
 export function useSchoolDayPulseQuery(tenantId: string | null, enabled = true) {
 	const { token } = useAuth();

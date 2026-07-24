@@ -1,15 +1,11 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { requireToken } from "@/lib/api/require-token";
 import { useAuth } from "@/modules/auth/context/auth-context";
 import { homeworkQueryKeys } from "../queries/homework-query-keys";
 import { homeworkService } from "../services/homework.service";
 import type { CreateHomeworkInput, UpdateHomeworkInput } from "../types/homework.types";
-
-function requireToken(token: string | null): string {
-	if (!token) throw new Error("Authentication required");
-	return token;
-}
 
 export function useHomeworkListQuery(
 	tenantId: string | null,

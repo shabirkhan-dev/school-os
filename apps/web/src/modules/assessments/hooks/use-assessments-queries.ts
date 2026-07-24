@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { requireToken } from "@/lib/api/require-token";
 import { useAuth } from "@/modules/auth/context/auth-context";
 import { assessmentsQueryKeys } from "../queries/assessments-query-keys";
 import { assessmentsService } from "../services/assessments.service";
@@ -9,11 +10,6 @@ import type {
 	UpdateAssessmentInput,
 	UpsertAssessmentResultsInput,
 } from "../types/assessments.types";
-
-function requireToken(token: string | null): string {
-	if (!token) throw new Error("Authentication required");
-	return token;
-}
 
 export function useAssessmentsListQuery(
 	tenantId: string | null,

@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { index, pgEnum, pgTable, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
 
 import { campuses } from './campuses.schema';
@@ -34,6 +35,9 @@ export const membershipInvites = pgTable(
 	},
 	(table) => [
 		uniqueIndex('membership_invites_token_hash_unique').on(table.tokenHash),
+		uniqueIndex('membership_invites_pending_tenant_email_unique')
+			.on(table.tenantId, table.email)
+			.where(sql`status = 'pending'`),
 		index('membership_invites_tenant_id_idx').on(table.tenantId),
 		index('membership_invites_email_idx').on(table.email),
 		index('membership_invites_status_idx').on(table.status),

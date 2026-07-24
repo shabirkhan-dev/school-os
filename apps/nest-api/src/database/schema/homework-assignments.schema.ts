@@ -43,6 +43,7 @@ export const homeworkAssignments = pgTable(
 		index('homework_assignments_tenant_id_idx').on(table.tenantId),
 		index('homework_assignments_section_subject_id_idx').on(table.sectionSubjectId),
 		index('homework_assignments_due_at_idx').on(table.tenantId, table.dueAt),
+		index('homework_assignments_status_idx').on(table.status),
 	],
 );
 

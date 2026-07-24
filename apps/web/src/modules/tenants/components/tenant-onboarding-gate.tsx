@@ -18,7 +18,7 @@ export function TenantOnboardingGate({ children }: { children: ReactNode }) {
 	const onCampuses = pathname.includes("/campuses") || pathname.startsWith("/admin/tenants/");
 
 	useEffect(() => {
-		if (tenantsLoading) return;
+		if (tenantsLoading || campusesLoading) return;
 
 		if (tenants.length === 0 && !onOnboarding && !onCampuses) {
 			router.replace("/admin/onboarding/tenant");
@@ -32,12 +32,17 @@ export function TenantOnboardingGate({ children }: { children: ReactNode }) {
 			} else {
 				router.replace("/admin");
 			}
+			return;
 		}
-	}, [activeTenant?.id, onCampuses, onOnboarding, router, tenants, tenantsLoading]);
 
-	useEffect(() => {
-		if (tenantsLoading || campusesLoading || onOnboarding || onCampuses) return;
-		if (tenants.length > 0 && campuses.length === 0 && activeTenant && canCreateCampus) {
+		if (
+			!onOnboarding &&
+			!onCampuses &&
+			tenants.length > 0 &&
+			campuses.length === 0 &&
+			activeTenant &&
+			canCreateCampus
+		) {
 			router.replace(`/admin/tenants/${activeTenant.id}/campuses`);
 		}
 	}, [
@@ -48,7 +53,7 @@ export function TenantOnboardingGate({ children }: { children: ReactNode }) {
 		onCampuses,
 		onOnboarding,
 		router,
-		tenants.length,
+		tenants,
 		tenantsLoading,
 	]);
 

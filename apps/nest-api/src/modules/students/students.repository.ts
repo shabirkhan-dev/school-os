@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
 
 import { DatabaseService } from '@/database/database.service';
-import { enrollments, type StudentRecord, students } from '@/database/schema';
+import { enrollments, type StudentRecord, studentGuardians, students } from '@/database/schema';
+import { GuardiansRepository } from '@/modules/guardians/guardians.repository';
 
 @Injectable()
 export class StudentsRepository {
-	constructor(private readonly database: DatabaseService) {}
+	constructor(
+		private readonly database: DatabaseService,
+		private readonly guardians: GuardiansRepository,
+	) {}
 
 	async listStudents(
 		tenantId: string,
@@ -65,6 +69,20 @@ export class StudentsRepository {
 		return student ?? null;
 	}
 
+	async findStudentsByIds(tenantId: string, studentIds: string[]) {
+		if (studentIds.length === 0) return [];
+		return this.database.db
+			.select()
+			.from(students)
+			.where(
+				and(
+					inArray(students.id, studentIds),
+					eq(students.tenantId, tenantId),
+					isNull(students.deletedAt),
+				),
+			);
+	}
+
 	async findStudentByMembershipId(tenantId: string, membershipId: string) {
 		const [student] = await this.database.db
 			.select()
@@ -98,6 +116,51 @@ export class StudentsRepository {
 	async createStudent(input: typeof students.$inferInsert) {
 		const [student] = await this.database.db.insert(students).values(input).returning();
 		return student;
+	}
+
+	async createStudentInTransaction(
+		studentInput: typeof students.$inferInsert,
+		guardianLinks?: Array<{
+			guardian: Parameters<GuardiansRepository['createGuardian']>[0];
+			link: {
+				relationship: (typeof studentGuardians.$inferInsert)['relationship'];
+				isPrimary: boolean;
+				canPickup: boolean;
+				receivesNotifications: boolean;
+			};
+		}>,
+	) {
+		return this.database.db.transaction(async (tx) => {
+			const [student] = await tx
+				.insert(students)
+				.values(studentInput)
+				.onConflictDoNothing({ target: [students.tenantId, students.studentCode] })
+				.returning();
+
+			if (!student) {
+				throw new ConflictException({
+					code: 'STUDENT_CODE_ALREADY_EXISTS',
+					message: 'A student with this admission number already exists',
+				});
+			}
+
+			if (guardianLinks?.length) {
+				for (const { guardian: guardianInput, link } of guardianLinks) {
+					const guardian = await this.guardians.createGuardianWithTx(tx, guardianInput);
+					await this.guardians.linkStudentGuardianWithTx(tx, {
+						tenantId: studentInput.tenantId,
+						studentId: student.id,
+						guardianId: guardian.id,
+						relationship: link.relationship,
+						isPrimary: link.isPrimary,
+						canPickup: link.canPickup,
+						receivesNotifications: link.receivesNotifications,
+					});
+				}
+			}
+
+			return student;
+		});
 	}
 
 	async updateStudent(
@@ -141,6 +204,21 @@ export class StudentsRepository {
 			.orderBy(asc(enrollments.enrolledOn));
 	}
 
+	async listEnrollmentsForStudents(tenantId: string, studentIds: string[]) {
+		if (studentIds.length === 0) return [];
+		return this.database.db
+			.select()
+			.from(enrollments)
+			.where(
+				and(
+					eq(enrollments.tenantId, tenantId),
+					inArray(enrollments.studentId, studentIds),
+					isNull(enrollments.deletedAt),
+				),
+			)
+			.orderBy(asc(enrollments.enrolledOn));
+	}
+
 	async findEnrollmentById(tenantId: string, enrollmentId: string) {
 		const [enrollment] = await this.database.db
 			.select()
@@ -176,6 +254,35 @@ export class StudentsRepository {
 	async createEnrollment(input: typeof enrollments.$inferInsert) {
 		const [enrollment] = await this.database.db.insert(enrollments).values(input).returning();
 		return enrollment;
+	}
+
+	async createEnrollmentAtomic(input: typeof enrollments.$inferInsert) {
+		return this.database.db.transaction(async (tx) => {
+			const [existing] = await tx
+				.select()
+				.from(enrollments)
+				.where(
+					and(
+						eq(enrollments.tenantId, input.tenantId),
+						eq(enrollments.studentId, input.studentId),
+						eq(enrollments.academicYearId, input.academicYearId),
+						eq(enrollments.status, 'active'),
+						isNull(enrollments.deletedAt),
+					),
+				)
+				.limit(1)
+				.for('update');
+
+			if (existing) {
+				throw new ConflictException({
+					code: 'ACTIVE_ENROLLMENT_EXISTS',
+					message: 'Student already has an active enrollment for this academic year',
+				});
+			}
+
+			const [enrollment] = await tx.insert(enrollments).values(input).returning();
+			return enrollment;
+		});
 	}
 
 	async updateEnrollment(

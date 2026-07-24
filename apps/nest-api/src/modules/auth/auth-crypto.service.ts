@@ -15,6 +15,9 @@ import { AppConfigService } from '@/config/app-config.service';
 import type { AuthChallengePurpose } from '@/database/schema';
 import type { AccessTokenPayload } from './auth.types';
 
+const JWT_ISSUER = 'school-os-api';
+const JWT_AUDIENCE = 'school-os-web';
+
 @Injectable()
 export class AuthCryptoService {
 	constructor(private readonly config: AppConfigService) {}
@@ -130,6 +133,8 @@ export class AuthCryptoService {
 
 		const token = await new SignJWT(claims)
 			.setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+			.setIssuer(JWT_ISSUER)
+			.setAudience(JWT_AUDIENCE)
 			.setSubject(payload.sub)
 			.setIssuedAt()
 			.setExpirationTime(Math.floor(expiresAt.getTime() / 1000))
@@ -141,6 +146,8 @@ export class AuthCryptoService {
 		try {
 			const { payload } = await jwtVerify(token, this.getJwtKey(), {
 				algorithms: ['HS256'],
+				issuer: JWT_ISSUER,
+				audience: JWT_AUDIENCE,
 			});
 			const sub = typeof payload.sub === 'string' ? payload.sub : null;
 			const sid = typeof payload.sid === 'string' ? payload.sid : null;

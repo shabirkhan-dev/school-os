@@ -99,42 +99,35 @@ export class StudentsService {
 		await this.requireCampus(tenantId, input.campusId);
 
 		const studentCode = input.studentCode.trim().toUpperCase();
-		if (await this.students.findStudentByCode(tenantId, studentCode)) {
-			throw new ConflictException({
-				code: 'STUDENT_CODE_ALREADY_EXISTS',
-				message: 'A student with this admission number already exists',
-			});
-		}
 
-		const student = await this.students.createStudent({
-			tenantId,
-			campusId: input.campusId,
-			studentCode,
-			firstName: input.firstName.trim(),
-			lastName: input.lastName.trim(),
-			middleName: input.middleName?.trim() ?? null,
-			dateOfBirth: input.dateOfBirth ?? null,
-			gender: input.gender ?? null,
-			email: input.email?.trim() ?? null,
-			phone: input.phone?.trim() ?? null,
-			addressLine1: input.addressLine1?.trim() ?? null,
-			addressLine2: input.addressLine2?.trim() ?? null,
-			city: input.city?.trim() ?? null,
-			state: input.state?.trim() ?? null,
-			postalCode: input.postalCode?.trim() ?? null,
-			country: input.country?.trim() ?? null,
-			bloodGroup: input.bloodGroup?.trim() ?? null,
-			medicalNotes: input.medicalNotes?.trim() ?? null,
-			emergencyContactName: input.emergencyContactName?.trim() ?? null,
-			emergencyContactPhone: input.emergencyContactPhone?.trim() ?? null,
-			admittedOn: input.admittedOn ?? new Date().toISOString().slice(0, 10),
-			previousSchool: input.previousSchool?.trim() ?? null,
-			status: input.status ?? 'active',
-		});
-
-		if (input.guardians?.length) {
-			for (const guardianInput of input.guardians) {
-				const guardian = await this.guardians.createGuardian({
+		const student = await this.students.createStudentInTransaction(
+			{
+				tenantId,
+				campusId: input.campusId,
+				studentCode,
+				firstName: input.firstName.trim(),
+				lastName: input.lastName.trim(),
+				middleName: input.middleName?.trim() ?? null,
+				dateOfBirth: input.dateOfBirth ?? null,
+				gender: input.gender ?? null,
+				email: input.email?.trim() ?? null,
+				phone: input.phone?.trim() ?? null,
+				addressLine1: input.addressLine1?.trim() ?? null,
+				addressLine2: input.addressLine2?.trim() ?? null,
+				city: input.city?.trim() ?? null,
+				state: input.state?.trim() ?? null,
+				postalCode: input.postalCode?.trim() ?? null,
+				country: input.country?.trim() ?? null,
+				bloodGroup: input.bloodGroup?.trim() ?? null,
+				medicalNotes: input.medicalNotes?.trim() ?? null,
+				emergencyContactName: input.emergencyContactName?.trim() ?? null,
+				emergencyContactPhone: input.emergencyContactPhone?.trim() ?? null,
+				admittedOn: input.admittedOn ?? new Date().toISOString().slice(0, 10),
+				previousSchool: input.previousSchool?.trim() ?? null,
+				status: input.status ?? 'active',
+			},
+			input.guardians?.map((guardianInput) => ({
+				guardian: {
 					tenantId,
 					membershipId: null,
 					firstName: guardianInput.firstName.trim(),
@@ -150,18 +143,15 @@ export class StudentsService {
 					country: null,
 					occupation: guardianInput.occupation?.trim() ?? null,
 					preferredChannel: guardianInput.preferredChannel ?? 'phone',
-				});
-				await this.guardians.linkStudentGuardian({
-					tenantId,
-					studentId: student.id,
-					guardianId: guardian.id,
+				},
+				link: {
 					relationship: guardianInput.relationship,
 					isPrimary: guardianInput.isPrimary ?? false,
 					canPickup: guardianInput.canPickup ?? true,
 					receivesNotifications: guardianInput.receivesNotifications ?? true,
-				});
-			}
-		}
+				},
+			})),
+		);
 
 		return { student: toPublicStudent(student) };
 	}
@@ -284,19 +274,7 @@ export class StudentsService {
 			});
 		}
 
-		const existing = await this.students.findActiveEnrollmentForYear(
-			tenantId,
-			studentId,
-			input.academicYearId,
-		);
-		if (existing) {
-			throw new ConflictException({
-				code: 'ACTIVE_ENROLLMENT_EXISTS',
-				message: 'Student already has an active enrollment for this academic year',
-			});
-		}
-
-		const enrollment = await this.students.createEnrollment({
+		const enrollment = await this.students.createEnrollmentAtomic({
 			tenantId,
 			studentId,
 			sectionId: input.sectionId,

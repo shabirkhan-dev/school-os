@@ -176,41 +176,25 @@ export class AssessmentsRepository {
 			const saved = [];
 
 			for (const resultInput of input.results) {
-				const [existing] = await transaction
-					.select()
-					.from(assessmentResults)
-					.where(
-						and(
-							eq(assessmentResults.assessmentId, input.assessmentId),
-							eq(assessmentResults.studentId, resultInput.studentId),
-						),
-					)
-					.limit(1);
-
-				if (existing) {
-					const [updated] = await transaction
-						.update(assessmentResults)
-						.set({
+				const [upserted] = await transaction
+					.insert(assessmentResults)
+					.values({
+						tenantId: input.tenantId,
+						assessmentId: input.assessmentId,
+						studentId: resultInput.studentId,
+						score: resultInput.score,
+						status: resultInput.status,
+					})
+					.onConflictDoUpdate({
+						target: [assessmentResults.assessmentId, assessmentResults.studentId],
+						set: {
 							score: resultInput.score,
 							status: resultInput.status,
 							updatedAt: now,
-						})
-						.where(eq(assessmentResults.id, existing.id))
-						.returning();
-					if (updated) saved.push(updated);
-				} else {
-					const [created] = await transaction
-						.insert(assessmentResults)
-						.values({
-							tenantId: input.tenantId,
-							assessmentId: input.assessmentId,
-							studentId: resultInput.studentId,
-							score: resultInput.score,
-							status: resultInput.status,
-						})
-						.returning();
-					if (created) saved.push(created);
-				}
+						},
+					})
+					.returning();
+				if (upserted) saved.push(upserted);
 			}
 
 			return saved;

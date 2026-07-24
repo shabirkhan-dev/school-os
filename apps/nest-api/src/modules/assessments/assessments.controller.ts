@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import type { AccessTokenPayload } from '@/modules/auth/auth.types';
 import { CurrentUser } from '@/modules/auth/current-user.decorator';
 import { JwtAuthGuard } from '@/modules/auth/jwt-auth.guard';
@@ -21,6 +22,10 @@ import { RequirePermissions } from '@/modules/authorization/require-permissions.
 import { TenantGuard } from '@/modules/tenants/tenant.guard';
 import {
 	CreateAssessmentDto,
+	type ListAssessmentsQuery,
+	listAssessmentsQuerySchema,
+	type PlannerAssessmentsQuery,
+	plannerAssessmentsQuerySchema,
 	UpdateAssessmentDto,
 	UpsertAssessmentResultsDto,
 } from './assessments.dto';
@@ -39,10 +44,9 @@ export class AssessmentsController {
 	list(
 		@CurrentUser() user: AccessTokenPayload,
 		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
-		@Query('sectionSubjectId') sectionSubjectId?: string,
-		@Query('status') status?: 'draft' | 'published' | 'closed',
+		@Query(new ZodValidationPipe(listAssessmentsQuerySchema)) query: ListAssessmentsQuery,
 	) {
-		return this.assessments.list(user.sub, tenantId, { sectionSubjectId, status });
+		return this.assessments.list(user.sub, tenantId, query);
 	}
 
 	@Get('planner')
@@ -51,11 +55,9 @@ export class AssessmentsController {
 	planner(
 		@CurrentUser() user: AccessTokenPayload,
 		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
-		@Query('from') from: string,
-		@Query('to') to: string,
-		@Query('sectionSubjectId') sectionSubjectId?: string,
+		@Query(new ZodValidationPipe(plannerAssessmentsQuerySchema)) query: PlannerAssessmentsQuery,
 	) {
-		return this.assessments.planner(user.sub, tenantId, { from, to, sectionSubjectId });
+		return this.assessments.planner(user.sub, tenantId, query);
 	}
 
 	@Get(':assessmentId')

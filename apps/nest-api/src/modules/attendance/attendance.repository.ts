@@ -80,100 +80,133 @@ export class AttendanceRepository {
 		const now = new Date();
 
 		return this.database.db.transaction(async (transaction) => {
-			const results: AttendanceMarkRecord[] = [];
+			const studentIds = input.marks.map((m) => m.studentId);
+
+			const existingMarks = await transaction
+				.select()
+				.from(attendanceMarks)
+				.where(
+					and(
+						eq(attendanceMarks.sessionId, input.session.id),
+						inArray(attendanceMarks.studentId, studentIds),
+					),
+				);
+
+			const existingByStudent = new Map(existingMarks.map((m) => [m.studentId, m]));
+
+			const toInsert: Array<typeof attendanceMarks.$inferInsert> = [];
+			const toUpdate: Array<{ id: string; status: AttendanceMarkRecord['status'] }> = [];
 
 			for (const markInput of input.marks) {
-				const [existing] = await transaction
-					.select()
-					.from(attendanceMarks)
-					.where(
-						and(
-							eq(attendanceMarks.sessionId, input.session.id),
-							eq(attendanceMarks.studentId, markInput.studentId),
-						),
-					)
-					.limit(1);
-
-				const previousStatus = existing?.status ?? null;
-				let mark: AttendanceMarkRecord;
-
+				const existing = existingByStudent.get(markInput.studentId);
 				if (existing) {
-					const [updated] = await transaction
-						.update(attendanceMarks)
-						.set({
-							status: markInput.status,
-							markedAt: now,
-							markedByMembershipId: input.markedByMembershipId,
-							updatedAt: now,
-						})
-						.where(eq(attendanceMarks.id, existing.id))
-						.returning();
-					if (!updated) throw new Error('Attendance mark update did not return a record');
-					mark = updated;
+					toUpdate.push({ id: existing.id, status: markInput.status });
 				} else {
-					const [created] = await transaction
-						.insert(attendanceMarks)
-						.values({
-							tenantId: input.tenantId,
-							sessionId: input.session.id,
-							studentId: markInput.studentId,
-							status: markInput.status,
-							markedAt: now,
-							markedByMembershipId: input.markedByMembershipId,
-						})
-						.returning();
-					if (!created) throw new Error('Attendance mark insert did not return a record');
-					mark = created;
+					toInsert.push({
+						tenantId: input.tenantId,
+						sessionId: input.session.id,
+						studentId: markInput.studentId,
+						status: markInput.status,
+						markedAt: now,
+						markedByMembershipId: input.markedByMembershipId,
+					});
 				}
+			}
 
-				const sourceEventId = `manual:${mark.id}:${now.getTime()}`;
-				await transaction.insert(attendanceEvents).values({
+			const results: AttendanceMarkRecord[] = [];
+
+			if (toInsert.length > 0) {
+				const created = await transaction.insert(attendanceMarks).values(toInsert).returning();
+				results.push(...created);
+			}
+
+			for (const update of toUpdate) {
+				const [updated] = await transaction
+					.update(attendanceMarks)
+					.set({
+						status: update.status,
+						markedAt: now,
+						markedByMembershipId: input.markedByMembershipId,
+						updatedAt: now,
+					})
+					.where(eq(attendanceMarks.id, update.id))
+					.returning();
+				if (updated) results.push(updated);
+			}
+
+			const eventValues = input.marks.map((markInput) => {
+				const existing = existingByStudent.get(markInput.studentId);
+				const mark = results.find((r) => r.studentId === markInput.studentId);
+				return {
 					tenantId: input.tenantId,
 					sessionId: input.session.id,
 					studentId: markInput.studentId,
-					eventType: 'manual_marked',
-					source: 'manual',
-					sourceEventId,
+					eventType: 'manual_marked' as const,
+					source: 'manual' as const,
+					sourceEventId: `manual:${mark?.id ?? ''}:${now.getTime()}`,
 					payload: {
 						status: markInput.status,
-						previousStatus,
+						previousStatus: existing?.status ?? null,
 						markedByMembershipId: input.markedByMembershipId,
 					},
-				});
+				};
+			});
 
-				await transaction.insert(auditLogs).values({
-					tenantId: input.tenantId,
-					actorMembershipId: input.markedByMembershipId,
-					action: 'attendance.marked',
-					resourceType: 'attendance_mark',
-					resourceId: mark.id,
-					metadata: {
-						sessionId: input.session.id,
-						studentId: markInput.studentId,
-						status: markInput.status,
-						previousStatus,
-					},
-				});
+			if (eventValues.length > 0) {
+				await transaction.insert(attendanceEvents).values(eventValues);
+			}
 
-				await transaction.insert(outboxEvents).values({
-					tenantId: input.tenantId,
-					eventType: 'attendance.manual_marked.v1',
-					aggregateType: 'attendance_mark',
-					aggregateId: mark.id,
-					payload: {
+			const auditValues = input.marks
+				.map((markInput) => {
+					const existing = existingByStudent.get(markInput.studentId);
+					const mark = results.find((r) => r.studentId === markInput.studentId);
+					if (!mark?.id) return null;
+					return {
 						tenantId: input.tenantId,
-						sessionId: input.session.id,
-						sectionId: input.session.sectionId,
-						campusId: input.session.campusId,
-						studentId: markInput.studentId,
-						status: markInput.status,
-						sessionDate: input.session.sessionDate,
-						markedAt: now.toISOString(),
-					},
-					status: 'pending',
-				});
+						actorMembershipId: input.markedByMembershipId,
+						action: 'attendance.marked',
+						resourceType: 'attendance_mark',
+						resourceId: mark.id,
+						metadata: {
+							sessionId: input.session.id,
+							studentId: markInput.studentId,
+							status: markInput.status,
+							previousStatus: existing?.status ?? null,
+						},
+					};
+				})
+				.filter((v): v is NonNullable<typeof v> => v !== null);
 
-				results.push(mark);
+			if (auditValues.length > 0) {
+				await transaction.insert(auditLogs).values(auditValues);
+			}
+
+			const outboxValues = input.marks
+				.map((markInput) => {
+					const mark = results.find((r) => r.studentId === markInput.studentId);
+					if (!mark?.id) return null;
+					return {
+						tenantId: input.tenantId,
+						eventType: 'attendance.manual_marked.v1',
+						aggregateType: 'attendance_mark',
+						aggregateId: mark.id,
+						payload: {
+							tenantId: input.tenantId,
+							sessionId: input.session.id,
+							sectionId: input.session.sectionId,
+							campusId: input.session.campusId,
+							studentId: markInput.studentId,
+							status: markInput.status,
+							sessionDate: input.session.sessionDate,
+							markedAt: now.toISOString(),
+						},
+						status: 'pending' as const,
+					};
+				})
+				.filter((v): v is NonNullable<typeof v> => v !== null);
+
+			if (outboxValues.length > 0) {
+				await transaction.insert(outboxEvents).values(outboxValues);
 			}
 
 			return results;

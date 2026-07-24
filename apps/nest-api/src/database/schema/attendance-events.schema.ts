@@ -43,6 +43,7 @@ export const attendanceEvents = pgTable(
 	(table) => [
 		uniqueIndex('attendance_events_source_event_unique').on(table.tenantId, table.sourceEventId),
 		index('attendance_events_session_id_idx').on(table.sessionId),
+		index('attendance_events_tenant_session_idx').on(table.tenantId, table.sessionId),
 		index('attendance_events_student_id_idx').on(table.studentId),
 	],
 );

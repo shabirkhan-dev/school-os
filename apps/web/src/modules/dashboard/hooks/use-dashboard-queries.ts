@@ -2,6 +2,7 @@
 
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { requireToken } from "@/lib/api/require-token";
 import { useAcademicYearsQuery, useClassesQuery, useSectionsQuery } from "@/modules/academic";
 import { useAuth } from "@/modules/auth/context/auth-context";
 import { useMembersQuery } from "@/modules/members/hooks/use-member-queries";
@@ -11,11 +12,6 @@ import { useTenantContext } from "@/modules/tenants";
 import { applySchoolAttendancePulse } from "../utils/apply-school-attendance-pulse";
 import { computeDashboardMetrics } from "../utils/dashboard-metrics.utils";
 import { useSchoolDayPulseQuery } from "./use-school-attendance-pulse";
-
-function requireToken(token: string | null): string {
-	if (!token) throw new Error("Authentication required");
-	return token;
-}
 
 type DashboardMetricsOptions = {
 	schoolPulse?: boolean;

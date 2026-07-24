@@ -127,9 +127,12 @@ export class AttendanceService {
 			enrolled.filter((row) => row.status === 'active').map((row) => row.studentId),
 		);
 
+		const markStudentIds = input.marks.map((mark) => mark.studentId);
+		const foundStudents = await this.students.findStudentsByIds(tenantId, markStudentIds);
+		const foundStudentIds = new Set(foundStudents.map((student) => student.id));
+
 		for (const mark of input.marks) {
-			const student = await this.students.findStudentById(tenantId, mark.studentId);
-			if (!student) {
+			if (!foundStudentIds.has(mark.studentId)) {
 				throw new NotFoundException({
 					code: 'STUDENT_NOT_FOUND',
 					message: `Student ${mark.studentId} not found`,

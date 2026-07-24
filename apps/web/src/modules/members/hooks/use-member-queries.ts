@@ -1,15 +1,11 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { requireToken } from "@/lib/api/require-token";
 import { useAuth } from "@/modules/auth";
 import { memberQueryKeys } from "../queries/member-query-keys";
 import { membersService } from "../services/members.service";
 import type { InviteMemberInput, UpdateMemberInput } from "../types/member.types";
-
-function requireToken(token: string | null): string {
-	if (!token) throw new Error("Authentication required");
-	return token;
-}
 
 export function useMembersQuery(tenantId: string | null, enabled = true) {
 	const { token } = useAuth();

@@ -55,8 +55,27 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
 	useEffect(() => {
 		if (!tokenExpiresAt) return;
-		const delay = Math.max(1_000, new Date(tokenExpiresAt).getTime() - Date.now() - 60_000);
-		const timer = window.setTimeout(() => refreshSession().catch(() => clearSession()), delay);
+		const expiresAtMs = new Date(tokenExpiresAt).getTime();
+		if (Number.isNaN(expiresAtMs)) return;
+		const delay = Math.max(1_000, expiresAtMs - Date.now() - 60_000);
+		let attempts = 0;
+		const maxAttempts = 3;
+
+		const attemptRefresh = async () => {
+			try {
+				await refreshSession();
+			} catch {
+				attempts += 1;
+				if (attempts < maxAttempts) {
+					const backoff = Math.min(30_000, 2 ** attempts * 1_000);
+					timer = window.setTimeout(attemptRefresh, backoff);
+				} else {
+					clearSession();
+				}
+			}
+		};
+
+		let timer = window.setTimeout(attemptRefresh, delay);
 		return () => window.clearTimeout(timer);
 	}, [clearSession, refreshSession, tokenExpiresAt]);
 

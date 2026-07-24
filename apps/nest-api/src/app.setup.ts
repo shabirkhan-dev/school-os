@@ -1,4 +1,3 @@
-import { join } from 'node:path';
 import type { INestApplication } from '@nestjs/common';
 import { VersioningType } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -21,9 +20,6 @@ export function setupApp(app: INestApplication, config: AppConfigService): void 
 		}),
 	);
 	expressApp.use(cookieParser());
-	expressApp.useStaticAssets(join(process.cwd(), 'uploads'), {
-		prefix: '/uploads/',
-	});
 
 	if (config.trustProxy) {
 		expressApp.getHttpAdapter().getInstance().set('trust proxy', 1);
@@ -53,12 +49,14 @@ export function setupApp(app: INestApplication, config: AppConfigService): void 
 	app.useGlobalInterceptors(new ResponseInterceptor());
 	app.useGlobalFilters(new HttpExceptionFilter());
 
-	const swaggerConfig = new DocumentBuilder()
-		.setTitle('Starter API')
-		.setDescription('Starter authentication and user API')
-		.setVersion(config.apiVersion)
-		.addBearerAuth()
-		.build();
-	const document = SwaggerModule.createDocument(app, swaggerConfig);
-	SwaggerModule.setup(`${config.apiPrefix}/docs`, app, document);
+	if (!config.isProduction) {
+		const swaggerConfig = new DocumentBuilder()
+			.setTitle('Starter API')
+			.setDescription('Starter authentication and user API')
+			.setVersion(config.apiVersion)
+			.addBearerAuth()
+			.build();
+		const document = SwaggerModule.createDocument(app, swaggerConfig);
+		SwaggerModule.setup(`${config.apiPrefix}/docs`, app, document);
+	}
 }

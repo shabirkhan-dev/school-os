@@ -1,4 +1,4 @@
-import { index, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import { index, pgTable, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
 
 import { memberships } from './memberships.schema';
 import { tenants } from './tenants.schema';
@@ -16,7 +16,7 @@ export const sessions = pgTable(
 		activeMembershipId: uuid('active_membership_id').references(() => memberships.id, {
 			onDelete: 'set null',
 		}),
-		userAgent: text('user_agent'),
+		userAgent: varchar('user_agent', { length: 512 }),
 		ipAddress: varchar('ip_address', { length: 45 }),
 		expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
 		lastUsedAt: timestamp('last_used_at', { withTimezone: true }).notNull().defaultNow(),

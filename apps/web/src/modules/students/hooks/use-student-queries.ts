@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { requireToken } from "@/lib/api/require-token";
 import { useAuth } from "@/modules/auth/context/auth-context";
 import { studentQueryKeys } from "../queries/student-query-keys";
 import { studentsService } from "../services/students.service";
@@ -10,11 +11,6 @@ import type {
 	Enrollment,
 	Student,
 } from "../types/student.types";
-
-function requireToken(token: string | null): string {
-	if (!token) throw new Error("Authentication required");
-	return token;
-}
 
 export function useStudentsQuery(tenantId: string | null, campusId: string | null, enabled = true) {
 	const { token } = useAuth();

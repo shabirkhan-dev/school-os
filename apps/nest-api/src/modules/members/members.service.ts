@@ -416,6 +416,12 @@ export class MembersService {
 				message: 'Principals cannot assign leadership roles',
 			});
 		}
+		if (nextRole === 'vice_principal' && actorRole !== 'principal') {
+			throw new ForbiddenException({
+				code: 'MEMBERSHIP_MANAGE_FORBIDDEN',
+				message: 'Only principals can assign the vice principal role',
+			});
+		}
 		if (nextRole && actorRole === 'admin' && ['owner', 'principal', 'admin'].includes(nextRole)) {
 			throw new ForbiddenException({
 				code: 'MEMBERSHIP_MANAGE_FORBIDDEN',
