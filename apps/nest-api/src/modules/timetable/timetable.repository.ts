@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, count, eq } from 'drizzle-orm';
 
 import { DatabaseService } from '@/database/database.service';
 import { classes, sections, subjects, timetableEntries, timetablePeriods } from '@/database/schema';
@@ -42,11 +42,10 @@ export class TimetableRepository {
 
 	async countEntries(tenantId: string): Promise<number> {
 		const [row] = await this.database.db
-			.select({ count: timetableEntries.id })
+			.select({ count: count() })
 			.from(timetableEntries)
-			.where(eq(timetableEntries.tenantId, tenantId))
-			.limit(1);
-		return row ? 1 : 0;
+			.where(eq(timetableEntries.tenantId, tenantId));
+		return row?.count ?? 0;
 	}
 
 	async insertPeriods(values: (typeof timetablePeriods.$inferInsert)[]) {

@@ -39,6 +39,7 @@ export class CampusesController {
 	}
 
 	@Get()
+	@RequirePermissions(PermissionCodes.ACADEMIC_READ)
 	@ApiOperation({ summary: 'List campuses for a tenant' })
 	list(
 		@CurrentUser() user: AccessTokenPayload,
@@ -48,6 +49,7 @@ export class CampusesController {
 	}
 
 	@Get(':campusId')
+	@RequirePermissions(PermissionCodes.ACADEMIC_READ)
 	@ApiOperation({ summary: 'Get a campus by id within a tenant' })
 	get(
 		@CurrentUser() user: AccessTokenPayload,

@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import type { AccessTokenPayload } from '@/modules/auth/auth.types';
 import { CurrentUser } from '@/modules/auth/current-user.decorator';
 import { JwtAuthGuard } from '@/modules/auth/jwt-auth.guard';
@@ -20,7 +21,13 @@ import { TenantGuard } from '@/modules/tenants/tenant.guard';
 import {
 	ConfirmAllPresentDto,
 	CreateAttendanceSessionDto,
+	type FindSessionQuery,
+	findSessionQuerySchema,
 	MarkAttendanceDto,
+	type SessionDateQuery,
+	type StudentHistoryQuery,
+	sessionDateQuerySchema,
+	studentHistoryQuerySchema,
 } from './attendance.dto';
 import { AttendanceService } from './attendance.service';
 
@@ -48,10 +55,9 @@ export class AttendanceController {
 	findSession(
 		@CurrentUser() user: AccessTokenPayload,
 		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
-		@Query('sectionId', new ParseUUIDPipe({ version: '4' })) sectionId: string,
-		@Query('sessionDate') sessionDate: string,
+		@Query(new ZodValidationPipe(findSessionQuerySchema)) query: FindSessionQuery,
 	) {
-		return this.attendance.findSession(user.sub, tenantId, { sectionId, sessionDate });
+		return this.attendance.findSession(user.sub, tenantId, query);
 	}
 
 	@Get('sessions/:sessionId')
@@ -95,9 +101,9 @@ export class AttendanceController {
 	getSchoolDayPulse(
 		@CurrentUser() user: AccessTokenPayload,
 		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
-		@Query('sessionDate') sessionDate?: string,
+		@Query(new ZodValidationPipe(sessionDateQuerySchema)) query: SessionDateQuery,
 	) {
-		const date = sessionDate ?? new Date().toISOString().slice(0, 10);
+		const date = query.sessionDate ?? new Date().toISOString().slice(0, 10);
 		return this.attendance.getSchoolDayPulse(user.sub, tenantId, date);
 	}
 
@@ -108,15 +114,8 @@ export class AttendanceController {
 		@CurrentUser() user: AccessTokenPayload,
 		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
 		@Param('studentId', new ParseUUIDPipe({ version: '4' })) studentId: string,
-		@Query('limit') limit?: string,
+		@Query(new ZodValidationPipe(studentHistoryQuerySchema)) query: StudentHistoryQuery,
 	) {
-		let parsedLimit = 50;
-		if (limit) {
-			const n = Number.parseInt(limit, 10);
-			if (!Number.isNaN(n) && n >= 1 && n <= 200) {
-				parsedLimit = n;
-			}
-		}
-		return this.attendance.getStudentHistory(user.sub, tenantId, studentId, parsedLimit);
+		return this.attendance.getStudentHistory(user.sub, tenantId, studentId, query.limit ?? 50);
 	}
 }

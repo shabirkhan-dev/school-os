@@ -8,6 +8,8 @@ import {
 import { AppConfigService } from '@/config/app-config.service';
 import type { AssistRequestInput, AssistResponse } from './ai.dto';
 
+const MAX_AI_REPLY_LENGTH = 100_000;
+
 @Injectable()
 export class AiClient {
 	private readonly logger = new Logger(AiClient.name);
@@ -50,6 +52,14 @@ export class AiClient {
 			throw new BadGatewayException({
 				code: 'AI_INVALID_RESPONSE',
 				message: 'AI assistance returned an invalid response',
+			});
+		}
+
+		if (payload.reply.length > MAX_AI_REPLY_LENGTH) {
+			this.logger.warn(`AI API reply exceeded ${MAX_AI_REPLY_LENGTH} characters`);
+			throw new BadGatewayException({
+				code: 'AI_REPLY_TOO_LARGE',
+				message: 'AI assistance returned an oversized response',
 			});
 		}
 

@@ -69,6 +69,20 @@ export class StudentsRepository {
 		return student ?? null;
 	}
 
+	async findStudentsByIds(tenantId: string, studentIds: string[]) {
+		if (studentIds.length === 0) return [];
+		return this.database.db
+			.select()
+			.from(students)
+			.where(
+				and(
+					inArray(students.id, studentIds),
+					eq(students.tenantId, tenantId),
+					isNull(students.deletedAt),
+				),
+			);
+	}
+
 	async findStudentByMembershipId(tenantId: string, membershipId: string) {
 		const [student] = await this.database.db
 			.select()
@@ -187,6 +201,21 @@ export class StudentsRepository {
 			.select()
 			.from(enrollments)
 			.where(and(...conditions))
+			.orderBy(asc(enrollments.enrolledOn));
+	}
+
+	async listEnrollmentsForStudents(tenantId: string, studentIds: string[]) {
+		if (studentIds.length === 0) return [];
+		return this.database.db
+			.select()
+			.from(enrollments)
+			.where(
+				and(
+					eq(enrollments.tenantId, tenantId),
+					inArray(enrollments.studentId, studentIds),
+					isNull(enrollments.deletedAt),
+				),
+			)
 			.orderBy(asc(enrollments.enrolledOn));
 	}
 

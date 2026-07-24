@@ -277,15 +277,12 @@ export class HomeworkService {
 	): Promise<boolean> {
 		if (row.assignment.status === 'draft') return false;
 
-		const sectionIds = new Set<string>();
-		for (const studentId of studentIds) {
-			const enrollments = await this.students.listEnrollments(tenantId, { studentId });
-			for (const enrollment of enrollments) {
-				if (enrollment.status === 'active') {
-					sectionIds.add(enrollment.sectionId);
-				}
-			}
-		}
+		const allEnrollments = await this.students.listEnrollmentsForStudents(tenantId, studentIds);
+		const sectionIds = new Set(
+			allEnrollments
+				.filter((enrollment) => enrollment.status === 'active')
+				.map((enrollment) => enrollment.sectionId),
+		);
 
 		if (!sectionIds.has(row.section.id)) return false;
 
