@@ -16,4 +16,6 @@ export type ApiErrorResponse = {
 	path: string;
 	method: string;
 	errors?: ReadonlyArray<unknown>;
+	/** Present in non-production when an unhandled error is mapped to 500. */
+	detail?: string;
 };

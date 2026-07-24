@@ -1,4 +1,11 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import {
+	ArgumentsHost,
+	Catch,
+	ExceptionFilter,
+	HttpException,
+	HttpStatus,
+	Logger,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
 
 import type { ApiErrorResponse } from '@/common/types/api-response.type';
@@ -13,12 +20,21 @@ type HttpExceptionPayload = {
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+	private readonly logger = new Logger(HttpExceptionFilter.name);
+
 	catch(exception: unknown, host: ArgumentsHost): void {
 		const http = host.switchToHttp();
 		const request = http.getRequest<RequestWithId>();
 		const response = http.getResponse<Response>();
 		const statusCode = getStatusCode(exception);
 		const payload = getExceptionPayload(exception);
+
+		if (statusCode === HttpStatus.INTERNAL_SERVER_ERROR && !(exception instanceof HttpException)) {
+			this.logger.error(
+				`${request.method} ${getRequestPath(request)}`,
+				exception instanceof Error ? exception.stack : String(exception),
+			);
+		}
 
 		const body: ApiErrorResponse = {
 			success: false,
@@ -30,10 +46,24 @@ export class HttpExceptionFilter implements ExceptionFilter {
 			path: getRequestPath(request),
 			method: request.method,
 			...(payload.errors ? { errors: payload.errors } : {}),
+			...(getDevErrorDetail(exception) ? { detail: getDevErrorDetail(exception) } : {}),
 		};
 
 		response.status(statusCode).json(body);
 	}
+}
+
+function getDevErrorDetail(exception: unknown): string | undefined {
+	if (process.env.NODE_ENV === 'production') {
+		return undefined;
+	}
+	if (exception instanceof HttpException) {
+		return undefined;
+	}
+	if (exception instanceof Error) {
+		return exception.message;
+	}
+	return undefined;
 }
 
 function getStatusCode(exception: unknown): number {

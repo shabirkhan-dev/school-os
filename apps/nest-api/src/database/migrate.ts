@@ -16,9 +16,13 @@ const database = drizzle(client);
 async function runMigrations(): Promise<void> {
 	try {
 		await migrate(database, { migrationsFolder: './src/database/migrations' });
+		console.log('Database migrations applied (drizzle migrator finished successfully).');
 	} finally {
 		await client.end();
 	}
 }
 
-void runMigrations();
+void runMigrations().catch((error: unknown) => {
+	console.error('Database migration failed:', error);
+	process.exit(1);
+});
