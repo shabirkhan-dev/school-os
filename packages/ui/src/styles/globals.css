@@ -38,6 +38,8 @@
 	--radius-md: calc(var(--radius) - 2px);
 	--radius-lg: var(--radius);
 	--radius-xl: calc(var(--radius) + 4px);
+	--animate-accordion-down: accordion-down 0.2s ease-out;
+	--animate-accordion-up: accordion-up 0.2s ease-out;
 	--radius-2xl: calc(var(--radius) + 8px);
 	--radius-3xl: calc(var(--radius) + 12px);
 	--radius-4xl: calc(var(--radius) + 16px);
@@ -119,5 +121,23 @@
 
 	body {
 		@apply bg-background text-foreground;
+	}
+}
+
+@keyframes accordion-down {
+	from {
+		height: 0;
+	}
+	to {
+		height: var(--accordion-panel-height);
+	}
+}
+
+@keyframes accordion-up {
+	from {
+		height: var(--accordion-panel-height);
+	}
+	to {
+		height: 0;
 	}
 }
