@@ -101,11 +101,17 @@ export function AdmitStudentWizard({
 
 	useEffect(() => {
 		if (!photoFile) {
-			setPhotoPreview(null);
+			setPhotoPreview((prev) => {
+				if (prev) URL.revokeObjectURL(prev);
+				return null;
+			});
 			return;
 		}
 		const url = URL.createObjectURL(photoFile);
-		setPhotoPreview(url);
+		setPhotoPreview((prev) => {
+			if (prev) URL.revokeObjectURL(prev);
+			return url;
+		});
 		return () => URL.revokeObjectURL(url);
 	}, [photoFile]);
 

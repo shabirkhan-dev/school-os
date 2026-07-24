@@ -137,11 +137,11 @@ export function AdmissionsTable({ admissions, className, query = "" }: Props) {
 						))}
 					</colgroup>
 					<thead>
-						<tr className="text-left">
+						<tr className="text-start">
 							{COLUMNS.map((col) => (
 								<th
 									key={col.id}
-									className="py-2.5 pr-3 font-medium text-[11px] text-dashboard-text-muted uppercase tracking-[0.06em] first:pl-4 last:pr-3"
+									className="py-2.5 pe-3 font-medium text-[11px] text-dashboard-text-muted uppercase tracking-[0.06em] first:ps-4 last:pe-3"
 								>
 									{col.sortable ? (
 										<Button
@@ -186,7 +186,7 @@ export function AdmissionsTable({ admissions, className, query = "" }: Props) {
 									i > 0 && "border-dashboard-border-subtle [&>td]:border-t",
 								)}
 							>
-								<td className="py-3 pr-3 pl-4 align-top">
+								<td className="py-3 pe-3 ps-4 align-top">
 									<div className="flex min-w-0 items-start gap-2.5">
 										<span
 											aria-hidden
@@ -207,7 +207,7 @@ export function AdmissionsTable({ admissions, className, query = "" }: Props) {
 										</span>
 									</div>
 								</td>
-								<td className="py-3 pr-3 align-top">
+								<td className="py-3 pe-3 align-top">
 									<span className="block truncate font-medium text-[12.5px] text-dashboard-text-primary">
 										{a.campus}
 									</span>
@@ -215,7 +215,7 @@ export function AdmissionsTable({ admissions, className, query = "" }: Props) {
 										{a.grade}
 									</span>
 								</td>
-								<td className="py-3 pr-3 align-top">
+								<td className="py-3 pe-3 align-top">
 									<span className="block truncate font-medium text-[12.5px] text-dashboard-text-primary">
 										{a.guardian}
 									</span>
@@ -223,16 +223,16 @@ export function AdmissionsTable({ admissions, className, query = "" }: Props) {
 										{a.guardianRelation} · {a.guardianPhone}
 									</span>
 								</td>
-								<td className="py-3 pr-3 align-top tabular-nums">
+								<td className="py-3 pe-3 align-top tabular-nums">
 									<span className="block text-[12.5px] text-dashboard-text-primary">{a.date}</span>
 									<span className="mt-0.5 block truncate text-[11.5px] text-dashboard-text-muted">
 										{SOURCE_LABEL[a.source]}
 									</span>
 								</td>
-								<td className="py-3 pr-3 align-top">
+								<td className="py-3 pe-3 align-top">
 									<StatusBadge status={a.status} />
 								</td>
-								<td className="py-3 pr-3 align-top">
+								<td className="py-3 pe-3 align-top">
 									<DropdownMenu>
 										<DropdownMenuTrigger
 											render={

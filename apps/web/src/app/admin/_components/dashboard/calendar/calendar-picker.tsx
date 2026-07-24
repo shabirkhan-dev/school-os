@@ -94,18 +94,23 @@ export function CalendarPicker({ value, onChange, className }: Props) {
 				<button
 					type="button"
 					onClick={goToday}
-					className="ml-1 rounded-full border border-dashboard-border-strong bg-dashboard-hover px-3 py-1 font-medium text-[11px] text-dashboard-text-secondary transition-colors hover:bg-dashboard-hover-strong"
+					className="ms-1 rounded-full border border-dashboard-border-strong bg-dashboard-hover px-3 py-1 font-medium text-[11px] text-dashboard-text-secondary transition-colors hover:bg-dashboard-hover-strong"
 				>
 					Today
 				</button>
-				<div className="ml-1 flex items-center gap-1">
+				<div className="ms-1 flex items-center gap-1">
 					<button
 						type="button"
 						aria-label="Previous month"
 						onClick={() => setView(addMonths(view, -1))}
 						className="flex size-7 items-center justify-center rounded-full text-dashboard-text-muted transition-colors hover:bg-dashboard-hover hover:text-dashboard-text-primary"
 					>
-						<HugeiconsIcon icon={ArrowLeft01Icon} size={14} strokeWidth={2} />
+						<HugeiconsIcon
+							icon={ArrowLeft01Icon}
+							size={14}
+							strokeWidth={2}
+							className="rtl:rotate-180"
+						/>
 					</button>
 					<button
 						type="button"
@@ -113,13 +118,18 @@ export function CalendarPicker({ value, onChange, className }: Props) {
 						onClick={() => setView(addMonths(view, 1))}
 						className="flex size-7 items-center justify-center rounded-full text-dashboard-text-muted transition-colors hover:bg-dashboard-hover hover:text-dashboard-text-primary"
 					>
-						<HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={2} />
+						<HugeiconsIcon
+							icon={ArrowRight01Icon}
+							size={14}
+							strokeWidth={2}
+							className="rtl:rotate-180"
+						/>
 					</button>
 				</div>
 				<button
 					type="button"
 					aria-label="Add"
-					className="ml-auto flex size-8 items-center justify-center rounded-full bg-dashboard-accent text-white transition-all hover:bg-dashboard-accent-hover active:scale-95"
+					className="ms-auto flex size-8 items-center justify-center rounded-full bg-dashboard-accent text-white transition-all hover:bg-dashboard-accent-hover active:scale-95"
 				>
 					<HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2.4} />
 				</button>
@@ -162,7 +172,7 @@ export function CalendarPicker({ value, onChange, className }: Props) {
 										),
 							)}
 						>
-							<span className="absolute top-1.5 left-2">{d.getDate()}</span>
+							<span className="absolute top-1.5 start-2">{d.getDate()}</span>
 						</button>
 					);
 				})}

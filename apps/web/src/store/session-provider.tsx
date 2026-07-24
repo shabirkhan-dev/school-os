@@ -55,7 +55,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
 	useEffect(() => {
 		if (!tokenExpiresAt) return;
-		const delay = Math.max(1_000, new Date(tokenExpiresAt).getTime() - Date.now() - 60_000);
+		const expiresAtMs = new Date(tokenExpiresAt).getTime();
+		if (Number.isNaN(expiresAtMs)) return;
+		const delay = Math.max(1_000, expiresAtMs - Date.now() - 60_000);
 		let attempts = 0;
 		const maxAttempts = 3;
 

@@ -87,6 +87,17 @@ export function AssessmentDetailPage({ assessmentId }: Props) {
 		setError(null);
 		setMessage(null);
 
+		const maxScore = detailQuery.data.maxScore;
+		for (const row of draftRows) {
+			if (row.status === "graded" && row.score.trim() !== "") {
+				const score = Number(row.score);
+				if (Number.isNaN(score) || score < 0 || score > maxScore) {
+					setError(`Invalid score for a student. Must be between 0 and ${maxScore}.`);
+					return;
+				}
+			}
+		}
+
 		try {
 			await saveMutation.mutateAsync({
 				results: draftRows.map((row) => ({
