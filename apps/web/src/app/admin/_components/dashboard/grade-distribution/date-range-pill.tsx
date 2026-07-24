@@ -2,6 +2,7 @@
 
 import { ArrowDown01Icon, Calendar03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -12,11 +13,12 @@ type Props = {
 
 export function DateRangePill({ label, onClick, className }: Props) {
 	return (
-		<button
-			type="button"
+		<Button
+			variant="outline"
+			size="sm"
 			onClick={onClick}
 			className={cn(
-				"flex h-8 items-center gap-2 rounded-full border border-dashboard-border-strong bg-dashboard-surface px-3 text-[12.5px] text-dashboard-text-secondary transition-colors hover:border-dashboard-border-focus hover:bg-dashboard-surface-elevated",
+				"h-8 gap-2 rounded-full border-dashboard-border-strong bg-dashboard-surface px-3 text-[12.5px] text-dashboard-text-secondary hover:border-dashboard-border-focus hover:bg-dashboard-surface-elevated dark:border-dashboard-border-strong dark:bg-dashboard-surface dark:hover:border-dashboard-border-focus dark:hover:bg-dashboard-surface-elevated",
 				className,
 			)}
 		>
@@ -33,6 +35,6 @@ export function DateRangePill({ label, onClick, className }: Props) {
 				strokeWidth={2}
 				className="text-dashboard-text-dim"
 			/>
-		</button>
+		</Button>
 	);
 }

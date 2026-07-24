@@ -2,6 +2,7 @@
 
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
 import { cn } from "@/lib/utils";
 import type { DashboardMetrics } from "@/modules/dashboard";
 import { DashboardCardFooter, DashboardCardHeader, FooterSep, InsightStat } from "../card-chrome";
@@ -72,13 +73,14 @@ export function GradeDistributionCard({ grades, insights, className }: Props) {
 
 			<DashboardCardFooter
 				action={
-					<button
-						type="button"
-						className="inline-flex items-center gap-1 font-medium text-[12px] text-dashboard-accent transition-colors hover:text-dashboard-accent-hover"
+					<Button
+						variant="link"
+						size="sm"
+						className="h-auto gap-1 p-0 text-[12px] text-dashboard-accent no-underline hover:text-dashboard-accent-hover hover:no-underline"
 					>
 						Class lists
 						<HugeiconsIcon icon={ArrowRight01Icon} size={13} strokeWidth={2} />
-					</button>
+					</Button>
 				}
 			>
 				<span>
