@@ -11,6 +11,7 @@ import { SelectField } from "@school-os/ui/components/select-field";
 import { Spinner } from "@school-os/ui/components/spinner";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import { useClassesQuery, useSectionsQuery } from "@/modules/academic";
 import { formatSectionLabel } from "@/modules/academic/utils/format-section-label";
 import {
@@ -39,6 +40,27 @@ import {
 import { AttendanceRosterGrid } from "./attendance-roster-grid";
 import { AttendanceSmartToolbar } from "./attendance-smart-toolbar";
 import { AttendanceSummaryStrip } from "./attendance-summary-strip";
+
+/** Lightweight skeleton that matches the roster card layout to prevent layout shift. */
+function RosterSkeleton() {
+	return (
+		<div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3" aria-hidden>
+			{["a", "b", "c", "d", "e", "f"].map((id) => (
+				<div
+					key={id}
+					className="flex animate-pulse items-center gap-3 rounded-[14px] border border-dashboard-border bg-dashboard-surface px-3 py-3"
+				>
+					<span className="size-10 shrink-0 rounded-xl bg-dashboard-surface-strong" />
+					<span className="min-w-0 flex-1 space-y-1.5">
+						<span className="block h-3 w-3/4 rounded bg-dashboard-surface-strong" />
+						<span className="block h-2.5 w-1/2 rounded bg-dashboard-surface-strong" />
+					</span>
+					<span className="h-5 w-12 shrink-0 rounded-full bg-dashboard-surface-strong" />
+				</div>
+			))}
+		</div>
+	);
+}
 
 export function AttendancePage() {
 	const searchParams = useSearchParams();
@@ -138,6 +160,11 @@ export function AttendancePage() {
 	const markAttendance = useMarkAttendanceMutation(tenantId ?? "", sessionId ?? "");
 	const confirmAllPresent = useConfirmAllPresentMutation(tenantId ?? "");
 
+	/** True while a filter change is loading a new session — used for subtle UI feedback. */
+	const isSwitchingSection =
+		loadSession.isPending ||
+		(isTeacherScoped ? sectionStudentsQuery.isFetching : enrollmentsQuery.isFetching);
+
 	const applySessionView = useCallback(
 		(result: Awaited<ReturnType<typeof loadSession.mutateAsync>>) => {
 			setSessionId(result.session.id);
@@ -235,9 +262,9 @@ export function AttendancePage() {
 		const key = `${sectionId}:${sessionDate}`;
 		if (autoLoadedKey.current === key) return;
 		autoLoadedKey.current = key;
-		setSessionId(null);
-		setSavedMarks({});
-		setMarkDraft({});
+		// Don't clear sessionId/savedMarks/markDraft here — keepPreviousData on the
+		// roster queries and the mutation's onSuccess (applySessionView) handle the
+		// transition so the UI never collapses mid-switch.
 		void loadSessionForSelection();
 	}, [sectionId, sessionDate, tenantId, loadSessionForSelection]);
 
@@ -511,34 +538,48 @@ export function AttendancePage() {
 							lastScanMessage={lastScanMessage}
 						/>
 
-						<div className="mt-4">
-							{enrollmentsQuery.isLoading ||
-							studentsQuery.isLoading ||
-							sectionStudentsQuery.isLoading ? (
-								<div className="flex justify-center py-12">
-									<Spinner className="size-6" />
+						<div className="relative mt-4">
+							{isSwitchingSection && rosterStudents.length > 0 ? (
+								<div
+									className="absolute inset-0 z-10 flex items-center justify-center rounded-[10px] bg-dashboard-surface/60 backdrop-blur-[1px]"
+									aria-hidden
+								>
+									<Spinner className="size-5 text-dashboard-text-muted" />
 								</div>
-							) : rosterStudents.length === 0 ? (
-								<p className="py-8 text-center text-[13px] text-dashboard-text-muted">
-									No active enrollments in this section.
-								</p>
-							) : (
-								<>
-									<p className="mb-3 text-[12px] text-dashboard-text-muted">
-										Tap a student to cycle: Present → Late → Absent → Excused → Left early →
-										Unmarked
-									</p>
-									<AttendanceRosterGrid
-										roster={filteredRoster}
-										markDraft={markDraft}
-										highlightStudentId={highlightStudentId}
-										canMark={canMarkThisSection}
-										onStatusChange={(studentId, status) =>
-											setMarkDraft((current) => ({ ...current, [studentId]: status }))
-										}
-									/>
-								</>
-							)}
+							) : null}
+							<div
+								className={cn(
+									"transition-opacity duration-200",
+									isSwitchingSection && rosterStudents.length > 0 && "opacity-50",
+								)}
+								aria-busy={isSwitchingSection}
+							>
+								{rosterStudents.length === 0 ? (
+									isSwitchingSection ? (
+										<RosterSkeleton />
+									) : (
+										<p className="py-8 text-center text-[13px] text-dashboard-text-muted">
+											No active enrollments in this section.
+										</p>
+									)
+								) : (
+									<>
+										<p className="mb-3 text-[12px] text-dashboard-text-muted">
+											Tap a student to cycle: Present → Late → Absent → Excused → Left early →
+											Unmarked
+										</p>
+										<AttendanceRosterGrid
+											roster={filteredRoster}
+											markDraft={markDraft}
+											highlightStudentId={highlightStudentId}
+											canMark={canMarkThisSection}
+											onStatusChange={(studentId, status) =>
+												setMarkDraft((current) => ({ ...current, [studentId]: status }))
+											}
+										/>
+									</>
+								)}
+							</div>
 						</div>
 					</div>
 

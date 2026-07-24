@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/modules/auth/context/auth-context";
 import { staffService } from "../services/staff.service";
 import type {
@@ -84,6 +84,7 @@ export function useMySectionStudentsQuery(
 				.then((response) => response.students as TeacherSectionStudent[]);
 		},
 		enabled: enabled && Boolean(token && tenantId && sectionId),
+		placeholderData: keepPreviousData,
 	});
 }
 
