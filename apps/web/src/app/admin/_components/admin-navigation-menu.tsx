@@ -8,6 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useDashboardI18n } from "@/modules/dashboard";
 import {
 	type NavigationNode,
 	type NavigationSection,
@@ -27,6 +28,8 @@ export function AdminNavigationMenu({ isCollapsed, mobile = false, onNavigate }:
 	const pathname = usePathname();
 	const { activeTenant } = useTenantContext();
 	const navigationQuery = useAdminNavigationQuery(activeTenant?.id ?? null);
+	const { dir } = useDashboardI18n();
+	const tooltipSide = dir === "rtl" ? "left" : "right";
 
 	const sections = navigationQuery.data?.sections ?? [];
 	const flatItems = useMemo(() => sections.flatMap((section) => section.items), [sections]);
@@ -62,6 +65,7 @@ export function AdminNavigationMenu({ isCollapsed, mobile = false, onNavigate }:
 					pathname={pathname}
 					onNavigate={onNavigate}
 					wrapCollapsed={isCollapsed && !mobile}
+					tooltipSide={tooltipSide}
 				/>
 			))}
 		</>
@@ -76,6 +80,7 @@ function AdminNavigationSection({
 	pathname,
 	onNavigate,
 	wrapCollapsed,
+	tooltipSide,
 }: {
 	section: NavigationSection;
 	idx: number;
@@ -84,6 +89,7 @@ function AdminNavigationSection({
 	pathname: string;
 	onNavigate?: () => void;
 	wrapCollapsed: boolean;
+	tooltipSide: "left" | "right";
 }) {
 	return (
 		<div className={cn(idx > 0 && "mt-3 border-dashboard-border-subtle border-t pt-3")}>
@@ -104,6 +110,7 @@ function AdminNavigationSection({
 						pathname={pathname}
 						onNavigate={onNavigate}
 						wrapCollapsed={wrapCollapsed}
+						tooltipSide={tooltipSide}
 					/>
 				))}
 			</ul>
@@ -118,6 +125,7 @@ function AdminNavigationItem({
 	pathname,
 	onNavigate,
 	wrapCollapsed,
+	tooltipSide,
 	depth = 0,
 }: {
 	item: NavigationNode;
@@ -126,6 +134,7 @@ function AdminNavigationItem({
 	pathname: string;
 	onNavigate?: () => void;
 	wrapCollapsed: boolean;
+	tooltipSide: "left" | "right";
 	depth?: number;
 }) {
 	const hasChildren = item.children.length > 0;
@@ -142,7 +151,7 @@ function AdminNavigationItem({
 	const active = item.key === activeKey;
 	const icon = resolveNavigationIcon(item.iconKey);
 	const className = cn(
-		"group/item relative flex w-full items-center gap-3 rounded-lg py-2 text-left text-[13px] transition-all duration-150",
+		"group/item relative flex w-full items-center gap-3 rounded-lg py-2 text-start text-[13px] transition-all duration-150",
 		depth > 0 ? "ms-2 px-2" : "px-2.5",
 		isCollapsed && depth === 0 && "justify-center px-0",
 		active
@@ -153,7 +162,7 @@ function AdminNavigationItem({
 	const indicator = active ? (
 		<span
 			aria-hidden
-			className="absolute top-1/2 left-0.5 h-4 w-0.5 -translate-y-1/2 rounded-full bg-dashboard-accent"
+			className="absolute top-1/2 start-0.5 h-4 w-0.5 -translate-y-1/2 rounded-full bg-dashboard-accent"
 		/>
 	) : null;
 
@@ -191,7 +200,7 @@ function AdminNavigationItem({
 		wrapCollapsed && depth === 0 ? (
 			<Tooltip>
 				<TooltipTrigger render={() => linkBody} />
-				<TooltipContent side="right">{item.label}</TooltipContent>
+				<TooltipContent side={tooltipSide}>{item.label}</TooltipContent>
 			</Tooltip>
 		) : (
 			linkBody
@@ -218,7 +227,7 @@ function AdminNavigationItem({
 						</button>
 					</div>
 					{open ? (
-						<ul className="space-y-0.5 border-dashboard-border-subtle border-l ms-3 ps-1">
+						<ul className="space-y-0.5 border-dashboard-border-subtle border-s ms-3 ps-1">
 							{item.children.map((child) => (
 								<AdminNavigationItem
 									key={child.id}
@@ -228,6 +237,7 @@ function AdminNavigationItem({
 									pathname={pathname}
 									onNavigate={onNavigate}
 									wrapCollapsed={wrapCollapsed}
+									tooltipSide={tooltipSide}
 									depth={depth + 1}
 								/>
 							))}

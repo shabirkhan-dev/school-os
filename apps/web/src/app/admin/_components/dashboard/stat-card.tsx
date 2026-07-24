@@ -3,6 +3,7 @@
 import { ArrowDown01Icon, ArrowRight01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
+import { DashboardForwardIcon } from "@/modules/dashboard";
 import { MiniBars } from "./mini-bars";
 import { useCountUp } from "./use-count-up";
 
@@ -84,7 +85,11 @@ export function StatCard({
 
 			<div className="mt-3.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-dashboard-text-muted tabular-nums sm:mt-4">
 				<span className={cn("flex size-5 items-center justify-center rounded-md", spec.chip)}>
-					<HugeiconsIcon icon={spec.icon} size={13} strokeWidth={2.2} />
+					{trend === "flat" ? (
+						<DashboardForwardIcon icon={spec.icon} size={13} strokeWidth={2.2} />
+					) : (
+						<HugeiconsIcon icon={spec.icon} size={13} strokeWidth={2.2} />
+					)}
 				</span>
 				<span className={cn("font-semibold", spec.delta)}>{trendDelta}</span>
 				<span>{trendLabel}</span>

@@ -91,7 +91,7 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 		<TooltipProvider delay={120}>
 			<aside
 				className={cn(
-					"group/sidebar relative flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-dashboard-border-subtle border-r bg-dashboard-sidebar-bg transition-[width] duration-200 ease-out",
+					"group/sidebar relative flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-dashboard-border-subtle border-e bg-dashboard-sidebar-bg transition-[width] duration-200 ease-out",
 					width,
 					className,
 				)}
@@ -107,14 +107,17 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 									onClick={() => setCollapsed((v) => !v)}
 									aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
 									className={cn(
-										"absolute top-6 right-0 z-20 flex size-6 translate-x-1/2 items-center justify-center rounded-full border border-dashboard-border-strong bg-dashboard-surface-elevated text-dashboard-text-muted opacity-0 transition-all duration-150 group-hover/sidebar:opacity-100 hover:border-dashboard-border-focus hover:bg-dashboard-surface-strong hover:text-dashboard-text-primary focus-visible:opacity-100 active:scale-90",
+										"absolute top-6 end-0 z-20 flex size-6 translate-x-1/2 rtl:-translate-x-1/2 items-center justify-center rounded-full border border-dashboard-border-strong bg-dashboard-surface-elevated text-dashboard-text-muted opacity-0 transition-all duration-150 group-hover/sidebar:opacity-100 hover:border-dashboard-border-focus hover:bg-dashboard-surface-strong hover:text-dashboard-text-primary focus-visible:opacity-100 active:scale-90",
 									)}
 								>
 									<HugeiconsIcon
 										icon={SidebarLeftIcon}
 										size={13}
 										strokeWidth={2}
-										className={cn("transition-transform duration-200", collapsed && "rotate-180")}
+										className={cn(
+											"transition-transform duration-200 rtl:scale-x-[-1]",
+											collapsed && "rotate-180",
+										)}
 									/>
 								</button>
 							)}
@@ -126,7 +129,7 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 				)}
 
 				{/* Workspace switcher */}
-				<div className={cn("px-3 pt-4 pb-3", mobile && "pr-14")}>
+				<div className={cn("px-3 pt-4 pb-3", mobile && "pe-14")}>
 					{canOpenWorkspaceMenu ? (
 						<DropdownMenu>
 							<DropdownMenuTrigger
@@ -135,7 +138,7 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 										type="button"
 										{...props}
 										className={cn(
-											"group/trigger flex w-full items-center gap-3 rounded-lg bg-dashboard-surface px-2 py-2 text-left transition-all hover:bg-dashboard-surface-hover active:scale-[0.985]",
+											"group/trigger flex w-full items-center gap-3 rounded-lg bg-dashboard-surface px-2 py-2 text-start transition-all hover:bg-dashboard-surface-hover active:scale-[0.985]",
 											isCollapsed && "justify-center px-1",
 										)}
 									>
@@ -301,7 +304,7 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 									type="button"
 									{...props}
 									className={cn(
-										"flex w-full items-center gap-3 rounded-lg bg-dashboard-surface-elevated px-2 py-2 text-left transition-all hover:bg-dashboard-surface-strong active:scale-[0.985]",
+										"flex w-full items-center gap-3 rounded-lg bg-dashboard-surface-elevated px-2 py-2 text-start transition-all hover:bg-dashboard-surface-strong active:scale-[0.985]",
 										isCollapsed && "justify-center px-1",
 									)}
 								>
@@ -309,7 +312,7 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 										<div className="flex size-9 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-zinc-600 to-zinc-800 font-semibold text-[13px] text-dashboard-text-secondary ring-1 ring-dashboard-border-subtle">
 											{initials}
 										</div>
-										<span className="absolute right-[-2px] bottom-[-2px] block size-2.5 rounded-full bg-emerald-500 ring-2 ring-dashboard-surface" />
+										<span className="absolute end-[-2px] bottom-[-2px] block size-2.5 rounded-full bg-emerald-500 ring-2 ring-dashboard-surface" />
 									</div>
 									{!isCollapsed && (
 										<>

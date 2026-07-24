@@ -41,7 +41,7 @@ function IconButton({ icon, label, dot, onClick, className }: IconBtnProps) {
 				{dot ? (
 					<span
 						aria-hidden
-						className="absolute top-1.5 right-1.5 block size-2 rounded-full bg-primary ring-2 ring-background"
+						className="absolute top-1.5 end-1.5 block size-2 rounded-full bg-primary ring-2 ring-background"
 					/>
 				) : null}
 			</TooltipTrigger>

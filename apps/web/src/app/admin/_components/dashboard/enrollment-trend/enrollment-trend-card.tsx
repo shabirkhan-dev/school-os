@@ -1,9 +1,9 @@
 "use client";
 
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 import type { DashboardMetrics } from "@/modules/dashboard";
+import { DashboardForwardIcon } from "@/modules/dashboard";
 import { DashboardCardFooter, DashboardCardHeader, FooterSep, InsightStat } from "../card-chrome";
 import { LegendDot } from "./legend-dot";
 import { PixelGridChart } from "./pixel-grid-chart";
@@ -91,7 +91,7 @@ export function EnrollmentTrendCard({ months, insights, className }: Props) {
 						className="inline-flex items-center gap-1 font-medium text-[12px] text-dashboard-accent transition-colors hover:text-dashboard-accent-hover"
 					>
 						Open students
-						<HugeiconsIcon icon={ArrowRight01Icon} size={13} strokeWidth={2} />
+						<DashboardForwardIcon icon={ArrowRight01Icon} size={13} strokeWidth={2} />
 					</button>
 				}
 			>

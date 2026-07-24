@@ -1,0 +1,19 @@
+/**
+ * Urdu dashboard: same layout as English — cleaner Arabic UI font, no “second UI”.
+ * Scoped to the admin i18n shell only.
+ */
+[data-dashboard-shell][lang="ur"] {
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+}
+
+/* Urdu labels are already cased in messages; all-caps + wide tracking breaks Nastaliq/Arabic. */
+[data-dashboard-shell][lang="ur"] .uppercase {
+	text-transform: none;
+	letter-spacing: 0.02em;
+}
+
+[data-dashboard-shell][lang="ur"] [class*="tracking-["] {
+	letter-spacing: 0.02em;
+}

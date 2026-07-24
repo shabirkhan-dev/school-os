@@ -1,10 +1,10 @@
 "use client";
 
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { Fragment } from "react";
 import { cn } from "@/lib/utils";
+import { DashboardForwardIcon } from "@/modules/dashboard";
 
 export type Crumb = { label: string; href?: string };
 
@@ -28,14 +28,11 @@ export function BreadcrumbTrail({ items, className }: Props) {
 				return (
 					<Fragment key={key}>
 						{showSeparator && (
-							<HugeiconsIcon
+							<DashboardForwardIcon
 								icon={ArrowRight01Icon}
 								size={14}
 								strokeWidth={2}
-								className={cn(
-									"shrink-0 text-dashboard-text-faint",
-									hideOnMobile && "hidden sm:block",
-								)}
+								className={cn("text-dashboard-text-faint", hideOnMobile && "hidden sm:block")}
 							/>
 						)}
 						{item.href && !isLast ? (

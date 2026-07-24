@@ -7,6 +7,7 @@ import {
 	dashboardLocaleClassName,
 	useDashboardI18n,
 } from "./dashboard-i18n-provider";
+import "./dashboard-locale.css";
 
 type Props = {
 	children: ReactNode;
@@ -17,9 +18,14 @@ function DashboardI18nRoot({ children, className }: Props) {
 	const { locale, dir } = useDashboardI18n();
 	return (
 		<div
+			data-dashboard-shell
 			dir={dir}
 			lang={locale === "ur" ? "ur" : "en"}
-			className={cn(className, dashboardLocaleClassName(locale))}
+			className={cn(
+				className,
+				dashboardLocaleClassName(locale),
+				locale === "ur" && "dashboard-locale-ur",
+			)}
 		>
 			{children}
 		</div>

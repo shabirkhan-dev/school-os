@@ -1,6 +1,6 @@
 "use client";
 
-import { Noto_Nastaliq_Urdu, Noto_Sans } from "next/font/google";
+import { Noto_Sans, Noto_Sans_Arabic } from "next/font/google";
 import {
 	createContext,
 	type ReactNode,
@@ -30,11 +30,13 @@ const notoSans = Noto_Sans({
 	display: "swap",
 });
 
-const notoNastaliq = Noto_Nastaliq_Urdu({
+/** UI Arabic/Urdu — pairs with Noto Sans (Latin) for mixed org names and numbers. */
+const notoSansArabic = Noto_Sans_Arabic({
 	subsets: ["arabic"],
 	variable: "--font-dashboard-urdu",
 	display: "swap",
 	weight: ["400", "500", "600", "700"],
+	adjustFontFallback: true,
 });
 
 type DashboardI18nContextValue = {
@@ -102,9 +104,16 @@ export function useDashboardT() {
 
 export type { DashboardMessageKey };
 
+export function dashboardLocaleFontVariables(): string {
+	return `${notoSans.variable} ${notoSansArabic.variable}`;
+}
+
 export function dashboardLocaleClassName(locale: DashboardLocale): string {
-	const fonts = `${notoSans.variable} ${notoNastaliq.variable}`;
+	const fonts = dashboardLocaleFontVariables();
 	return locale === "ur"
-		? cn(fonts, "font-[family-name:var(--font-dashboard-urdu)]")
-		: cn(fonts, "font-[family-name:var(--font-dashboard-sans)]");
+		? cn(
+				fonts,
+				"font-[family-name:var(--font-dashboard-urdu),var(--font-dashboard-sans),system-ui,sans-serif]",
+			)
+		: cn(fonts, "font-[family-name:var(--font-dashboard-sans),system-ui,sans-serif]");
 }

@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { OpsPulseStrip } from "@/app/admin/_components/dashboard/ops-pulse-strip";
 import { useDashboardMetricsQuery } from "../hooks/use-dashboard-queries";
+import { DashboardForwardIcon } from "../i18n/dashboard-directional-icon";
 import { useDashboardI18n } from "../i18n/dashboard-i18n-provider";
 import { localizeDashboardMetrics } from "../i18n/localize-dashboard-metrics";
 
@@ -229,7 +230,7 @@ export function PrincipalSchoolPulse({ tenantName, enabled = true }: Props) {
 						{t("principal.quickActions")}
 					</h3>
 					<ul className="mt-3 space-y-2">
-						<QuickAction href="/admin/students?admit=1" label={t("principal.admitStudent")} />
+						<QuickAction href="/admin/admissions?start=1" label={t("principal.admitStudent")} />
 						<QuickAction href="/admin/attendance" label={t("principal.openAttendance")} />
 						<QuickAction href="/admin/students" label={t("principal.reviewStudents")} />
 						<QuickAction href="/admin/members" label={t("principal.staffInvites")} />
@@ -276,10 +277,10 @@ function QuickAction({ href, label }: { href: string; label: string }) {
 				render={<Link href={href} />}
 			>
 				{label}
-				<HugeiconsIcon
+				<DashboardForwardIcon
 					icon={ArrowRight01Icon}
 					size={14}
-					className="text-dashboard-text-dim rtl:rotate-180"
+					className="text-dashboard-text-dim"
 				/>
 			</Button>
 		</li>

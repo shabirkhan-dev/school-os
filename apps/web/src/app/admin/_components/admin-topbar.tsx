@@ -7,6 +7,7 @@ import { TooltipProvider } from "@school-os/ui/components/tooltip";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useDashboardI18n } from "@/modules/dashboard";
 import { AdminSidebar } from "./admin-sidebar";
 import { BreadcrumbTrail, type Crumb } from "./topbar/breadcrumb-trail";
 import { GlobalSearch } from "./topbar/global-search";
@@ -47,6 +48,8 @@ export function AdminTopbar({ crumbs, className }: Props) {
 	const pathname = usePathname();
 	const items = crumbs ?? crumbsForPath(pathname);
 	const [mobileNavOpen, setMobileNavOpen] = useState(false);
+	const { dir } = useDashboardI18n();
+	const mobileNavSide = dir === "rtl" ? "right" : "left";
 
 	return (
 		<TooltipProvider delay={120}>
@@ -70,7 +73,7 @@ export function AdminTopbar({ crumbs, className }: Props) {
 						)}
 					/>
 					<SheetContent
-						side="left"
+						side={mobileNavSide}
 						className="w-[min(88vw,320px)] max-w-none gap-0 border-dashboard-border-subtle bg-dashboard-sidebar-bg p-0 text-dashboard-text-primary"
 					>
 						<SheetTitle className="sr-only">Admin navigation</SheetTitle>
@@ -84,7 +87,7 @@ export function AdminTopbar({ crumbs, className }: Props) {
 					<GlobalSearch className="w-full max-w-[420px]" />
 				</div>
 
-				<TopbarActions className="ml-auto shrink-0" />
+				<TopbarActions className="ms-auto shrink-0" />
 			</header>
 		</TooltipProvider>
 	);
