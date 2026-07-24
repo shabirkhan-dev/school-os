@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { AuthModule } from '@/modules/auth/auth.module';
 import { PermissionsModule } from '@/modules/authorization/permissions.module';
+import { GuardiansModule } from '@/modules/guardians/guardians.module';
 import { MembershipsModule } from '@/modules/memberships/memberships.module';
 import { StaffModule } from '@/modules/staff/staff.module';
 import { StudentsModule } from '@/modules/students/students.module';
@@ -16,6 +17,7 @@ import { HomeworkService } from './homework.service';
 		PermissionsModule,
 		MembershipsModule,
 		TenantsModule,
+		GuardiansModule,
 		StaffModule,
 		StudentsModule,
 	],

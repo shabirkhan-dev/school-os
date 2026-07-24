@@ -36,8 +36,9 @@ export class HomeworkController {
 		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
 		@Query('sectionSubjectId') sectionSubjectId?: string,
 		@Query('status') status?: 'draft' | 'published' | 'closed',
+		@Query('studentId') studentId?: string,
 	) {
-		return this.homework.list(user.sub, tenantId, { sectionSubjectId, status });
+		return this.homework.list(user.sub, tenantId, { sectionSubjectId, status, studentId });
 	}
 
 	@Get(':homeworkId')

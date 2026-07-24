@@ -13,12 +13,17 @@ function requireToken(token: string | null): string {
 
 export function useHomeworkListQuery(
 	tenantId: string | null,
-	filters?: { sectionSubjectId?: string; status?: string },
+	filters?: { sectionSubjectId?: string; status?: string; studentId?: string },
 	enabled = true,
 ) {
 	const { token } = useAuth();
 	return useQuery({
-		queryKey: homeworkQueryKeys.list(tenantId ?? "", filters?.sectionSubjectId, filters?.status),
+		queryKey: homeworkQueryKeys.list(
+			tenantId ?? "",
+			filters?.sectionSubjectId,
+			filters?.status,
+			filters?.studentId,
+		),
 		queryFn: () => {
 			if (!tenantId) throw new Error("Tenant required");
 			return homeworkService

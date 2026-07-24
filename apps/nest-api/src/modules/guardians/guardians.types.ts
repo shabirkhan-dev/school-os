@@ -33,7 +33,11 @@ export type PublicStudentGuardianLink = {
 export type PublicLinkedStudent = {
 	studentId: string;
 	studentCode: string;
+	firstName: string;
+	lastName: string;
 	fullName: string;
+	status: StudentRecord['status'];
+	admittedOn: string | null;
 	relationship: StudentGuardianRecord['relationship'];
 	isPrimary: boolean;
 };
@@ -82,7 +86,11 @@ export function toPublicLinkedStudent(input: {
 	return {
 		studentId: input.student.id,
 		studentCode: input.student.studentCode,
+		firstName: input.student.firstName,
+		lastName: input.student.lastName,
 		fullName: `${input.student.firstName} ${input.student.lastName}`.trim(),
+		status: input.student.status,
+		admittedOn: input.student.admittedOn,
 		relationship: input.link.relationship,
 		isPrimary: input.link.isPrimary,
 	};

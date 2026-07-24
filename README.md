@@ -94,7 +94,7 @@ The monorepo is a **production-shaped foundation**. Core school ops (students, a
 | Tenants, academic structure, students (table + **ID cards**), guardians, staff | ✅ |
 | Attendance (homeroom), teacher dashboard + **my classes** roster (table + **ID cards**) | ✅ |
 | Homework, assessments, test planner (teacher/admin) | ✅ |
-| Parent/student homework & test views, WhatsApp pipeline | 🔜 Phase 1–2 per roadmap |
+| Parent/student homework & test views, WhatsApp pipeline | 🔜 Phase 1–2 per roadmap (parent **My children** ID cards + homework live) |
 
 ---
 

@@ -2,6 +2,7 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createMockPermissionsService } from '@/modules/authorization/testing/mock-permissions.service';
+import { GuardiansRepository } from '@/modules/guardians/guardians.repository';
 import { MembershipsRepository } from '@/modules/memberships/memberships.repository';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { StaffRepository } from '@/modules/staff/staff.repository';
@@ -49,6 +50,7 @@ const homeworkRecord = {
 describe('HomeworkService', () => {
 	let service: HomeworkService;
 	let homeworkRepository: {
+		list: ReturnType<typeof vi.fn>;
 		listForSectionSubjects: ReturnType<typeof vi.fn>;
 		findById: ReturnType<typeof vi.fn>;
 		create: ReturnType<typeof vi.fn>;
@@ -71,8 +73,13 @@ describe('HomeworkService', () => {
 		listRolesForMembership: ReturnType<typeof vi.fn>;
 	};
 
+	let guardiansRepository: {
+		listLinkedStudentsForMembership: ReturnType<typeof vi.fn>;
+	};
+
 	beforeEach(() => {
 		homeworkRepository = {
+			list: vi.fn().mockResolvedValue([]),
 			listForSectionSubjects: vi.fn(),
 			findById: vi.fn(),
 			create: vi.fn(),
@@ -101,6 +108,9 @@ describe('HomeworkService', () => {
 			findActiveByTenantAndUser: vi.fn(),
 			listRolesForMembership: vi.fn().mockResolvedValue([{ role: 'teacher' }]),
 		};
+		guardiansRepository = {
+			listLinkedStudentsForMembership: vi.fn().mockResolvedValue([]),
+		};
 
 		service = new HomeworkService(
 			homeworkRepository as unknown as HomeworkRepository,
@@ -110,6 +120,7 @@ describe('HomeworkService', () => {
 				membershipsRepository as unknown as MembershipsRepository,
 				createMockPermissionsService(),
 			),
+			guardiansRepository as unknown as GuardiansRepository,
 		);
 	});
 

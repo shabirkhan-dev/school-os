@@ -23,7 +23,11 @@ export type Guardian = {
 export type LinkedStudent = {
 	studentId: string;
 	studentCode: string;
+	firstName: string;
+	lastName: string;
 	fullName: string;
+	status: "active" | "inactive" | "graduated" | "withdrawn";
+	admittedOn: string | null;
 	relationship: GuardianRelationship;
 	isPrimary: boolean;
 };

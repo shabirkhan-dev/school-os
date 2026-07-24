@@ -7,6 +7,7 @@ import {
 
 import type { MembershipRecord } from '@/database/schema';
 import { PermissionCodes } from '@/modules/authorization/permission-codes';
+import { GuardiansRepository } from '@/modules/guardians/guardians.repository';
 import { hasManagementRole } from '@/modules/memberships/membership-roles';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { StaffRepository } from '@/modules/staff/staff.repository';
@@ -22,6 +23,7 @@ export class HomeworkService {
 		private readonly staff: StaffRepository,
 		private readonly students: StudentsRepository,
 		private readonly membershipAccess: MembershipsService,
+		private readonly guardians: GuardiansRepository,
 	) {}
 
 	async list(userId: string, tenantId: string, filters: ListHomeworkQuery) {
@@ -33,6 +35,10 @@ export class HomeworkService {
 			return {
 				assignments: await Promise.all(rows.map((row) => this.toPublicWithCount(tenantId, row))),
 			};
+		}
+
+		if (roles.includes('parent') && !roles.includes('teacher')) {
+			return this.listForLinkedStudents(tenantId, membership.id, filters);
 		}
 
 		const assignments = await this.staff.listSubjectAssignments(tenantId, membership.id);
@@ -52,6 +58,19 @@ export class HomeworkService {
 		const membership = await this.requireRead(userId, tenantId);
 		const roles = await this.membershipAccess.listRoleCodes(membership.id, membership.role);
 		const row = await this.requireHomework(tenantId, homeworkId);
+
+		if (roles.includes('parent') && !roles.includes('teacher') && !hasManagementRole(roles)) {
+			const studentIds = await this.linkedStudentIds(tenantId, membership.id, undefined);
+			const allowed = await this.homeworkAppliesToStudents(tenantId, row, studentIds);
+			if (!allowed) {
+				throw new ForbiddenException({
+					code: 'HOMEWORK_ACCESS_DENIED',
+					message: 'This assignment is not assigned to your linked students',
+				});
+			}
+			return this.buildDetailResponse(tenantId, row, { omitRoster: true });
+		}
+
 		await this.requireSectionSubjectAccess(
 			tenantId,
 			membership,
@@ -172,6 +191,83 @@ export class HomeworkService {
 		return this.buildDetailResponse(tenantId, row);
 	}
 
+	private async listForLinkedStudents(
+		tenantId: string,
+		membershipId: string,
+		filters: ListHomeworkQuery,
+	) {
+		const studentIds = await this.linkedStudentIds(tenantId, membershipId, filters.studentId);
+		if (studentIds.length === 0) {
+			return { assignments: [] };
+		}
+
+		const statusFilter = filters.status ?? undefined;
+		const rows = await this.homework.list(tenantId, {
+			sectionSubjectId: filters.sectionSubjectId,
+			status: statusFilter,
+		});
+
+		const visible: typeof rows = [];
+		for (const row of rows) {
+			if (row.assignment.status === 'draft') continue;
+			if (statusFilter && row.assignment.status !== statusFilter) continue;
+			if (await this.homeworkAppliesToStudents(tenantId, row, studentIds)) {
+				visible.push(row);
+			}
+		}
+
+		return {
+			assignments: await Promise.all(visible.map((row) => this.toPublicWithCount(tenantId, row))),
+		};
+	}
+
+	private async linkedStudentIds(
+		tenantId: string,
+		membershipId: string,
+		filterStudentId?: string,
+	): Promise<string[]> {
+		const linked = await this.guardians.listLinkedStudentsForMembership(tenantId, membershipId);
+		let studentIds = linked.map((row) => row.student.id);
+		if (filterStudentId) {
+			if (!studentIds.includes(filterStudentId)) {
+				throw new ForbiddenException({
+					code: 'HOMEWORK_STUDENT_ACCESS_DENIED',
+					message: 'You are not linked to this student',
+				});
+			}
+			studentIds = [filterStudentId];
+		}
+		return studentIds;
+	}
+
+	private async homeworkAppliesToStudents(
+		tenantId: string,
+		row: {
+			assignment: { id: string; assignMode: 'whole_class' | 'selected_students'; status: string };
+			section: { id: string };
+		},
+		studentIds: string[],
+	): Promise<boolean> {
+		if (row.assignment.status === 'draft') return false;
+
+		const sectionIds = new Set<string>();
+		for (const studentId of studentIds) {
+			const enrollments = await this.students.listEnrollments(tenantId, { studentId });
+			for (const enrollment of enrollments) {
+				if (enrollment.status === 'active') {
+					sectionIds.add(enrollment.sectionId);
+				}
+			}
+		}
+
+		if (!sectionIds.has(row.section.id)) return false;
+
+		if (row.assignment.assignMode === 'whole_class') return true;
+
+		const recipients = await this.homework.listRecipientStudentIds(tenantId, row.assignment.id);
+		return studentIds.some((studentId) => recipients.includes(studentId));
+	}
+
 	private async buildDetailResponse(
 		tenantId: string,
 		row: {
@@ -179,6 +275,7 @@ export class HomeworkService {
 			section: { id: string; name: string };
 			subject: { id: string; code: string; name: string };
 		},
+		options?: { omitRoster?: boolean },
 	): Promise<{ assignment: PublicHomeworkDetail }> {
 		const recipientStudentIds = await this.homework.listRecipientStudentIds(
 			tenantId,
@@ -204,13 +301,16 @@ export class HomeworkService {
 		return {
 			assignment: {
 				...base,
-				recipientStudentIds,
-				rosterStudents: studentRows.map((student) => ({
-					studentId: student.id,
-					studentName: `${student.firstName} ${student.lastName}`.trim(),
-					studentCode: student.studentCode,
-					isAssigned: row.assignment.assignMode === 'whole_class' || recipientSet.has(student.id),
-				})),
+				recipientStudentIds: options?.omitRoster ? [] : recipientStudentIds,
+				rosterStudents: options?.omitRoster
+					? []
+					: studentRows.map((student) => ({
+							studentId: student.id,
+							studentName: `${student.firstName} ${student.lastName}`.trim(),
+							studentCode: student.studentCode,
+							isAssigned:
+								row.assignment.assignMode === 'whole_class' || recipientSet.has(student.id),
+						})),
 			},
 		};
 	}

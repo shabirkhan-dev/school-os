@@ -10,11 +10,12 @@ export const homeworkService = {
 	list: (
 		accessToken: string,
 		tenantId: string,
-		params?: { sectionSubjectId?: string; status?: string },
+		params?: { sectionSubjectId?: string; status?: string; studentId?: string },
 	) => {
 		const search = new URLSearchParams();
 		if (params?.sectionSubjectId) search.set("sectionSubjectId", params.sectionSubjectId);
 		if (params?.status) search.set("status", params.status);
+		if (params?.studentId) search.set("studentId", params.studentId);
 		const query = search.toString();
 		return apiClient.get<{ assignments: HomeworkAssignment[] }>(
 			`/tenants/${tenantId}/homework${query ? `?${query}` : ""}`,

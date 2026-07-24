@@ -77,6 +77,7 @@ export const listHomeworkQuerySchema = z
 	.object({
 		sectionSubjectId: z.string().uuid().optional(),
 		status: homeworkStatusSchema.optional(),
+		studentId: z.string().uuid().optional(),
 	})
 	.strict();
 
