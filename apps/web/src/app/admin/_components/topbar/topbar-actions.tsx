@@ -11,6 +11,7 @@ import { ThemeToggleControl } from "@/components/motion/theme-toggle";
 import { useAuth } from "@/context/auth-context";
 import { userInitials } from "@/lib/user-display";
 import { cn } from "@/lib/utils";
+import { DashboardLocaleSwitcher } from "@/modules/dashboard";
 
 type IconType = ComponentProps<typeof HugeiconsIcon>["icon"];
 
@@ -67,6 +68,7 @@ export function TopbarActions({
 
 	return (
 		<div className={cn("flex items-center gap-0.5 sm:gap-1", className)}>
+			<DashboardLocaleSwitcher />
 			<ThemeToggleControl />
 			<IconButton icon={Notification03Icon} label="Notifications" dot={unreadNotifications} />
 			<IconButton icon={PrinterIcon} label="Print" className="hidden sm:flex" />

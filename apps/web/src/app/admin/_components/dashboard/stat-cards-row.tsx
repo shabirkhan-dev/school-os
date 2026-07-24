@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { DashboardStatCard } from "@/modules/dashboard";
+import { useDashboardT } from "@/modules/dashboard";
 import { StatCard } from "./stat-card";
 
 type Props = {
@@ -10,9 +11,10 @@ type Props = {
 };
 
 export function StatCardsRow({ stats, className }: Props) {
+	const t = useDashboardT();
 	return (
 		<section
-			aria-label="Key performance metrics"
+			aria-label={t("stats.aria")}
 			className={cn(
 				"grid grid-cols-1 gap-px overflow-hidden rounded-[16px] border border-dashboard-border bg-dashboard-border shadow-(--dashboard-shadow-card) sm:grid-cols-2 xl:grid-cols-4",
 				className,

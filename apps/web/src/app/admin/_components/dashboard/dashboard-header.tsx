@@ -3,6 +3,7 @@
 import { userFirstName } from "@/lib/user-display";
 import { cn } from "@/lib/utils";
 import type { DashboardMetrics } from "@/modules/dashboard";
+import { useDashboardI18n } from "@/modules/dashboard";
 import type { Campus } from "@/modules/tenants";
 import { useSessionStore } from "@/store";
 import { DatePill } from "./date-pill";
@@ -27,13 +28,14 @@ export function DashboardHeader({
 	onExport,
 }: Props) {
 	const user = useSessionStore((state) => state.user);
+	const { t, intlLocale } = useDashboardI18n();
 	const greetingName = name ?? (user ? userFirstName(user.username) : "there");
-	const today = new Date().toLocaleDateString("en-US", {
+	const today = new Date().toLocaleDateString(intlLocale, {
 		weekday: "short",
 		month: "short",
 		day: "numeric",
 	});
-	const todayLong = new Date().toLocaleDateString("en-US", {
+	const todayLong = new Date().toLocaleDateString(intlLocale, {
 		weekday: "long",
 		month: "long",
 		day: "numeric",
@@ -45,11 +47,17 @@ export function DashboardHeader({
 					.slice(0, 3)
 					.map((campus) => campus.name)
 					.join(", ")
-			: "Add campuses to see locations here";
+			: t("header.addCampuses");
 
 	const statusLine = insights
-		? `${insights.totalStudents.toLocaleString("en-US")} active students · ${insights.newThisMonth} new this month · ${insights.activeYearLabel}`
-		: "Loading organization overview…";
+		? t("header.statusLine", {
+				total: insights.totalStudents.toLocaleString(intlLocale),
+				new: insights.newThisMonth,
+				year: insights.activeYearLabel,
+			})
+		: t("header.statusLoading");
+
+	const orgLabel = tenantName ?? t("header.organization");
 
 	return (
 		<section
@@ -61,11 +69,11 @@ export function DashboardHeader({
 			<div className="min-w-0">
 				<div className="mb-1.5 flex items-center gap-2 text-[11px] text-dashboard-text-muted uppercase tracking-[0.08em]">
 					<span className="size-1.5 rounded-full bg-emerald-500" />
-					<span className="sm:hidden">Live · {tenantName ?? "Organization"}</span>
-					<span className="hidden sm:inline">Live overview · {tenantName ?? "Organization"}</span>
+					<span className="sm:hidden">{t("header.liveMobile", { org: orgLabel })}</span>
+					<span className="hidden sm:inline">{t("header.liveDesktop", { org: orgLabel })}</span>
 				</div>
 				<h1 className="font-semibold text-[22px] text-dashboard-text-primary leading-tight tracking-tight sm:text-[24px]">
-					Welcome back, {greetingName}
+					{t("header.welcome", { name: greetingName })}
 				</h1>
 				<p className="mt-1.5 text-[13px] text-dashboard-text-secondary leading-5 sm:hidden">
 					{today} · {statusLine}
@@ -74,8 +82,8 @@ export function DashboardHeader({
 					{todayLong} · {campusLine}. {statusLine}
 				</p>
 				<p className="mt-1 hidden text-[12px] text-dashboard-text-dim sm:block">
-					Data synced from students, staff, and academic records
-					{insights ? ` · Updated ${insights.updatedAt}` : ""}
+					{t("header.synced")}
+					{insights ? t("header.updated", { time: insights.updatedAt }) : ""}
 				</p>
 			</div>
 

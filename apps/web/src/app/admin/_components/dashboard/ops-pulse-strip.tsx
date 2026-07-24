@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { DashboardOpsPulseItem } from "@/modules/dashboard";
+import { useDashboardT } from "@/modules/dashboard";
 
 type Props = {
 	items: DashboardOpsPulseItem[];
@@ -13,9 +14,10 @@ type Props = {
  * title + description + status line, without adding another card.
  */
 export function OpsPulseStrip({ items, className }: Props) {
+	const t = useDashboardT();
 	return (
 		<section
-			aria-label="Operational pulse"
+			aria-label={t("opsPulse.aria")}
 			className={cn(
 				"grid grid-cols-2 gap-px overflow-hidden rounded-[14px] border border-dashboard-border bg-dashboard-border sm:grid-cols-4",
 				className,

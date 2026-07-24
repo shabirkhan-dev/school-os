@@ -1,6 +1,7 @@
 import { RequireAuth } from "@/modules/auth/components";
+import { DashboardI18nShell } from "@/modules/dashboard";
 import { PendingInvitesBanner } from "@/modules/members";
-import { TenantOnboardingGate, TenantProvider } from "@/modules/tenants";
+import { RoleCampusScope, TenantOnboardingGate, TenantProvider } from "@/modules/tenants";
 import { AdminScrollLock } from "./_components/admin-scroll-lock";
 import { AdminSidebar } from "./_components/admin-sidebar";
 import { AdminTopbar } from "./_components/admin-topbar";
@@ -10,12 +11,13 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
 		<RequireAuth>
 			<TenantProvider>
 				<TenantOnboardingGate>
+					<RoleCampusScope />
 					<AdminScrollLock />
 					{/*
 					  One scroll owner only: this shell is viewport-locked; main scrolls.
 					  overflow-x-hidden stops wide charts from adding a second (horizontal) bar.
 					*/}
-					<div className="flex h-dvh max-h-dvh overflow-hidden bg-dashboard-bg text-dashboard-text-primary">
+					<DashboardI18nShell className="flex h-dvh max-h-dvh overflow-hidden bg-dashboard-bg text-dashboard-text-primary">
 						<AdminSidebar className="hidden lg:flex" />
 						<div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 							<AdminTopbar />
@@ -24,7 +26,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
 								{children}
 							</main>
 						</div>
-					</div>
+					</DashboardI18nShell>
 				</TenantOnboardingGate>
 			</TenantProvider>
 		</RequireAuth>
