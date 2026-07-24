@@ -18,7 +18,12 @@ import type {
 	MarkAttendanceInput,
 } from './attendance.dto';
 import { AttendanceRepository } from './attendance.repository';
-import { countMarksByStatus, toPublicMark, toPublicSession } from './attendance.types';
+import {
+	countMarksByStatus,
+	countMarksByStatusRows,
+	toPublicMark,
+	toPublicSession,
+} from './attendance.types';
 
 @Injectable()
 export class AttendanceService {
@@ -210,6 +215,41 @@ export class AttendanceService {
 		});
 
 		return this.buildSessionResponse(tenantId, session);
+	}
+
+	async getSchoolDayPulse(userId: string, tenantId: string, sessionDate: string) {
+		const membership = await this.requireRead(userId, tenantId);
+		if (!managementRoles.has(membership.role)) {
+			const roles = await this.membershipAccess.listRoleCodes(membership.id, membership.role);
+			if (!hasManagementRole(roles)) {
+				throw new ForbiddenException({
+					code: 'ATTENDANCE_PULSE_FORBIDDEN',
+					message: 'School-wide attendance pulse is limited to leadership roles',
+				});
+			}
+		}
+
+		const sessions = await this.attendance.listSessionsForDate(tenantId, sessionDate);
+		const sessionIds = sessions.map((session) => session.id);
+		const statusRows = await this.attendance.countMarksByStatusForSessions(tenantId, sessionIds);
+
+		const summary = countMarksByStatusRows(statusRows);
+
+		const attended = summary.present + summary.late + summary.excused;
+		const attendanceRate =
+			summary.total > 0 ? Math.round((attended / summary.total) * 1000) / 10 : null;
+
+		const sectionsWithSessions = new Set(
+			sessions.map((session) => session.sectionId).filter(Boolean),
+		).size;
+
+		return {
+			sessionDate,
+			sessionsCount: sessions.length,
+			sectionsWithSessions,
+			summary,
+			attendanceRate,
+		};
 	}
 
 	async getStudentHistory(userId: string, tenantId: string, studentId: string, limit?: number) {

@@ -99,3 +99,42 @@ export function countMarksByStatus(marks: AttendanceMarkRecord[]): AttendanceSta
 
 	return counts;
 }
+
+export function countMarksByStatusRows(
+	rows: ReadonlyArray<{ status: AttendanceMarkRecord['status']; count: number }>,
+): AttendanceStatusCounts {
+	const counts: AttendanceStatusCounts = {
+		present: 0,
+		absent: 0,
+		late: 0,
+		excused: 0,
+		leftEarly: 0,
+		unknown: 0,
+		total: 0,
+	};
+
+	for (const row of rows) {
+		counts.total += row.count;
+		switch (row.status) {
+			case 'present':
+				counts.present += row.count;
+				break;
+			case 'absent':
+				counts.absent += row.count;
+				break;
+			case 'late':
+				counts.late += row.count;
+				break;
+			case 'excused':
+				counts.excused += row.count;
+				break;
+			case 'left_early':
+				counts.leftEarly += row.count;
+				break;
+			default:
+				counts.unknown += row.count;
+		}
+	}
+
+	return counts;
+}

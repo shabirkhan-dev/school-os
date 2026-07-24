@@ -89,6 +89,18 @@ export class AttendanceController {
 		return this.attendance.confirmAllPresent(user.sub, tenantId, sessionId, body);
 	}
 
+	@Get('school-pulse')
+	@RequirePermissions(PermissionCodes.ATTENDANCE_READ)
+	@ApiOperation({ summary: 'School-wide attendance pulse for a calendar date' })
+	getSchoolDayPulse(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Query('sessionDate') sessionDate?: string,
+	) {
+		const date = sessionDate ?? new Date().toISOString().slice(0, 10);
+		return this.attendance.getSchoolDayPulse(user.sub, tenantId, date);
+	}
+
 	@Get('students/:studentId/history')
 	@RequirePermissions(PermissionCodes.ATTENDANCE_READ)
 	@ApiOperation({ summary: 'Get attendance history for a student' })

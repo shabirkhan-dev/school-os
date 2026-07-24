@@ -40,6 +40,7 @@ const parentTenantAccess = new Set<PermissionCode>([
 const roleMatrix: Record<MembershipRecord['role'], ReadonlySet<PermissionCode>> = {
 	owner: fullTenantAccess,
 	principal: fullTenantAccess,
+	vice_principal: fullTenantAccess,
 	admin: fullTenantAccess,
 	teacher: teacherTenantAccess,
 	parent: parentTenantAccess,

@@ -1,7 +1,14 @@
 import * as z from 'zod';
 
 const emailSchema = z.email().trim().toLowerCase().max(320);
-const membershipRoleSchema = z.enum(['principal', 'admin', 'teacher', 'parent', 'student']);
+const membershipRoleSchema = z.enum([
+	'principal',
+	'vice_principal',
+	'admin',
+	'teacher',
+	'parent',
+	'student',
+]);
 
 export const inviteMemberSchema = z
 	.object({

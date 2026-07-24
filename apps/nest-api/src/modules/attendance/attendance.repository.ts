@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { DatabaseService } from '@/database/database.service';
 import {
@@ -193,5 +193,36 @@ export class AttendanceRepository {
 				),
 			);
 		return rows.length;
+	}
+
+	async listSessionsForDate(tenantId: string, sessionDate: string) {
+		return this.database.db
+			.select()
+			.from(attendanceSessions)
+			.where(
+				and(
+					eq(attendanceSessions.tenantId, tenantId),
+					eq(attendanceSessions.sessionDate, sessionDate),
+				),
+			);
+	}
+
+	async countMarksByStatusForSessions(tenantId: string, sessionIds: string[]) {
+		if (sessionIds.length === 0) {
+			return [] as Array<{ status: AttendanceMarkRecord['status']; count: number }>;
+		}
+
+		const rows = await this.database.db
+			.select({
+				status: attendanceMarks.status,
+				count: sql<number>`count(*)::int`,
+			})
+			.from(attendanceMarks)
+			.where(
+				and(eq(attendanceMarks.tenantId, tenantId), inArray(attendanceMarks.sessionId, sessionIds)),
+			)
+			.groupBy(attendanceMarks.status);
+
+		return rows;
 	}
 }

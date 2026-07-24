@@ -20,6 +20,11 @@ const DEMO_ACCOUNTS: Array<{
 	role: MembershipRecord['role'];
 }> = [
 	{ email: 'seed.principal@northwood.demo', username: 'seed_principal', role: 'principal' },
+	{
+		email: 'seed.vice-principal@northwood.demo',
+		username: 'seed_vice_principal',
+		role: 'vice_principal',
+	},
 	{ email: 'seed.admin@northwood.demo', username: 'seed_admin', role: 'admin' },
 	{ email: 'seed.parent@northwood.demo', username: 'seed_parent', role: 'parent' },
 	{ email: 'seed.student@northwood.demo', username: 'seed_student', role: 'student' },

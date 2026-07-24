@@ -2,10 +2,19 @@ import type { MembershipRecord } from '@/database/schema';
 
 export type MembershipRole = MembershipRecord['role'];
 
-const allRoles: MembershipRole[] = ['owner', 'principal', 'admin', 'teacher', 'parent', 'student'];
+const allRoles: MembershipRole[] = [
+	'owner',
+	'principal',
+	'vice_principal',
+	'admin',
+	'teacher',
+	'parent',
+	'student',
+];
 
 const invitableRoles: Array<Exclude<MembershipRole, 'owner'>> = [
 	'principal',
+	'vice_principal',
 	'admin',
 	'teacher',
 	'parent',
@@ -14,7 +23,8 @@ const invitableRoles: Array<Exclude<MembershipRole, 'owner'>> = [
 
 export function getAssignableRoles(actorRole: MembershipRole): MembershipRole[] {
 	if (actorRole === 'owner') return allRoles;
-	if (actorRole === 'principal') return ['teacher', 'parent', 'student'];
+	if (actorRole === 'principal') return ['vice_principal', 'teacher', 'parent', 'student'];
+	if (actorRole === 'vice_principal') return ['teacher', 'parent', 'student'];
 	if (actorRole === 'admin') return ['teacher', 'parent', 'student'];
 	return [];
 }
@@ -23,7 +33,8 @@ export function getInvitableRoles(
 	actorRole: MembershipRole,
 ): Array<Exclude<MembershipRole, 'owner'>> {
 	if (actorRole === 'owner') return invitableRoles;
-	if (actorRole === 'principal') return ['admin', 'teacher', 'parent', 'student'];
+	if (actorRole === 'principal') return ['vice_principal', 'admin', 'teacher', 'parent', 'student'];
+	if (actorRole === 'vice_principal') return ['admin', 'teacher', 'parent', 'student'];
 	if (actorRole === 'admin') return ['teacher', 'parent', 'student'];
 	return [];
 }
@@ -31,8 +42,14 @@ export function getInvitableRoles(
 export function canManageTarget(actorRole: MembershipRole, targetRole: MembershipRole): boolean {
 	if (actorRole === 'owner') return true;
 	if (targetRole === 'owner') return false;
-	if (actorRole === 'principal' && ['principal', 'admin'].includes(targetRole)) return false;
-	return ['owner', 'principal', 'admin'].includes(actorRole);
+	if (actorRole === 'principal' && ['principal', 'vice_principal', 'admin'].includes(targetRole))
+		return false;
+	if (
+		actorRole === 'vice_principal' &&
+		['principal', 'vice_principal', 'admin'].includes(targetRole)
+	)
+		return false;
+	return ['owner', 'principal', 'vice_principal', 'admin'].includes(actorRole);
 }
 
 export function buildActorCapabilities(

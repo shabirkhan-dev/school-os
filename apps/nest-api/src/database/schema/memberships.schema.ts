@@ -9,6 +9,7 @@ export const membershipStatus = pgEnum('membership_status', ['active', 'invited'
 export const membershipRole = pgEnum('membership_role', [
 	'owner',
 	'principal',
+	'vice_principal',
 	'admin',
 	'teacher',
 	'parent',

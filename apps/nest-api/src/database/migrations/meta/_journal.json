@@ -134,6 +134,13 @@
       "when": 1786300647371,
       "tag": "0019_student_membership_link",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1786400647371,
+      "tag": "0020_vice_principal_role",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,11 @@
 import type { MembershipRecord } from '@/database/schema';
 
-export const managementRoles = new Set<MembershipRecord['role']>(['owner', 'principal', 'admin']);
+export const managementRoles = new Set<MembershipRecord['role']>([
+	'owner',
+	'principal',
+	'vice_principal',
+	'admin',
+]);
 
 export function isManagementRole(role: MembershipRecord['role']): boolean {
 	return managementRoles.has(role);
