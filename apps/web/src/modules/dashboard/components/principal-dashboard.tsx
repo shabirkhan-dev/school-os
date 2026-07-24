@@ -9,9 +9,10 @@ import { PrincipalSchoolPulse } from "./principal-school-pulse";
 
 export function PrincipalDashboard() {
 	const { activeTenant, campuses } = useTenantContext();
-	const { can } = usePermissions();
+	const { can, role } = usePermissions();
 	const { t } = useDashboardI18n();
 	const metricsEnabled = can(PermissionCodes.STUDENTS_READ);
+	const isVice = role === "vice_principal";
 	const locationWord = campuses.length === 1 ? t("principal.location") : t("principal.locations");
 
 	return (
@@ -23,7 +24,7 @@ export function PrincipalDashboard() {
 					</div>
 					<div>
 						<h1 className="font-semibold text-[22px] text-dashboard-text-primary">
-							{t("principal.commandCenter")}
+							{isVice ? t("vicePrincipal.commandCenter") : t("principal.commandCenter")}
 						</h1>
 						<p className="max-w-2xl text-dashboard-text-muted text-sm">
 							{activeTenant?.name ?? t("common.yourSchool")}
@@ -41,7 +42,7 @@ export function PrincipalDashboard() {
 						{t("principal.enrollmentDetail")}
 					</h2>
 				</div>
-				<AdminDashboard enabled={metricsEnabled} embedded />
+				<AdminDashboard enabled={metricsEnabled} embedded schoolPulse />
 			</div>
 		</div>
 	);

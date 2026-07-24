@@ -3,7 +3,7 @@
 import { Spinner } from "@school-os/ui/components/spinner";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { PermissionCodes, usePermissions } from "@/modules/tenants";
+import { isSchoolLeadershipRole, PermissionCodes, usePermissions } from "@/modules/tenants";
 import { AdminDashboard } from "./admin-dashboard";
 import { PrincipalDashboard } from "./principal-dashboard";
 import { StudentDashboard } from "./student-dashboard";
@@ -43,7 +43,7 @@ export function AdminHomePage() {
 		return <TeacherDashboard />;
 	}
 
-	if (role === "principal") {
+	if (isSchoolLeadershipRole(role)) {
 		return <PrincipalDashboard />;
 	}
 

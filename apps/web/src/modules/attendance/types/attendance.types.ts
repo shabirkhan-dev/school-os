@@ -65,3 +65,11 @@ export type StudentAttendanceHistoryEntry = {
 	mark: AttendanceMark;
 	session: AttendanceSession;
 };
+
+export type SchoolDayPulse = {
+	sessionDate: string;
+	sessionsCount: number;
+	sectionsWithSessions: number;
+	summary: AttendanceStatusCounts;
+	attendanceRate: number | null;
+};

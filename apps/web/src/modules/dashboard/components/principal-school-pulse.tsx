@@ -44,7 +44,7 @@ type Props = {
 
 export function PrincipalSchoolPulse({ tenantName, enabled = true }: Props) {
 	const { t, intlLocale } = useDashboardI18n();
-	const { metrics, isLoading, isError } = useDashboardMetricsQuery(enabled);
+	const { metrics, isLoading, isError } = useDashboardMetricsQuery(enabled, { schoolPulse: true });
 
 	const localized = useMemo(
 		() => (metrics ? localizeDashboardMetrics(metrics, t) : null),
@@ -133,6 +133,10 @@ export function PrincipalSchoolPulse({ tenantName, enabled = true }: Props) {
 	}
 	if (metrics.stats.find((s) => s.id === "attendance")?.unavailable) {
 		suggestions.push(t("principal.suggestAttendance"));
+	} else if (
+		metrics.stats.find((s) => s.id === "attendance")?.detail.includes("No attendance sessions")
+	) {
+		suggestions.push(t("principal.suggestAttendance"));
 	}
 	if (metrics.stats.find((s) => s.id === "fees")?.unavailable) {
 		suggestions.push(t("principal.suggestFinance"));
@@ -147,6 +151,8 @@ export function PrincipalSchoolPulse({ tenantName, enabled = true }: Props) {
 			: `${metrics.insights.campusCount} ${
 					metrics.insights.campusCount === 1 ? t("common.campus") : t("common.campuses")
 				}`;
+
+	const attendanceStat = metrics.stats.find((s) => s.id === "attendance");
 
 	return (
 		<div className="space-y-5 px-4 py-5 sm:px-6 lg:px-8">
@@ -188,8 +194,12 @@ export function PrincipalSchoolPulse({ tenantName, enabled = true }: Props) {
 					<PulseRow
 						icon={AlertCircleIcon}
 						label={t("principal.attendanceToday")}
-						value="—"
-						hint={t("principal.attendanceHint")}
+						value={
+							attendanceStat && !attendanceStat.unavailable
+								? attendanceStat.formatValue(attendanceStat.value)
+								: "—"
+						}
+						hint={attendanceStat?.detail ?? t("principal.attendanceHint")}
 					/>
 					<PulseRow
 						icon={Megaphone01Icon}
@@ -219,6 +229,7 @@ export function PrincipalSchoolPulse({ tenantName, enabled = true }: Props) {
 						{t("principal.quickActions")}
 					</h3>
 					<ul className="mt-3 space-y-2">
+						<QuickAction href="/admin/students?admit=1" label={t("principal.admitStudent")} />
 						<QuickAction href="/admin/attendance" label={t("principal.openAttendance")} />
 						<QuickAction href="/admin/students" label={t("principal.reviewStudents")} />
 						<QuickAction href="/admin/members" label={t("principal.staffInvites")} />

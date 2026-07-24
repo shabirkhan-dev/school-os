@@ -31,7 +31,8 @@ import { Input } from "@school-os/ui/components/input";
 import { SelectField } from "@school-os/ui/components/select-field";
 import { Spinner } from "@school-os/ui/components/spinner";
 import { ToggleGroup, ToggleGroupItem } from "@school-os/ui/components/toggle-group";
-import { useCallback, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminPageShell, FormDrawer } from "@/components/admin";
 import {
 	DataTable,
@@ -127,6 +128,13 @@ export function StudentsPage() {
 
 	const [admitOpen, setAdmitOpen] = useState(false);
 	const [admitForm, setAdmitForm] = useState<AdmitFormState>(emptyAdmitForm);
+	const searchParams = useSearchParams();
+
+	useEffect(() => {
+		if (searchParams.get("admit") === "1" && canWrite) {
+			setAdmitOpen(true);
+		}
+	}, [searchParams, canWrite]);
 
 	const [enrollOpen, setEnrollOpen] = useState(false);
 	const [enrollStudentId, setEnrollStudentId] = useState("");

@@ -16,13 +16,16 @@ import { localizeDashboardMetrics } from "../i18n/localize-dashboard-metrics";
 
 type Props = {
 	enabled?: boolean;
-	/** Hide greeting header when nested (e.g. principal command center). */
 	embedded?: boolean;
+	/** Load school-wide attendance pulse for leadership dashboards. */
+	schoolPulse?: boolean;
 };
 
-export function AdminDashboard({ enabled = true, embedded = false }: Props) {
+export function AdminDashboard({ enabled = true, embedded = false, schoolPulse = false }: Props) {
 	const { t } = useDashboardI18n();
-	const { metrics, isLoading, isError, tenantName, campuses } = useDashboardMetricsQuery(enabled);
+	const { metrics, isLoading, isError, tenantName, campuses } = useDashboardMetricsQuery(enabled, {
+		schoolPulse,
+	});
 	const localized = useMemo(
 		() => (metrics ? localizeDashboardMetrics(metrics, t) : null),
 		[metrics, t],

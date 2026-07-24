@@ -4,6 +4,7 @@ import type {
 	ConfirmAllPresentInput,
 	CreateAttendanceSessionInput,
 	MarkAttendanceInput,
+	SchoolDayPulse,
 	StudentAttendanceHistoryEntry,
 } from "../types/attendance.types";
 
@@ -56,4 +57,10 @@ export const attendanceService = {
 			`/tenants/${tenantId}/attendance/students/${studentId}/history`,
 			{ accessToken },
 		),
+	getSchoolDayPulse: (accessToken: string, tenantId: string, sessionDate?: string) => {
+		const search = sessionDate ? `?sessionDate=${encodeURIComponent(sessionDate)}` : "";
+		return apiClient.get<SchoolDayPulse>(`/tenants/${tenantId}/attendance/school-pulse${search}`, {
+			accessToken,
+		});
+	},
 };

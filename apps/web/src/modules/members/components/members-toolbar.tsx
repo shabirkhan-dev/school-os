@@ -37,6 +37,7 @@ const STATUS_OPTIONS: Array<{ value: MembersFilters["status"]; label: string }> 
 const ROLE_OPTIONS: MembershipRole[] = [
 	"owner",
 	"principal",
+	"vice_principal",
 	"admin",
 	"teacher",
 	"parent",

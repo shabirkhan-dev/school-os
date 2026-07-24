@@ -8,17 +8,26 @@ import { useMembersQuery } from "@/modules/members/hooks/use-member-queries";
 import { useTeachersQuery } from "@/modules/staff/hooks/use-staff-queries";
 import { studentsService } from "@/modules/students/services/students.service";
 import { useTenantContext } from "@/modules/tenants";
+import { applySchoolAttendancePulse } from "../utils/apply-school-attendance-pulse";
 import { computeDashboardMetrics } from "../utils/dashboard-metrics.utils";
+import { useSchoolDayPulseQuery } from "./use-school-attendance-pulse";
 
 function requireToken(token: string | null): string {
 	if (!token) throw new Error("Authentication required");
 	return token;
 }
 
-export function useDashboardMetricsQuery(enabled = true) {
+type DashboardMetricsOptions = {
+	schoolPulse?: boolean;
+};
+
+export function useDashboardMetricsQuery(enabled = true, options?: DashboardMetricsOptions) {
 	const { token } = useAuth();
 	const { activeTenant, campuses } = useTenantContext();
 	const tenantId = activeTenant?.id ?? null;
+	const schoolPulse = options?.schoolPulse ?? false;
+
+	const pulseQuery = useSchoolDayPulseQuery(tenantId, enabled && schoolPulse);
 
 	const yearsQuery = useAcademicYearsQuery(tenantId, enabled);
 	const classesQuery = useClassesQuery(tenantId, enabled);
@@ -104,10 +113,18 @@ export function useDashboardMetricsQuery(enabled = true) {
 		yearsQuery.data,
 	]);
 
+	const metricsWithPulse = useMemo(() => {
+		if (!metrics) return null;
+		if (!schoolPulse || !pulseQuery.data) return metrics;
+		return applySchoolAttendancePulse(metrics, pulseQuery.data);
+	}, [metrics, schoolPulse, pulseQuery.data]);
+
+	const isLoadingWithPulse = isLoading || (schoolPulse && pulseQuery.isLoading && !pulseQuery.data);
+
 	return {
-		metrics,
-		isLoading,
-		isError,
+		metrics: metricsWithPulse,
+		isLoading: isLoadingWithPulse,
+		isError: isError || pulseQuery.isError,
 		tenantName: activeTenant?.name ?? null,
 		campuses,
 	};

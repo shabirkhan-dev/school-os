@@ -26,4 +26,5 @@ export {
 	useUpdateTenantMutation,
 	useWorkspaceSwitcherPolicy,
 } from "./hooks";
+export { isSchoolLeadershipRole } from "./lib/school-leadership";
 export type * from "./types/tenant.types";

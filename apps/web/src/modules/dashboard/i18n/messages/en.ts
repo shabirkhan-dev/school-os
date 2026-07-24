@@ -57,6 +57,7 @@ export const enMessages = {
 			"Predictive alerts, parent sentiment, and auto-drafted reports for the principal role are on the roadmap — this panel uses real enrollment and staff signals today.",
 		quickActions: "Quick actions",
 		openAttendance: "Open attendance",
+		admitStudent: "Admit a student",
 		reviewStudents: "Review students & admissions",
 		staffInvites: "Staff & invites",
 		homeworkOversight: "Homework oversight",
@@ -69,6 +70,9 @@ export const enMessages = {
 		students: "students",
 		invite: "invite",
 		invites: "invites",
+	},
+	vicePrincipal: {
+		commandCenter: "Vice principal command center",
 	},
 	adminDashboard: {
 		loadError: "Could not load dashboard data. Refresh to try again.",

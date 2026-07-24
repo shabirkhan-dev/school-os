@@ -24,11 +24,19 @@ export const PermissionCodes = {
 
 export type PermissionCode = (typeof PermissionCodes)[keyof typeof PermissionCodes];
 
-export type MembershipRole = "owner" | "principal" | "admin" | "teacher" | "parent" | "student";
+export type MembershipRole =
+	| "owner"
+	| "principal"
+	| "vice_principal"
+	| "admin"
+	| "teacher"
+	| "parent"
+	| "student";
 
 export const membershipRoleLabels: Record<MembershipRole, string> = {
 	owner: "Owner",
 	principal: "Principal",
+	vice_principal: "Vice Principal",
 	admin: "Admin",
 	teacher: "Teacher",
 	parent: "Parent",
@@ -38,6 +46,7 @@ export const membershipRoleLabels: Record<MembershipRole, string> = {
 export const membershipRoleDescriptions: Record<MembershipRole, string> = {
 	owner: "Full organization control, billing, and ownership transfer",
 	principal: "School leadership — settings, staff, and academic oversight",
+	vice_principal: "Deputy leadership — daily operations and academic oversight",
 	admin: "Day-to-day administration — members, campuses, and operations",
 	teacher: "Classroom access — attendance, grades, and student records",
 	parent: "Guardian portal — child progress, fees, and communication",

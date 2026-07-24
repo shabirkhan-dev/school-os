@@ -11,13 +11,30 @@ import {
 	membershipRoleLabels,
 } from "@/modules/tenants";
 
-const ROLES: MembershipRole[] = ["owner", "principal", "admin", "teacher", "parent", "student"];
+const ROLES: MembershipRole[] = [
+	"owner",
+	"principal",
+	"vice_principal",
+	"admin",
+	"teacher",
+	"parent",
+	"student",
+];
 
 const CAPABILITIES: Array<{ label: string; roles: MembershipRole[] }> = [
-	{ label: "Manage organization settings", roles: ["owner", "principal", "admin"] },
-	{ label: "Invite & manage members", roles: ["owner", "principal", "admin"] },
-	{ label: "Manage campuses & academics", roles: ["owner", "principal", "admin"] },
-	{ label: "Mark attendance & view students", roles: ["owner", "principal", "admin", "teacher"] },
+	{
+		label: "Manage organization settings",
+		roles: ["owner", "principal", "vice_principal", "admin"],
+	},
+	{ label: "Invite & manage members", roles: ["owner", "principal", "vice_principal", "admin"] },
+	{
+		label: "Manage campuses & academics",
+		roles: ["owner", "principal", "vice_principal", "admin"],
+	},
+	{
+		label: "Mark attendance & view students",
+		roles: ["owner", "principal", "vice_principal", "admin", "teacher"],
+	},
 	{ label: "Parent portal access", roles: ["parent"] },
 	{ label: "Student portal access", roles: ["student"] },
 ];

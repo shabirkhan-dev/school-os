@@ -92,7 +92,15 @@ export function MembersPage() {
 				);
 			})
 			.sort((a, b) => {
-				const roleOrder = ["owner", "principal", "admin", "teacher", "parent", "student"];
+				const roleOrder = [
+					"owner",
+					"principal",
+					"vice_principal",
+					"admin",
+					"teacher",
+					"parent",
+					"student",
+				];
 				const roleDiff = roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role);
 				if (roleDiff !== 0) return roleDiff;
 				return a.email.localeCompare(b.email);

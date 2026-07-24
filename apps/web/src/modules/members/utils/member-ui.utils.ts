@@ -10,7 +10,13 @@ import type {
 export function canManageMember(actor: ActorCapabilities, member: Member): boolean {
 	if (!actor.canManage) return false;
 	if (member.role === "owner" && actor.role !== "owner") return false;
-	if (actor.role === "principal" && ["principal", "admin"].includes(member.role)) return false;
+	if (actor.role === "principal" && ["principal", "vice_principal", "admin"].includes(member.role))
+		return false;
+	if (
+		actor.role === "vice_principal" &&
+		["principal", "vice_principal", "admin"].includes(member.role)
+	)
+		return false;
 	return true;
 }
 
@@ -73,7 +79,9 @@ export function computeMemberInsights(
 	pendingInvites: PendingInvite[],
 	summary?: MemberListSummary,
 ): MemberInsights {
-	const leadership = members.filter((m) => ["owner", "principal", "admin"].includes(m.role)).length;
+	const leadership = members.filter((m) =>
+		["owner", "principal", "vice_principal", "admin"].includes(m.role),
+	).length;
 	const staff = members.filter((m) => m.role === "teacher" && m.status === "active").length;
 	const awaiting = (summary?.invited ?? 0) + (summary?.pendingEmailInvites ?? 0);
 

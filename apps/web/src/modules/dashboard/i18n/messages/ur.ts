@@ -60,6 +60,7 @@ export const urMessages: DashboardMessages = {
 			"پرنسپل کے لیے پیش گوئی، والدین کے جذبات، اور خودکار رپورٹس روڈ میپ پر ہیں — یہ پینل آج اصل داخلہ اور عملے کے اشارے استعمال کرتا ہے۔",
 		quickActions: "فوری اقدامات",
 		openAttendance: "حاضری کھولیں",
+		admitStudent: "طالب علم داخل کریں",
 		reviewStudents: "طلباء اور داخلہ دیکھیں",
 		staffInvites: "عملہ اور دعوت نامے",
 		homeworkOversight: "ہوم ورک نگرانی",
@@ -72,6 +73,9 @@ export const urMessages: DashboardMessages = {
 		students: "طلباء",
 		invite: "دعوت",
 		invites: "دعوت نامے",
+	},
+	vicePrincipal: {
+		commandCenter: "وائس پرنسپل کمانڈ سینٹر",
 	},
 	adminDashboard: {
 		loadError: "ڈیش بورڈ ڈیٹا لوڈ نہیں ہو سکا۔ دوبارہ کوشش کے لیے ریفریش کریں۔",
