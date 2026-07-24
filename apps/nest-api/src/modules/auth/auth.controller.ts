@@ -249,6 +249,6 @@ function getRequestMetadata(request: Request): {
 } {
 	return {
 		ipAddress: request.ip || null,
-		userAgent: request.get('user-agent') ?? null,
+		userAgent: request.get('user-agent')?.slice(0, 512) ?? null,
 	};
 }

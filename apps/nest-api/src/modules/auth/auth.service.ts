@@ -51,6 +51,8 @@ import type {
 	VerifyEmailBody,
 } from './dto/auth.dto';
 
+const DUMMY_BCRYPT_HASH = '$2b$12$LJ3m4sMKfRJf5TQ3GV8HYOsYfTX2v7mX5qW8pN6rK1cC0zN5m0V9e';
+
 @Injectable()
 export class AuthService {
 	constructor(
@@ -109,7 +111,7 @@ export class AuthService {
 	async login(body: LoginBody, metadata: RequestMetadata): Promise<LoginResult> {
 		const user = await this.usersService.findByEmail(body.email);
 		if (!user) {
-			await this.crypto.hashPassword(body.password);
+			await this.crypto.verifyPassword(body.password, DUMMY_BCRYPT_HASH);
 			throw invalidCredentialsException();
 		}
 
@@ -233,7 +235,7 @@ export class AuthService {
 		}
 
 		if (!this.crypto.verifyRefreshToken(refreshToken, session.refreshTokenHash)) {
-			await this.authRepository.revokeSession(session.id, session.userId, 'refresh_token_reuse');
+			await this.authRepository.revokeAllSessions(session.userId, 'refresh_token_reuse_detected');
 			throw invalidRefreshTokenException();
 		}
 
@@ -681,8 +683,8 @@ export class AuthService {
 		return new Date(Date.now() + this.config.sessionTtlDays * 86_400_000);
 	}
 
-	private async consumePasswordTiming(_password: string): Promise<false> {
-		await new Promise((resolve) => setTimeout(resolve, 200));
+	private async consumePasswordTiming(password: string): Promise<false> {
+		await this.crypto.verifyPassword(password, DUMMY_BCRYPT_HASH);
 		return false;
 	}
 }

@@ -9,6 +9,7 @@ import {
 	UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import type { AccessTokenPayload } from '@/modules/auth/auth.types';
 import { CurrentUser } from '@/modules/auth/current-user.decorator';
@@ -35,6 +36,7 @@ export class TenantsController {
 	) {}
 
 	@Post()
+	@Throttle({ default: { limit: 5, ttl: 60_000 } })
 	@ApiOperation({ summary: 'Create a tenant and grant the caller owner membership' })
 	create(@CurrentUser() user: AccessTokenPayload, @Body() body: CreateTenantDto) {
 		return this.tenants.create(user.sub, body);

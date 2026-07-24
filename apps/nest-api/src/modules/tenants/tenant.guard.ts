@@ -36,6 +36,8 @@ export class TenantGuard implements CanActivate {
 			return true;
 		}
 
+		const membership = await this.memberships.requireActiveMembership(request.user.sub, tenantId);
+
 		const tenant = await this.tenantsRepository.findById(tenantId);
 		if (!tenant || !this.tenantsRepository.isActive(tenant)) {
 			throw new ForbiddenException({
@@ -44,8 +46,6 @@ export class TenantGuard implements CanActivate {
 			});
 		}
 
-		const membership = await this.memberships.requireActiveMembership(request.user.sub, tenantId);
-		await this.permissions.ensureCacheFresh();
 		const roleRows = await this.memberships.listRolesForMembership(membership.id);
 		const roles =
 			roleRows.length > 0 ? roleRows.map((row) => row.role) : ([membership.role] as const);
