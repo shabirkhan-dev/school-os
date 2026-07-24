@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { index, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
 
 import { tenants } from './tenants.schema';
@@ -16,7 +17,10 @@ export const roles = pgTable(
 	(table) => [
 		index('roles_tenant_id_idx').on(table.tenantId),
 		index('roles_code_idx').on(table.code),
-		uniqueIndex('roles_tenant_code_idx').on(table.tenantId, table.code),
+		uniqueIndex('roles_platform_code_unique').on(table.code).where(sql`tenant_id IS NULL`),
+		uniqueIndex('roles_tenant_code_unique')
+			.on(table.tenantId, table.code)
+			.where(sql`tenant_id IS NOT NULL`),
 	],
 );
 

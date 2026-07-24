@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
 	date,
 	index,
@@ -67,6 +68,9 @@ export const students = pgTable(
 	},
 	(table) => [
 		uniqueIndex('students_tenant_code_unique').on(table.tenantId, table.studentCode),
+		uniqueIndex('students_membership_id_unique')
+			.on(table.membershipId)
+			.where(sql`membership_id IS NOT NULL`),
 		index('students_tenant_id_idx').on(table.tenantId),
 		index('students_campus_id_idx').on(table.campusId),
 		index('students_membership_id_idx').on(table.membershipId),

@@ -27,6 +27,7 @@ export const sectionSubjects = pgTable(
 	(table) => [
 		uniqueIndex('section_subjects_section_subject_unique').on(table.sectionId, table.subjectId),
 		index('section_subjects_tenant_id_idx').on(table.tenantId),
+		index('section_subjects_section_id_idx').on(table.sectionId),
 		index('section_subjects_teacher_membership_id_idx').on(table.teacherMembershipId),
 	],
 );

@@ -1,4 +1,4 @@
-import { index, pgTable, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { index, pgTable, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { assessments } from './assessments.schema';
 import { students } from './students.schema';
@@ -22,6 +22,10 @@ export const assessmentRecipients = pgTable(
 	(table) => [
 		index('assessment_recipients_tenant_id_idx').on(table.tenantId),
 		index('assessment_recipients_assessment_id_idx').on(table.assessmentId),
+		uniqueIndex('assessment_recipients_assessment_student_unique').on(
+			table.assessmentId,
+			table.studentId,
+		),
 	],
 );
 
