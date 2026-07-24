@@ -4,7 +4,7 @@ import { RequireAuth } from "@/modules/auth/components";
 import "@/modules/chat/styles/chat.css";
 
 export const metadata: Metadata = {
-	title: "Chat | School OS",
+	title: "Chat",
 	description: "School OS chat workspace",
 };
 

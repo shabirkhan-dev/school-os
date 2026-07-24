@@ -48,6 +48,32 @@ export class StaffRepository {
 			.orderBy(asc(users.email));
 	}
 
+	async findTeacherByMembershipId(tenantId: string, membershipId: string) {
+		const [row] = await this.database.db
+			.select({
+				membership: memberships,
+				user: {
+					id: users.id,
+					email: users.email,
+					username: users.username,
+				},
+				profile: staffProfiles,
+			})
+			.from(memberships)
+			.innerJoin(users, eq(memberships.userId, users.id))
+			.leftJoin(staffProfiles, eq(staffProfiles.membershipId, memberships.id))
+			.where(
+				and(
+					eq(memberships.tenantId, tenantId),
+					eq(memberships.id, membershipId),
+					eq(memberships.status, 'active'),
+					inArray(memberships.role, [...teacherRoles]),
+				),
+			)
+			.limit(1);
+		return row ?? null;
+	}
+
 	async findProfileByMembershipId(tenantId: string, membershipId: string) {
 		const [row] = await this.database.db
 			.select()

@@ -578,7 +578,6 @@ export class AuthService {
 		}
 
 		const roles = await this.memberships.listRoleCodes(membership.id, membership.role);
-		await this.permissions.refreshCache();
 
 		return {
 			id: membership.id,
@@ -682,8 +681,8 @@ export class AuthService {
 		return new Date(Date.now() + this.config.sessionTtlDays * 86_400_000);
 	}
 
-	private async consumePasswordTiming(password: string): Promise<false> {
-		await this.crypto.hashPassword(password);
+	private async consumePasswordTiming(_password: string): Promise<false> {
+		await new Promise((resolve) => setTimeout(resolve, 200));
 		return false;
 	}
 }
