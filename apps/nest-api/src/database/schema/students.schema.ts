@@ -11,6 +11,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { campuses } from './campuses.schema';
+import { memberships } from './memberships.schema';
 import { tenants } from './tenants.schema';
 
 export const studentStatus = pgEnum('student_status', [
@@ -58,6 +59,7 @@ export const students = pgTable(
 		admittedOn: date('admitted_on'),
 		previousSchool: varchar('previous_school', { length: 255 }),
 		status: studentStatus('status').notNull().default('active'),
+		membershipId: uuid('membership_id').references(() => memberships.id, { onDelete: 'set null' }),
 		deletedAt: timestamp('deleted_at', { withTimezone: true }),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -66,6 +68,7 @@ export const students = pgTable(
 		uniqueIndex('students_tenant_code_unique').on(table.tenantId, table.studentCode),
 		index('students_tenant_id_idx').on(table.tenantId),
 		index('students_campus_id_idx').on(table.campusId),
+		index('students_membership_id_idx').on(table.membershipId),
 		index('students_status_idx').on(table.status),
 	],
 );

@@ -19,6 +19,11 @@ export const studentsService = {
 	},
 	get: (accessToken: string, tenantId: string, studentId: string) =>
 		apiClient.get<StudentDetail>(`/tenants/${tenantId}/students/${studentId}`, { accessToken }),
+	getMyProfile: (accessToken: string, tenantId: string) =>
+		apiClient.get<{ student: Student; activeEnrollment: Enrollment | null }>(
+			`/tenants/${tenantId}/students/me`,
+			{ accessToken },
+		),
 	create: (accessToken: string, tenantId: string, input: CreateStudentInput) =>
 		apiClient.post<{ student: Student }>(`/tenants/${tenantId}/students`, input, {
 			accessToken,

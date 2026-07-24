@@ -65,6 +65,33 @@ export class StudentsService {
 		};
 	}
 
+	async getMyStudentProfile(userId: string, tenantId: string) {
+		const membership = await this.membershipAccess.requireActiveMembership(userId, tenantId);
+		if (membership.role !== 'student') {
+			throw new ForbiddenException({
+				code: 'STUDENT_PROFILE_FORBIDDEN',
+				message: 'Only student accounts can access this profile',
+			});
+		}
+
+		const student = await this.students.findStudentByMembershipId(tenantId, membership.id);
+		if (!student) {
+			throw new NotFoundException({
+				code: 'STUDENT_RECORD_NOT_LINKED',
+				message:
+					'No student record is linked to this account yet. Ask your school admin to complete admission linking.',
+			});
+		}
+
+		const enrollments = await this.students.listEnrollments(tenantId, { studentId: student.id });
+		const activeEnrollment = enrollments.find((row) => row.status === 'active') ?? null;
+
+		return {
+			student: toPublicStudent(student),
+			activeEnrollment: activeEnrollment ? toPublicEnrollment(activeEnrollment) : null,
+		};
+	}
+
 	async createStudent(userId: string, tenantId: string, input: CreateStudentInput) {
 		await this.requireWrite(userId, tenantId);
 		await this.requireCampus(tenantId, input.campusId);

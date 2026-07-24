@@ -65,6 +65,21 @@ export class StudentsRepository {
 		return student ?? null;
 	}
 
+	async findStudentByMembershipId(tenantId: string, membershipId: string) {
+		const [student] = await this.database.db
+			.select()
+			.from(students)
+			.where(
+				and(
+					eq(students.tenantId, tenantId),
+					eq(students.membershipId, membershipId),
+					isNull(students.deletedAt),
+				),
+			)
+			.limit(1);
+		return student ?? null;
+	}
+
 	async findStudentByCode(tenantId: string, studentCode: string) {
 		const [student] = await this.database.db
 			.select()

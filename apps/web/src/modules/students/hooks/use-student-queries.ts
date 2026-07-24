@@ -145,3 +145,15 @@ export function useCreateEnrollmentMutation(tenantId: string) {
 		},
 	});
 }
+
+export function useMyStudentProfileQuery(tenantId: string | null, enabled = true) {
+	const { token } = useAuth();
+	return useQuery({
+		queryKey: studentQueryKeys.myProfile(tenantId ?? ""),
+		queryFn: () => {
+			if (!tenantId) throw new Error("Tenant id required");
+			return studentsService.getMyProfile(requireToken(token), tenantId);
+		},
+		enabled: enabled && Boolean(token && tenantId),
+	});
+}

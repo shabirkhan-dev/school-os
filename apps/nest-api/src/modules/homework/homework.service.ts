@@ -41,6 +41,10 @@ export class HomeworkService {
 			return this.listForLinkedStudents(tenantId, membership.id, filters);
 		}
 
+		if (roles.includes('student') && !roles.includes('teacher') && !hasManagementRole(roles)) {
+			return this.listForLinkedStudents(tenantId, membership.id, filters);
+		}
+
 		const assignments = await this.staff.listSubjectAssignments(tenantId, membership.id);
 		const sectionSubjectIds = assignments.map((row) => row.assignment.id);
 
@@ -66,6 +70,18 @@ export class HomeworkService {
 				throw new ForbiddenException({
 					code: 'HOMEWORK_ACCESS_DENIED',
 					message: 'This assignment is not assigned to your linked students',
+				});
+			}
+			return this.buildDetailResponse(tenantId, row, { omitRoster: true });
+		}
+
+		if (roles.includes('student') && !roles.includes('teacher') && !hasManagementRole(roles)) {
+			const studentIds = await this.linkedStudentIds(tenantId, membership.id, undefined);
+			const allowed = await this.homeworkAppliesToStudents(tenantId, row, studentIds);
+			if (!allowed) {
+				throw new ForbiddenException({
+					code: 'HOMEWORK_ACCESS_DENIED',
+					message: 'This assignment is not assigned to you',
 				});
 			}
 			return this.buildDetailResponse(tenantId, row, { omitRoster: true });
@@ -226,6 +242,17 @@ export class HomeworkService {
 		membershipId: string,
 		filterStudentId?: string,
 	): Promise<string[]> {
+		const student = await this.students.findStudentByMembershipId(tenantId, membershipId);
+		if (student) {
+			if (filterStudentId && filterStudentId !== student.id) {
+				throw new ForbiddenException({
+					code: 'HOMEWORK_STUDENT_ACCESS_DENIED',
+					message: 'You are not linked to this student',
+				});
+			}
+			return [student.id];
+		}
+
 		const linked = await this.guardians.listLinkedStudentsForMembership(tenantId, membershipId);
 		let studentIds = linked.map((row) => row.student.id);
 		if (filterStudentId) {

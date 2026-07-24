@@ -57,6 +57,15 @@ export class StudentsController {
 		return this.students.createStudent(user.sub, tenantId, body);
 	}
 
+	@Get('students/me')
+	@ApiOperation({ summary: 'Get the logged-in student profile linked to this membership' })
+	getMyStudent(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+	) {
+		return this.students.getMyStudentProfile(user.sub, tenantId);
+	}
+
 	@Get('students/:studentId')
 	@RequirePermissions(PermissionCodes.STUDENTS_READ)
 	@ApiOperation({ summary: 'Get a student by id' })

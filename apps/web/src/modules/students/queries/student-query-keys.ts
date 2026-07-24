@@ -4,6 +4,7 @@ export const studentQueryKeys = {
 		[...studentQueryKeys.all, tenantId, "list", campusId ?? "all"] as const,
 	detail: (tenantId: string, studentId: string) =>
 		[...studentQueryKeys.all, tenantId, "detail", studentId] as const,
+	myProfile: (tenantId: string) => [...studentQueryKeys.all, tenantId, "me"] as const,
 	enrollments: (tenantId: string, studentId: string) =>
 		[...studentQueryKeys.all, tenantId, "enrollments", studentId] as const,
 	tenantEnrollments: (tenantId: string, academicYearId: string) =>
