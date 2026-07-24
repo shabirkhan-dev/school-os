@@ -1,5 +1,6 @@
 "use client";
 
+import { SchoolOsBrand } from "@school-os/ui";
 import Link from "next/link";
 import type { FormEvent } from "react";
 import { useState } from "react";
@@ -14,29 +15,7 @@ function GitHubIcon({ className }: { className?: string }) {
 	);
 }
 
-function TwitterIcon({ className }: { className?: string }) {
-	return (
-		<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
-			<title>twitter</title>
-			<path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.41l-5.8-7.58-6.64 7.58H.46l8.6-9.83L0 1.15h7.6l5.24 6.93 6.06-6.93Zm-1.29 19.5h2.04L6.49 3.24H4.3l13.31 17.41Z" />
-		</svg>
-	);
-}
-
-function LinkedInIcon({ className }: { className?: string }) {
-	return (
-		<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
-			<title>linkedin</title>
-			<path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14Zm1.78 13.02H3.55V9h3.57v11.45ZM22.22 0H1.77C.8 0 0 .78 0 1.74v20.52C0 23.22.8 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.74V1.74C24 .78 23.2 0 22.22 0Z" />
-		</svg>
-	);
-}
-
-const SOCIALS = [
-	{ label: "GitHub", href: "#", icon: GitHubIcon },
-	{ label: "Twitter", href: "#", icon: TwitterIcon },
-	{ label: "LinkedIn", href: "#", icon: LinkedInIcon },
-] as const;
+const SOCIALS = [{ label: "GitHub", href: SITE.githubUrl, icon: GitHubIcon }] as const;
 
 export function SiteFooter() {
 	const [email, setEmail] = useState("");
@@ -56,9 +35,7 @@ export function SiteFooter() {
 			<div className="mx-auto w-full max-w-6xl px-4 pt-16 pb-8 sm:px-8">
 				<div className="grid gap-12 lg:grid-cols-[1.4fr_2fr]">
 					<div className="flex flex-col">
-						<span className="text-foreground font-semibold text-xl tracking-tight">
-							{SITE.name}
-						</span>
+						<SchoolOsBrand nameClassName="text-xl" />
 						<p className="mt-3 max-w-xs text-muted-foreground text-sm leading-6">
 							{SITE.description}
 						</p>
@@ -123,7 +100,7 @@ export function SiteFooter() {
 				</div>
 
 				<div className="mt-14 flex flex-col-reverse items-center gap-6 border-border border-t pt-8 sm:flex-row sm:justify-between">
-					<p className="text-muted-foreground text-xs">© 2026 beUI Pro. All rights reserved.</p>
+					<p className="text-muted-foreground text-xs">© 2026 {SITE.name}. All rights reserved.</p>
 					<div className="flex items-center gap-1.5">
 						{SOCIALS.map(({ label, href, icon: Icon }) => (
 							<a

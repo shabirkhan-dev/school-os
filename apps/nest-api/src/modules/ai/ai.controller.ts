@@ -5,7 +5,12 @@ import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import type { AccessTokenPayload } from '@/modules/auth/auth.types';
 import { CurrentUser } from '@/modules/auth/current-user.decorator';
 import { JwtAuthGuard } from '@/modules/auth/jwt-auth.guard';
-import { AssistRequestDto, assistRequestSchema } from './ai.dto';
+import {
+	AcademicDraftRequestDto,
+	AssistRequestDto,
+	academicDraftRequestSchema,
+	assistRequestSchema,
+} from './ai.dto';
 import { AiService } from './ai.service';
 
 @ApiTags('AI')
@@ -29,5 +34,15 @@ export class AiController {
 		@Body(new ZodValidationPipe(assistRequestSchema)) body: AssistRequestDto,
 	) {
 		return this.ai.assist(user.sub, body);
+	}
+
+	@Post('academics/draft')
+	@HttpCode(HttpStatus.OK)
+	@ApiOperation({ summary: 'Draft homework or assessment content with AI assist' })
+	draftAcademics(
+		@CurrentUser() user: AccessTokenPayload,
+		@Body(new ZodValidationPipe(academicDraftRequestSchema)) body: AcademicDraftRequestDto,
+	) {
+		return this.ai.draftAcademics(user.sub, body);
 	}
 }

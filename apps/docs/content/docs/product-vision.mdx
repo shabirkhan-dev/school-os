@@ -3,12 +3,14 @@ title: Product Vision
 description: Trust engine positioning, personas, modules, and phased roadmap from the portfolio spec.
 ---
 
-School OS is the **trust engine for schools** — mobile-first, WhatsApp-native, and built for
-affordable private schools that want admissions growth, less chaos, and real-time parent peace of
-mind.
+School OS is the **trust engine for Pakistani school networks** — mobile-first,
+WhatsApp-native, and designed with **Aga Khan Schools (AKES)**-scale operators in mind
+(Karachi, Lahore, Islamabad). It helps schools earn parent trust through instant safety alerts,
+not ERP bloat.
 
 This page summarizes the [portfolio detailed spec](https://github.com/shabirkhan-dev/school-os) and
-aligns it with what this monorepo implements today. For engineering depth, see
+aligns it with what this monorepo implements today. For the **full presentation-style plan** with
+diagrams, see [Master Plan](/docs/master-plan). For engineering depth, see
 [Product System Design](/docs/product-system-design) and
 [Production Roadmap](/docs/production-roadmap).
 
@@ -39,12 +41,19 @@ aligns it with what this monorepo implements today. For engineering depth, see
 | Parent / guardian | WhatsApp + app | Know child is safe; homework, fees, messages in one place |
 | Student | Phone | Schedule, homework, feedback |
 | Gate guard / bus conductor | Phone scanner | Reliable arrival, departure, and route events |
+| Network operations lead | Web + mobile | Multi-campus rollout, consent compliance, pilot metrics |
+
+## Primary design reference
+
+**Aga Khan Schools (AKES)** is the reference network for product UX and pilot scenarios:
+multi-campus, consent-heavy, audit-ready, and parent-first on WhatsApp. School OS is shaped for
+similar Pakistani private and network schools (~200–2K students per campus).
 
 ## The killer demo
 
 ```text
-Teacher scans student QR at the gate.
-→ Parent WhatsApp: "Rohan arrived safely at 8:17 AM."
+Gate guard scans Hassan Raza (Class 7-B) at AKES Karachi Gate A.
+→ Parent WhatsApp to Amina Khan: "Hassan arrived safely at 8:17 AM."
 → Principal dashboard: 247 in · 3 absent · 1 late
 ```
 
@@ -114,7 +123,8 @@ All AI outputs go through policy checks; high-risk actions require human approva
 
 ## WhatsApp and compliance (2026 best practices)
 
-Research and regional regulations (e.g. India DPDPA, COPPA/FERPA awareness) imply:
+Research and regional regulations (Pakistan guardian consent for minors, PECA awareness,
+COPPA/FERPA for international campuses, India DPDPA for expansion) imply:
 
 - Use **WhatsApp Business Cloud API** via an approved BSP — not personal WhatsApp Web.
 - **Explicit opt-in** from guardians; store consent source, time, and purpose.
@@ -134,8 +144,9 @@ Research and regional regulations (e.g. India DPDPA, COPPA/FERPA awareness) impl
 | 3 — Finance & AI | Months 9–12 | Fees, payments, AI comments, early warning, bus, CRM |
 | 4 — Polish & scale | Year 2 | UX audit, white-label, performance, acquisition prep |
 
-Engineering phases in [Production Roadmap](/docs/production-roadmap) map to this product plan —
-backend spine first (NestJS, Drizzle, tenant-safe modules), then attendance vertical slice.
+Engineering phases in [Production Roadmap](/docs/production-roadmap) include backend spine work
+(Phases 0–6) and **Product Milestone 1** — the scan→WhatsApp→dashboard demo — as the first
+product ship target.
 
 ## Repo vs. spec — source of truth
 
@@ -146,14 +157,14 @@ backend spine first (NestJS, Drizzle, tenant-safe modules), then attendance vert
 | Mobile | React Native | **Expo** (`apps/mobile`) |
 | Database | PostgreSQL | **PostgreSQL** (Neon in production) |
 | AI | OpenAI / Ollama | **FastAPI** proxied by Nest (`apps/ai-api`) |
-| Payments | Stripe / Razorpay | Providers wired in billing module |
-| Attendance / WhatsApp | Core MVP | **Planned** — follow production roadmap Phase 7+ |
+| Payments | Stripe / Razorpay / local PSP | Providers wired in billing module |
+| Attendance / WhatsApp | Core MVP | **Planned** — Product Milestone 1 in production roadmap |
 
 ## Monetization (SaaS)
 
 | Tier | Price / month | Scope |
 | --- | --- | --- |
-| Pilot | $0 | ~100 students, attendance + alerts |
+| Pilot | $0 (PKR flexible) | ~100 students, one campus, attendance + WhatsApp alerts |
 | Standard | $50–$100 | ~500 students, + communication + homework |
 | Premium | $200–$500 | Unlimited, all modules + AI |
 | Enterprise | Custom | Chains, white-label, SLA |

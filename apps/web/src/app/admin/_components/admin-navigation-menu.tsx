@@ -1,0 +1,242 @@
+"use client";
+
+import { ArrowDown01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Skeleton } from "@school-os/ui/components/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@school-os/ui/components/tooltip";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
+import {
+	type NavigationNode,
+	type NavigationSection,
+	resolveActiveNavigationKey,
+	resolveNavigationIcon,
+	useAdminNavigationQuery,
+} from "@/modules/navigation";
+import { useTenantContext } from "@/modules/tenants";
+
+type Props = {
+	isCollapsed: boolean;
+	mobile?: boolean;
+	onNavigate?: () => void;
+};
+
+export function AdminNavigationMenu({ isCollapsed, mobile = false, onNavigate }: Props) {
+	const pathname = usePathname();
+	const { activeTenant } = useTenantContext();
+	const navigationQuery = useAdminNavigationQuery(activeTenant?.id ?? null);
+
+	const sections = navigationQuery.data?.sections ?? [];
+	const flatItems = useMemo(() => sections.flatMap((section) => section.items), [sections]);
+	const activeKey = resolveActiveNavigationKey(pathname, flatItems);
+
+	if (navigationQuery.isLoading) {
+		return (
+			<div className="space-y-3 px-3 py-2">
+				{["a", "b", "c", "d"].map((key) => (
+					<Skeleton key={key} className="h-9 w-full rounded-lg" />
+				))}
+			</div>
+		);
+	}
+
+	if (sections.length === 0) {
+		return (
+			<div className="px-4 py-6 text-[12px] text-dashboard-text-muted">
+				No navigation available for your role.
+			</div>
+		);
+	}
+
+	return (
+		<>
+			{sections.map((section, idx) => (
+				<AdminNavigationSection
+					key={section.heading}
+					section={section}
+					idx={idx}
+					isCollapsed={isCollapsed}
+					activeKey={activeKey}
+					pathname={pathname}
+					onNavigate={onNavigate}
+					wrapCollapsed={isCollapsed && !mobile}
+				/>
+			))}
+		</>
+	);
+}
+
+function AdminNavigationSection({
+	section,
+	idx,
+	isCollapsed,
+	activeKey,
+	pathname,
+	onNavigate,
+	wrapCollapsed,
+}: {
+	section: NavigationSection;
+	idx: number;
+	isCollapsed: boolean;
+	activeKey: string;
+	pathname: string;
+	onNavigate?: () => void;
+	wrapCollapsed: boolean;
+}) {
+	return (
+		<div className={cn(idx > 0 && "mt-3 border-dashboard-border-subtle border-t pt-3")}>
+			{!isCollapsed ? (
+				<div className="px-2 pt-1 pb-1.5 font-medium text-[11px] text-dashboard-text-dim uppercase tracking-[0.06em]">
+					{section.heading}
+				</div>
+			) : (
+				idx > 0 && <div className="h-1" />
+			)}
+			<ul className="space-y-0.5">
+				{section.items.map((item) => (
+					<AdminNavigationItem
+						key={item.id}
+						item={item}
+						isCollapsed={isCollapsed}
+						activeKey={activeKey}
+						pathname={pathname}
+						onNavigate={onNavigate}
+						wrapCollapsed={wrapCollapsed}
+					/>
+				))}
+			</ul>
+		</div>
+	);
+}
+
+function AdminNavigationItem({
+	item,
+	isCollapsed,
+	activeKey,
+	pathname,
+	onNavigate,
+	wrapCollapsed,
+	depth = 0,
+}: {
+	item: NavigationNode;
+	isCollapsed: boolean;
+	activeKey: string;
+	pathname: string;
+	onNavigate?: () => void;
+	wrapCollapsed: boolean;
+	depth?: number;
+}) {
+	const hasChildren = item.children.length > 0;
+	const branchActive =
+		item.key === activeKey ||
+		item.children.some((child) => child.key === activeKey) ||
+		(item.href != null && pathname.startsWith(`${item.href}/`));
+	const [open, setOpen] = useState(branchActive);
+
+	useEffect(() => {
+		if (branchActive) setOpen(true);
+	}, [branchActive]);
+
+	const active = item.key === activeKey;
+	const icon = resolveNavigationIcon(item.iconKey);
+	const className = cn(
+		"group/item relative flex w-full items-center gap-3 rounded-lg py-2 text-left text-[13px] transition-all duration-150",
+		depth > 0 ? "ms-2 px-2" : "px-2.5",
+		isCollapsed && depth === 0 && "justify-center px-0",
+		active
+			? "bg-dashboard-accent-soft font-medium text-dashboard-accent hover:bg-dashboard-accent-soft"
+			: "font-normal text-dashboard-text-muted hover:bg-dashboard-hover hover:text-dashboard-text-secondary active:scale-[0.985]",
+	);
+
+	const indicator = active ? (
+		<span
+			aria-hidden
+			className="absolute top-1/2 left-0.5 h-4 w-0.5 -translate-y-1/2 rounded-full bg-dashboard-accent"
+		/>
+	) : null;
+
+	const iconNode = (
+		<HugeiconsIcon
+			icon={icon}
+			size={depth > 0 ? 16 : 18}
+			strokeWidth={active ? 2 : 1.7}
+			className={cn(
+				"shrink-0 transition-colors",
+				active
+					? "text-dashboard-accent"
+					: "text-dashboard-text-dim group-hover/item:text-dashboard-text-secondary",
+			)}
+		/>
+	);
+
+	const label = !isCollapsed ? <span className="truncate">{item.label}</span> : null;
+
+	const linkBody = item.href ? (
+		<Link href={item.href} className={className} onClick={onNavigate}>
+			{indicator}
+			{iconNode}
+			{label}
+		</Link>
+	) : (
+		<button type="button" className={className} disabled>
+			{indicator}
+			{iconNode}
+			{label}
+		</button>
+	);
+
+	const renderedLink =
+		wrapCollapsed && depth === 0 ? (
+			<Tooltip>
+				<TooltipTrigger render={() => linkBody} />
+				<TooltipContent side="right">{item.label}</TooltipContent>
+			</Tooltip>
+		) : (
+			linkBody
+		);
+
+	return (
+		<li>
+			{hasChildren && !isCollapsed ? (
+				<div className="space-y-0.5">
+					<div className="flex items-center gap-0.5">
+						<div className="min-w-0 flex-1">{renderedLink}</div>
+						<button
+							type="button"
+							className="flex size-7 shrink-0 items-center justify-center rounded-md text-dashboard-text-dim hover:bg-dashboard-hover hover:text-dashboard-text-secondary"
+							aria-expanded={open}
+							aria-label={`${open ? "Collapse" : "Expand"} ${item.label}`}
+							onClick={() => setOpen((value) => !value)}
+						>
+							<HugeiconsIcon
+								icon={open ? ArrowUp01Icon : ArrowDown01Icon}
+								size={14}
+								strokeWidth={2}
+							/>
+						</button>
+					</div>
+					{open ? (
+						<ul className="space-y-0.5 border-dashboard-border-subtle border-l ms-3 ps-1">
+							{item.children.map((child) => (
+								<AdminNavigationItem
+									key={child.id}
+									item={child}
+									isCollapsed={isCollapsed}
+									activeKey={activeKey}
+									pathname={pathname}
+									onNavigate={onNavigate}
+									wrapCollapsed={wrapCollapsed}
+									depth={depth + 1}
+								/>
+							))}
+						</ul>
+					) : null}
+				</div>
+			) : (
+				renderedLink
+			)}
+		</li>
+	);
+}

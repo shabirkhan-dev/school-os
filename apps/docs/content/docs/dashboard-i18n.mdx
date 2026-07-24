@@ -1,0 +1,29 @@
+---
+title: Dashboard i18n (English & Urdu)
+description: Scoped bilingual admin dashboards with RTL, aligned with shadcn/ui logical layout.
+---
+
+## Scope
+
+Only the **admin dashboard shell** (`/admin`) is translated today — login, marketing, and docs stay English.
+
+## shadcn / RTL
+
+School OS enables shadcn **RTL mode** in `apps/web/components.json` (`"rtl": true`). Shared UI in `@school-os/ui` uses logical spacing (`ms`/`me`, `start`/`end`) and `rtl:` variants (sidebar chevrons, pagination, calendars). When the dashboard locale is Urdu, the admin shell sets `dir="rtl"` and `lang="ur"` on the layout wrapper so components mirror correctly without duplicating CSS.
+
+## Implementation
+
+| Piece | Location |
+|-------|----------|
+| Locale provider + session persistence | `apps/web/src/modules/dashboard/i18n/` |
+| Message catalogs | `messages/en.ts`, `messages/ur.ts` |
+| Language switcher | Admin topbar (globe icon) |
+| Fonts | Noto Sans (EN), Noto Nastaliq Urdu (UR) via `next/font` |
+
+Locale is stored in `sessionStorage` under `school-os-dashboard-locale` so it survives refreshes without changing global user profile yet.
+
+## Future
+
+- Sync with tenant `default_locale` and user profile `locale` from the Nest API.
+- Expand catalogs to sidebar nav labels module-by-module.
+- Optional full-app i18n (`next-intl` or Paraglide) once non-dashboard routes need translation.

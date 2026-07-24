@@ -1,28 +1,12 @@
 "use client";
 
 import {
-	BubbleChatIcon,
-	Calendar03Icon,
-	ClipboardIcon,
-	DashboardSquare01Icon,
-	File01Icon,
-	HelpCircleIcon,
-	Invoice01Icon,
 	Logout01Icon,
-	Megaphone01Icon,
-	Mortarboard01Icon,
-	PuzzleIcon,
 	SecurityIcon,
-	Settings02Icon,
 	SidebarLeftIcon,
-	StudentIcon,
-	TeacherIcon,
 	Tick02Icon,
 	UnfoldMoreIcon,
-	UserAdd01Icon,
 	UserCircle02Icon,
-	UserMultiple02Icon,
-	UserSettings01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -41,74 +25,22 @@ import {
 	TooltipTrigger,
 } from "@school-os/ui/components/tooltip";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { type ComponentProps, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { userInitials } from "@/lib/user-display";
 import { cn } from "@/lib/utils";
-
-type IconType = ComponentProps<typeof HugeiconsIcon>["icon"];
-type NavItem = { id: string; label: string; icon: IconType; href?: string };
-type NavSection = { heading: string; items: NavItem[] };
-
-const sections: NavSection[] = [
-	{
-		heading: "Main Menu",
-		items: [
-			{ id: "dashboard", label: "Dashboard", icon: DashboardSquare01Icon, href: "/admin" },
-			{ id: "ai-assist", label: "AI Assist", icon: BubbleChatIcon, href: "/admin/ai" },
-			{ id: "attendance", label: "Attendance", icon: ClipboardIcon },
-			{ id: "timetable", label: "Timetable", icon: Calendar03Icon },
-			{ id: "exams", label: "Exams", icon: File01Icon },
-			{ id: "announcements", label: "Announcements", icon: Megaphone01Icon },
-		],
-	},
-	{
-		heading: "People",
-		items: [
-			{ id: "students", label: "Students", icon: StudentIcon },
-			{ id: "teachers", label: "Teachers", icon: TeacherIcon },
-			{ id: "guardians", label: "Guardians", icon: UserMultiple02Icon },
-		],
-	},
-	{
-		heading: "Management",
-		items: [
-			{ id: "admissions", label: "Admissions", icon: UserAdd01Icon },
-			{ id: "fees", label: "Fees & Invoices", icon: Invoice01Icon },
-			{ id: "academics", label: "Academics", icon: Mortarboard01Icon },
-			{ id: "roles", label: "Roles & Permissions", icon: UserSettings01Icon },
-			{ id: "integrations", label: "Integrations", icon: PuzzleIcon },
-		],
-	},
-	{
-		heading: "Settings",
-		items: [
-			{ id: "help", label: "Help Center", icon: HelpCircleIcon },
-			{ id: "system", label: "System Settings", icon: Settings02Icon },
-			{
-				id: "account-profile",
-				label: "Profile",
-				icon: UserCircle02Icon,
-				href: "/admin/account/profile",
-			},
-			{
-				id: "account-security",
-				label: "Account Security",
-				icon: SecurityIcon,
-				href: "/admin/account/security",
-			},
-		],
-	},
-];
+import { useTenantContext, useWorkspaceSwitcherPolicy } from "@/modules/tenants";
+import { useSessionStore } from "@/store";
+import { AdminNavigationMenu } from "./admin-navigation-menu";
 
 type School = { id: string; name: string; kind: string; mark: string };
 
-const schools: School[] = [
-	{ id: "northwood", name: "Northwood High School", kind: "Grades 9–12", mark: "N" },
-	{ id: "riverside", name: "Riverside Elementary", kind: "Grades K–5", mark: "R" },
-	{ id: "district", name: "District Office", kind: "All campuses", mark: "D" },
-];
+function campusMark(name: string, code: string): string {
+	const fromCode = code.replace(/[^A-Za-z0-9]/g, "").slice(0, 2);
+	if (fromCode) return fromCode.toUpperCase();
+	return name.trim().charAt(0).toUpperCase() || "S";
+}
 
 type AdminSidebarProps = {
 	className?: string;
@@ -116,33 +48,36 @@ type AdminSidebarProps = {
 	onNavigate?: () => void;
 };
 
-function activeNavId(pathname: string): string {
-	if (pathname.startsWith("/admin/account/profile")) {
-		return "account-profile";
-	}
-	if (pathname.startsWith("/admin/account/security")) {
-		return "account-security";
-	}
-	if (pathname.startsWith("/admin/ai")) {
-		return "ai-assist";
-	}
-	if (pathname === "/admin" || pathname === "/admin/") {
-		return "dashboard";
-	}
-	return "dashboard";
-}
-
 export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSidebarProps) {
-	const pathname = usePathname();
 	const router = useRouter();
 	const { user, logout } = useAuth();
+	const { activeTenant, activeCampus, campuses, setActiveCampusId, setActiveTenantId } =
+		useTenantContext();
+	const tenants = useSessionStore((state) => state.tenants);
+	const workspacePolicy = useWorkspaceSwitcherPolicy();
 	const [collapsed, setCollapsed] = useState(false);
-	const [schoolId, setSchoolId] = useState(schools[0].id);
 
+	const schools: School[] = campuses.map((campus) => ({
+		id: campus.id,
+		name: campus.name,
+		kind: campus.code,
+		mark: campusMark(campus.name, campus.code),
+	}));
+	const schoolId = activeCampus?.id ?? schools[0]?.id ?? "";
 	const school = schools.find((s) => s.id === schoolId) ?? schools[0];
+	const tenantLabel = activeTenant?.name ?? "Organization";
 	const isCollapsed = !mobile && collapsed;
+	const workspaceTitle = !workspacePolicy.allowCampusSwitch
+		? workspacePolicy.workspaceSubtitle.includes("children")
+			? tenantLabel
+			: (school?.name ?? tenantLabel)
+		: (school?.name ?? "Add a campus");
+	const workspaceHint = !workspacePolicy.allowCampusSwitch
+		? workspacePolicy.workspaceSubtitle
+		: tenantLabel;
+	const canOpenWorkspaceMenu =
+		workspacePolicy.allowCampusSwitch || workspacePolicy.allowOrganizationSwitch;
 	const width = mobile ? "w-full" : isCollapsed ? "w-[76px]" : "w-[260px]";
-	const activeId = activeNavId(pathname);
 	const displayName = user?.username ?? "Account";
 	const displayEmail = user?.email ?? "";
 	const initials = userInitials(displayName);
@@ -192,79 +127,159 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 
 				{/* Workspace switcher */}
 				<div className={cn("px-3 pt-4 pb-3", mobile && "pr-14")}>
-					<DropdownMenu>
-						<DropdownMenuTrigger
-							render={(props) => (
-								<button
-									type="button"
-									{...props}
-									className={cn(
-										"group/trigger flex w-full items-center gap-3 rounded-lg bg-dashboard-surface px-2 py-2 text-left transition-all hover:bg-dashboard-surface-hover active:scale-[0.985]",
-										isCollapsed && "justify-center px-1",
-									)}
-								>
-									<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-dashboard-accent-soft text-dashboard-accent">
-										<span className="font-bold text-[15px] leading-none">{school.mark}</span>
-									</div>
-									{!isCollapsed && (
-										<>
-											<div className="min-w-0 flex-1">
-												<div className="text-[11px] text-dashboard-text-dim leading-tight">
-													{school.kind}
-												</div>
-												<div className="truncate font-semibold text-[13px] text-dashboard-text-secondary leading-tight">
-													{school.name}
-												</div>
-											</div>
-											<HugeiconsIcon
-												icon={UnfoldMoreIcon}
-												size={16}
-												strokeWidth={1.8}
-												className="text-dashboard-text-dim transition-colors group-hover/trigger:text-dashboard-text-secondary"
-											/>
-										</>
-									)}
-								</button>
-							)}
-						/>
-						<DropdownMenuContent
-							align="start"
-							sideOffset={8}
-							className="w-[244px] border-dashboard-border bg-dashboard-surface text-dashboard-text-secondary"
-						>
-							<DropdownMenuGroup>
-								<DropdownMenuLabel className="text-[10.5px] text-dashboard-text-dim uppercase">
-									Switch campus
-								</DropdownMenuLabel>
-							</DropdownMenuGroup>
-							<DropdownMenuSeparator className="bg-dashboard-border" />
-							{schools.map((s) => {
-								const selected = s.id === schoolId;
-								return (
-									<DropdownMenuItem
-										key={s.id}
-										onClick={() => setSchoolId(s.id)}
-										className="gap-3 focus:bg-dashboard-hover-strong"
-									>
-										<div className="flex size-8 items-center justify-center rounded-md bg-dashboard-accent-soft font-bold text-[13px] text-dashboard-accent">
-											{s.mark}
-										</div>
-										<div className="min-w-0 flex-1">
-											<div className="truncate font-medium text-[13px]">{s.name}</div>
-											<div className="text-[11px] text-dashboard-text-dim">{s.kind}</div>
-										</div>
-										{selected && (
-											<HugeiconsIcon
-												icon={Tick02Icon}
-												size={16}
-												className="text-dashboard-accent"
-											/>
+					{canOpenWorkspaceMenu ? (
+						<DropdownMenu>
+							<DropdownMenuTrigger
+								render={(props) => (
+									<button
+										type="button"
+										{...props}
+										className={cn(
+											"group/trigger flex w-full items-center gap-3 rounded-lg bg-dashboard-surface px-2 py-2 text-left transition-all hover:bg-dashboard-surface-hover active:scale-[0.985]",
+											isCollapsed && "justify-center px-1",
 										)}
-									</DropdownMenuItem>
-								);
-							})}
-						</DropdownMenuContent>
-					</DropdownMenu>
+									>
+										<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-dashboard-accent-soft text-dashboard-accent">
+											<span className="font-bold text-[15px] leading-none">
+												{school?.mark ?? tenantLabel.charAt(0).toUpperCase()}
+											</span>
+										</div>
+										{!isCollapsed && (
+											<>
+												<div className="min-w-0 flex-1">
+													<div className="text-[11px] text-dashboard-text-dim leading-tight">
+														{workspaceHint}
+													</div>
+													<div className="truncate font-semibold text-[13px] text-dashboard-text-secondary leading-tight">
+														{workspaceTitle}
+													</div>
+												</div>
+												<HugeiconsIcon
+													icon={UnfoldMoreIcon}
+													size={16}
+													strokeWidth={1.8}
+													className="text-dashboard-text-dim transition-colors group-hover/trigger:text-dashboard-text-secondary"
+												/>
+											</>
+										)}
+									</button>
+								)}
+							/>
+							<DropdownMenuContent
+								align="start"
+								sideOffset={8}
+								className="w-[244px] border-dashboard-border bg-dashboard-surface text-dashboard-text-secondary"
+							>
+								{workspacePolicy.allowOrganizationSwitch && tenants.length > 1 ? (
+									<>
+										<DropdownMenuGroup>
+											<DropdownMenuLabel className="text-[10.5px] text-dashboard-text-dim uppercase">
+												Organizations
+											</DropdownMenuLabel>
+										</DropdownMenuGroup>
+										{tenants.map((tenant) => (
+											<DropdownMenuItem
+												key={tenant.id}
+												onClick={() => setActiveTenantId(tenant.id)}
+												className="gap-3 focus:bg-dashboard-hover-strong"
+											>
+												<div className="truncate font-medium text-[13px]">{tenant.name}</div>
+												{tenant.id === activeTenant?.id ? (
+													<HugeiconsIcon
+														icon={Tick02Icon}
+														size={16}
+														className="ms-auto text-dashboard-accent"
+													/>
+												) : null}
+											</DropdownMenuItem>
+										))}
+										<DropdownMenuSeparator className="bg-dashboard-border" />
+									</>
+								) : null}
+								{workspacePolicy.allowCampusSwitch ? (
+									<>
+										<DropdownMenuGroup>
+											<DropdownMenuLabel className="text-[10.5px] text-dashboard-text-dim uppercase">
+												Switch campus
+											</DropdownMenuLabel>
+										</DropdownMenuGroup>
+										<DropdownMenuSeparator className="bg-dashboard-border" />
+										{schools.length === 0 ? (
+											<DropdownMenuItem
+												render={
+													<Link
+														href={
+															activeTenant
+																? `/admin/tenants/${activeTenant.id}/campuses`
+																: "/admin/onboarding/tenant"
+														}
+														onClick={onNavigate}
+													/>
+												}
+												className="gap-3 focus:bg-dashboard-hover-strong"
+											>
+												<div className="text-[13px] text-dashboard-text-muted">
+													Add your first campus
+												</div>
+											</DropdownMenuItem>
+										) : (
+											schools.map((s) => {
+												const selected = s.id === schoolId;
+												return (
+													<DropdownMenuItem
+														key={s.id}
+														onClick={() => {
+															if (activeTenant) setActiveTenantId(activeTenant.id);
+															setActiveCampusId(s.id);
+														}}
+														className="gap-3 focus:bg-dashboard-hover-strong"
+													>
+														<div className="flex size-8 items-center justify-center rounded-md bg-dashboard-accent-soft font-bold text-[13px] text-dashboard-accent">
+															{s.mark}
+														</div>
+														<div className="min-w-0 flex-1">
+															<div className="truncate font-medium text-[13px]">{s.name}</div>
+															<div className="text-[11px] text-dashboard-text-dim">{s.kind}</div>
+														</div>
+														{selected ? (
+															<HugeiconsIcon
+																icon={Tick02Icon}
+																size={16}
+																className="text-dashboard-accent"
+															/>
+														) : null}
+													</DropdownMenuItem>
+												);
+											})
+										)}
+									</>
+								) : null}
+							</DropdownMenuContent>
+						</DropdownMenu>
+					) : (
+						<div
+							className={cn(
+								"flex w-full items-center gap-3 rounded-lg bg-dashboard-surface px-2 py-2",
+								isCollapsed && "justify-center px-1",
+							)}
+						>
+							<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-dashboard-accent-soft text-dashboard-accent">
+								<span className="font-bold text-[15px] leading-none">
+									{school?.mark ?? tenantLabel.charAt(0).toUpperCase()}
+								</span>
+							</div>
+							{!isCollapsed && (
+								<div className="min-w-0 flex-1">
+									<div className="text-[11px] text-dashboard-text-dim leading-tight">
+										{workspaceHint}
+									</div>
+									<div className="truncate font-semibold text-[13px] text-dashboard-text-secondary leading-tight">
+										{workspaceTitle}
+									</div>
+								</div>
+							)}
+						</div>
+					)}
 				</div>
 
 				{/* Nav */}
@@ -274,80 +289,7 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 						"[&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-dashboard-border [&::-webkit-scrollbar-track]:bg-transparent",
 					)}
 				>
-					{sections.map((section, idx) => (
-						<div
-							key={section.heading}
-							className={cn(idx > 0 && "mt-3 border-dashboard-border-subtle border-t pt-3")}
-						>
-							{!isCollapsed ? (
-								<div className="px-2 pt-1 pb-1.5 font-medium text-[11px] text-dashboard-text-dim uppercase tracking-[0.06em]">
-									{section.heading}
-								</div>
-							) : (
-								idx > 0 && <div className="h-1" />
-							)}
-							<ul className="space-y-0.5">
-								{section.items.map((item) => {
-									const active = item.id === activeId;
-									const className = cn(
-										"group/item relative flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-[13px] transition-all duration-150",
-										isCollapsed && "justify-center px-0",
-										active
-											? "bg-dashboard-accent-soft font-medium text-dashboard-accent hover:bg-dashboard-accent-soft"
-											: "font-normal text-dashboard-text-muted hover:bg-dashboard-hover hover:text-dashboard-text-secondary active:scale-[0.985]",
-									);
-									const indicator = active ? (
-										<span
-											aria-hidden
-											className="absolute top-1/2 left-0.5 h-4 w-0.5 -translate-y-1/2 rounded-full bg-dashboard-accent"
-										/>
-									) : null;
-									const icon = (
-										<HugeiconsIcon
-											icon={item.icon}
-											size={18}
-											strokeWidth={active ? 2 : 1.7}
-											className={cn(
-												"shrink-0 transition-colors",
-												active
-													? "text-dashboard-accent"
-													: "text-dashboard-text-dim group-hover/item:text-dashboard-text-secondary",
-											)}
-										/>
-									);
-									const label = !isCollapsed ? (
-										<span className="truncate">{item.label}</span>
-									) : null;
-									const button = item.href ? (
-										<Link href={item.href} className={className} onClick={onNavigate}>
-											{indicator}
-											{icon}
-											{label}
-										</Link>
-									) : (
-										<button type="button" className={className}>
-											{indicator}
-											{icon}
-											{label}
-										</button>
-									);
-
-									return (
-										<li key={item.id}>
-											{isCollapsed ? (
-												<Tooltip>
-													<TooltipTrigger render={() => button} />
-													<TooltipContent side="right">{item.label}</TooltipContent>
-												</Tooltip>
-											) : (
-												button
-											)}
-										</li>
-									);
-								})}
-							</ul>
-						</div>
-					))}
+					<AdminNavigationMenu isCollapsed={isCollapsed} mobile={mobile} onNavigate={onNavigate} />
 				</nav>
 
 				{/* User card */}

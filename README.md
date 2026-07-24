@@ -80,7 +80,7 @@ Face recognition stays **optional and off by default** until consent, legal revi
 
 ## Built today
 
-The monorepo is a **production-shaped foundation**. Domain modules from the spec are mostly **planned**, not shipped yet.
+The monorepo is a **production-shaped foundation**. Core school ops (students, attendance, homework, assessments) are **in progress** on web + Nest; parent mobile and WhatsApp remain on the roadmap.
 
 | Area | Status |
 | --- | --- |
@@ -91,7 +91,10 @@ The monorepo is a **production-shaped foundation**. Domain modules from the spec
 | Billing hooks — Stripe / Razorpay (`apps/nest-api`) | ✅ |
 | AI assist proxy — FastAPI (`apps/ai-api`) | ✅ |
 | Docs site (`apps/docs`) | ✅ |
-| **Attendance, tenants, students, WhatsApp pipeline** | 🔜 Phase 1 per roadmap |
+| Tenants, academic structure, students (table + **ID cards**), guardians, staff | ✅ |
+| Attendance (homeroom), teacher dashboard + **my classes** roster (table + **ID cards**) | ✅ |
+| Homework, assessments, test planner (teacher/admin) | ✅ |
+| Parent/student homework & test views, WhatsApp pipeline | 🔜 Phase 1–2 per roadmap (parent **My children** ID cards + homework live) |
 
 ---
 

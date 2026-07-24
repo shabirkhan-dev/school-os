@@ -47,3 +47,32 @@ bun run typecheck
 ```
 
 If your change only touches one app, you can still run checks at the root to keep CI consistent.
+
+## 6) PostgreSQL and API migrations
+
+Homework, assessments, and related permissions require migrations **0017** and **0018**. If the
+Homework page shows a **500** from `/api/v1/tenants/.../homework`, the Nest API is often pointed
+at a database that has not been migrated yet.
+
+1. Start Postgres (Docker Compose postgres only, or full stack — see [Docker](/docs/docker)).
+2. Set `DATABASE_URL` in the repo root `.env` (same value for migrate and `bun run dev`).
+3. Apply migrations:
+
+```bash
+bun --cwd apps/nest-api run db:migrate
+```
+
+4. Restart the Nest API dev task after migrating.
+
+Optional demo data:
+
+```bash
+bun --cwd apps/nest-api run db:seed
+bun --cwd apps/nest-api run db:seed-demo-logins
+```
+
+`db:seed-demo-logins` creates (or refreshes) **owner / principal / admin / parent / student**
+passwords on your seeded tenant. Teachers stay `seed.teacher.*@northwood.demo` / `Teacher@123`.
+See script output for the owner email on your machine (often the account that created the org).
+
+See [Homework & assessments](/docs/academics-homework-assessments) for routes and permissions.

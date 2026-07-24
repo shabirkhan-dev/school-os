@@ -2,20 +2,32 @@
 
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { DashboardCardFooter, DashboardCardHeader, FooterSep } from "../card-chrome";
-import { admissionSummary, admissions } from "./admissions-data";
+import { type Admission, admissionSummary } from "./admissions-data";
 import { AdmissionsTable } from "./admissions-table";
 import { AdmissionsToolbar } from "./admissions-toolbar";
 
 type Props = {
+	admissions: Admission[];
+	summary?: ReturnType<typeof admissionSummary>;
+	updatedAt?: string;
 	className?: string;
 };
 
-export function RecentAdmissionsCard({ className }: Props) {
+export function RecentAdmissionsCard({
+	admissions,
+	summary: summaryProp,
+	updatedAt,
+	className,
+}: Props) {
 	const [query, setQuery] = useState("");
-	const summary = useMemo(() => admissionSummary(admissions), []);
+	const summary = useMemo(
+		() => summaryProp ?? admissionSummary(admissions),
+		[admissions, summaryProp],
+	);
 
 	const filteredCount = useMemo(() => {
 		const q = query.trim().toLowerCase();
@@ -32,7 +44,7 @@ export function RecentAdmissionsCard({ className }: Props) {
 				row.note,
 			].some((field) => field.toLowerCase().includes(q)),
 		).length;
-	}, [query]);
+	}, [admissions, query]);
 
 	return (
 		<section
@@ -44,26 +56,28 @@ export function RecentAdmissionsCard({ className }: Props) {
 		>
 			<DashboardCardHeader
 				title="Recent Admissions"
-				description="Applications across campuses with guardian context, source, and review notes."
-				meta={`Showing ${filteredCount} of ${summary.total} · updated a few minutes ago`}
-				info="Search filters this list only. Status updates sync once SIS webhooks confirm."
+				description="Latest student records with campus, guardian, and enrollment context."
+				meta={`Showing ${filteredCount} of ${summary.total} · updated ${updatedAt ?? "just now"}`}
+				info="Rows are sorted by admission date from live student records."
 				actions={<AdmissionsToolbar query={query} onQueryChange={setQuery} className="w-full" />}
 			/>
 
 			<div className="shrink-0">
-				<AdmissionsTable query={query} />
+				<AdmissionsTable admissions={admissions} query={query} />
 			</div>
 
 			<DashboardCardFooter
 				className="shrink-0"
 				action={
-					<button
+					<Button
 						type="button"
-						className="inline-flex items-center gap-1 font-medium text-[12px] text-dashboard-accent transition-colors hover:text-dashboard-accent-hover"
+						variant="link"
+						size="sm"
+						className="h-auto gap-1 p-0 font-medium text-[12px] text-dashboard-accent hover:text-dashboard-accent-hover"
 					>
-						View all admissions
+						View all students
 						<HugeiconsIcon icon={ArrowRight01Icon} size={13} strokeWidth={2} />
-					</button>
+					</Button>
 				}
 			>
 				<span>
@@ -78,7 +92,7 @@ export function RecentAdmissionsCard({ className }: Props) {
 				<FooterSep />
 				<span>
 					<span className="font-semibold text-dashboard-text-secondary">{summary.enrolled}</span>{" "}
-					enrolled this week
+					enrolled
 				</span>
 			</DashboardCardFooter>
 		</section>

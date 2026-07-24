@@ -8,6 +8,7 @@ import {
 	Param,
 	ParseUUIDPipe,
 	Post,
+	Query,
 	Req,
 	Res,
 	UseGuards,
@@ -15,6 +16,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
+import { AcceptInviteDto } from '@/modules/members/members.dto';
 import type { PublicUser } from '@/modules/users/users.types';
 import { AuthService } from './auth.service';
 import type {
@@ -22,6 +24,7 @@ import type {
 	AuthChallengeResult,
 	ClientAuthSession,
 	ClientLoginResult,
+	PublicAuthSession,
 	RegistrationResult,
 	SessionView,
 } from './auth.types';
@@ -34,6 +37,7 @@ import {
 	RefreshBodyDto,
 	RegisterBodyDto,
 	ResetPasswordBodyDto,
+	SwitchTenantBodyDto,
 	VerifyEmailBodyDto,
 } from './dto/auth.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -141,6 +145,49 @@ export class AuthController {
 	@ApiOperation({ summary: 'Get the authenticated user' })
 	me(@CurrentUser() user: AccessTokenPayload): Promise<PublicUser> {
 		return this.authService.me(user.sub);
+	}
+
+	@Post('switch-tenant')
+	@UseGuards(JwtAuthGuard)
+	@ApiBearerAuth()
+	@HttpCode(HttpStatus.OK)
+	@ApiOperation({
+		summary: 'Switch the active organization for the current session',
+		description:
+			'Updates session tenant context and returns a new access token with tid/mid claims.',
+	})
+	switchTenant(
+		@CurrentUser() user: AccessTokenPayload,
+		@Body() body: SwitchTenantBodyDto,
+	): Promise<PublicAuthSession> {
+		return this.authService.switchTenant(user, body.tenantId);
+	}
+
+	@Get('invites/preview')
+	@Throttle({ default: { limit: 20, ttl: 60_000 } })
+	@ApiOperation({ summary: 'Preview a membership invite before accepting' })
+	previewInvite(@Query('token') token: string) {
+		return this.authService.previewInvite(token);
+	}
+
+	@Get('pending-invites')
+	@UseGuards(JwtAuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'List pending membership invites for the current user' })
+	listPendingInvites(@CurrentUser() user: AccessTokenPayload) {
+		return this.authService.listPendingInvites(user.sub);
+	}
+
+	@Post('accept-invite')
+	@UseGuards(JwtAuthGuard)
+	@ApiBearerAuth()
+	@HttpCode(HttpStatus.OK)
+	@ApiOperation({ summary: 'Accept a membership invite' })
+	acceptInvite(@CurrentUser() user: AccessTokenPayload, @Body() body: AcceptInviteDto) {
+		return this.authService.acceptInvite(user.sub, {
+			token: body.token,
+			inviteId: body.inviteId,
+		});
 	}
 
 	@Post('forgot-password')

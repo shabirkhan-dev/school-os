@@ -2,9 +2,16 @@
 
 import { ArrowDown01Icon, ArrowUp01Icon, MoreHorizontalIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@school-os/ui/components/dropdown-menu";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { type Admission, admissions as seedAdmissions } from "./admissions-data";
+import type { Admission } from "./admissions-data";
 import { StatusBadge } from "./status-badge";
 
 type SortKey = "id" | "student" | "grade" | "guardian" | "date" | "status" | "campus";
@@ -33,6 +40,7 @@ const SOURCE_LABEL: Record<Admission["source"], string> = {
 };
 
 type Props = {
+	admissions: Admission[];
 	className?: string;
 	query?: string;
 };
@@ -52,11 +60,16 @@ function initials(name: string): string {
 		.join("");
 }
 
-function useAdmissionRows(query: string, sortKey: SortKey, sortDir: "asc" | "desc") {
+function useAdmissionRows(
+	admissions: Admission[],
+	query: string,
+	sortKey: SortKey,
+	sortDir: "asc" | "desc",
+) {
 	return useMemo(() => {
 		const q = query.trim().toLowerCase();
 		const filtered = q
-			? seedAdmissions.filter((row) =>
+			? admissions.filter((row) =>
 					[
 						row.id,
 						row.student,
@@ -69,18 +82,18 @@ function useAdmissionRows(query: string, sortKey: SortKey, sortDir: "asc" | "des
 						row.note,
 					].some((field) => field.toLowerCase().includes(q)),
 				)
-			: seedAdmissions;
+			: admissions;
 
 		const sorted = [...filtered].sort((a, b) => compareAdmissions(a, b, sortKey));
 		if (sortDir === "desc") sorted.reverse();
 		return sorted;
-	}, [query, sortDir, sortKey]);
+	}, [admissions, query, sortDir, sortKey]);
 }
 
-export function AdmissionsTable({ className, query = "" }: Props) {
+export function AdmissionsTable({ admissions, className, query = "" }: Props) {
 	const [sortKey, setSortKey] = useState<SortKey>("date");
 	const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-	const rows = useAdmissionRows(query, sortKey, sortDir);
+	const rows = useAdmissionRows(admissions, query, sortKey, sortDir);
 
 	const toggleSort = (key: SortKey) => {
 		if (sortKey === key) {
@@ -131,10 +144,12 @@ export function AdmissionsTable({ className, query = "" }: Props) {
 									className="py-2.5 pr-3 font-medium text-[11px] text-dashboard-text-muted uppercase tracking-[0.06em] first:pl-4 last:pr-3"
 								>
 									{col.sortable ? (
-										<button
+										<Button
 											type="button"
+											variant="ghost"
+											size="sm"
 											onClick={() => toggleSort(col.id as SortKey)}
-											className="inline-flex items-center gap-1 rounded-md transition-colors hover:text-dashboard-text-secondary"
+											className="-ms-2 h-7 gap-1 px-2 font-medium text-[11px] text-dashboard-text-muted uppercase tracking-[0.06em] hover:text-dashboard-text-secondary"
 											aria-label={`Sort by ${col.label}`}
 										>
 											{col.label}
@@ -154,7 +169,7 @@ export function AdmissionsTable({ className, query = "" }: Props) {
 														: "text-dashboard-text-faint opacity-50",
 												)}
 											/>
-										</button>
+										</Button>
 									) : (
 										<span className="sr-only">{col.label || "Actions"}</span>
 									)}
@@ -218,14 +233,23 @@ export function AdmissionsTable({ className, query = "" }: Props) {
 									<StatusBadge status={a.status} />
 								</td>
 								<td className="py-3 pr-3 align-top">
-									<button
-										type="button"
-										aria-label={`Actions for ${a.student}`}
-										title="Open admission detail"
-										className="flex size-7 items-center justify-center rounded-md border border-dashboard-border-strong bg-dashboard-surface text-dashboard-text-muted transition-colors hover:border-dashboard-border-focus hover:text-dashboard-text-primary"
-									>
-										<HugeiconsIcon icon={MoreHorizontalIcon} size={13} strokeWidth={2} />
-									</button>
+									<DropdownMenu>
+										<DropdownMenuTrigger
+											render={
+												<Button
+													variant="outline"
+													size="icon-sm"
+													aria-label={`Actions for ${a.student}`}
+												/>
+											}
+										>
+											<HugeiconsIcon icon={MoreHorizontalIcon} strokeWidth={2} />
+										</DropdownMenuTrigger>
+										<DropdownMenuContent align="end">
+											<DropdownMenuItem disabled>View detail (coming soon)</DropdownMenuItem>
+											<DropdownMenuItem disabled>Update status</DropdownMenuItem>
+										</DropdownMenuContent>
+									</DropdownMenu>
 								</td>
 							</tr>
 						))}

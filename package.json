@@ -32,6 +32,7 @@
     "scripts:run": "bash scripts/bash/main.sh",
     "scripts:run:bash": "bash scripts/bash/main.sh",
     "scripts:run:python": "python scripts/python/main.py",
+    "db:seed": "bun --cwd apps/nest-api run db:seed",
     "prepare": "lefthook install"
   },
   "devDependencies": {

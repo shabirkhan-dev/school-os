@@ -51,7 +51,7 @@ describe('AuthCryptoService', () => {
 		);
 	});
 
-	it('signs short-lived access tokens with minimal claims', async () => {
+	it('signs short-lived access tokens with session and optional tenant claims', async () => {
 		const payload = {
 			sub: 'a01a0cab-a947-44f0-bfcd-4b8e8c907534',
 			sid: '9d3f45e6-f7df-4f64-8bd2-c20a2dd28722',
@@ -60,5 +60,13 @@ describe('AuthCryptoService', () => {
 
 		await expect(service.verifyAccessToken(signed.token)).resolves.toEqual(payload);
 		expect(signed.expiresAt.getTime()).toBeGreaterThan(Date.now());
+
+		const tenantPayload = {
+			...payload,
+			tid: 'b12b0cab-a947-44f0-bfcd-4b8e8c907535',
+			mid: 'c23c0cab-a947-44f0-bfcd-4b8e8c907536',
+		};
+		const tenantSigned = await service.signAccessToken(tenantPayload);
+		await expect(service.verifyAccessToken(tenantSigned.token)).resolves.toEqual(tenantPayload);
 	});
 });

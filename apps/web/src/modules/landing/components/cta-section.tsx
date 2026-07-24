@@ -5,7 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useState } from "react";
-import { DEPLOY_TERMINAL } from "../data/landing.data";
+import { DEPLOY_TERMINAL, docsHref, SITE } from "../data/landing.data";
 import { ATLAS_EASE, hoverTap, springSnappy } from "../lib/motion";
 import { FadeIn } from "./fade-in";
 
@@ -105,13 +105,15 @@ export function CtaSection() {
 						whileTap={hoverTap}
 						transition={springSnappy}
 					>
-						<Link
-							href="#deploy"
+						<a
+							href={SITE.githubUrl}
+							target="_blank"
+							rel="noreferrer noopener"
 							className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-7 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90"
 						>
-							Get started
+							Clone on GitHub
 							<HugeiconsIcon icon={ArrowRight01Icon} className="size-4" aria-hidden={true} />
-						</Link>
+						</a>
 					</motion.div>
 					<motion.div
 						whileHover={{ scale: 1.03, y: -2 }}
@@ -119,7 +121,7 @@ export function CtaSection() {
 						transition={springSnappy}
 					>
 						<Link
-							href="http://localhost:3002/docs"
+							href={docsHref()}
 							className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border bg-card px-6 text-base font-medium text-foreground transition-colors hover:border-border"
 						>
 							Read the docs

@@ -10,11 +10,14 @@ mobile, and API apps from one workspace.
 
 ## Why School OS
 
-School OS is a **trust engine for schools** — mobile-first, WhatsApp-native, starting with Smart
-Attendance and parent alerts, not a generic ERP. This docs site covers both **product vision** and
-**engineering** for the monorepo.
+School OS is a **trust engine for Pakistani school networks** — mobile-first, WhatsApp-native,
+starting with Smart Attendance and parent alerts, not a generic ERP. Built for campuses in
+Karachi, Lahore, and Islamabad, with **Aga Khan Schools (AKES)** as the primary design reference.
 
-- Trust-first product: attendance → parent alert → dashboard → AI signals
+This docs site covers both **product vision** and **engineering** for the monorepo.
+
+- Trust-first product: scan → WhatsApp alert → dashboard → AI signals (with approval)
+- Target market: Pakistani school networks (~200–2K students per campus)
 - Monorepo with Turborepo workspaces (`apps/*`, `packages/*`)
 - Bun-first package and task management
 - Shared TypeScript and UI packages across apps
@@ -24,6 +27,16 @@ Attendance and parent alerts, not a generic ERP. This docs site covers both **pr
 ## Start here
 
 <Cards>
+  <Card
+    title="Master Plan"
+    description="Full presentation — smart OS vision, waves, diagrams, edge cases."
+    href="/docs/master-plan"
+  />
+  <Card
+    title="Multi-Tenancy"
+    description="Tenants, roles, permissions, policies, and data isolation."
+    href="/docs/multi-tenancy"
+  />
   <Card
     title="Product Vision"
     description="Trust engine positioning, personas, and phased roadmap."
@@ -48,6 +61,11 @@ Attendance and parent alerts, not a generic ERP. This docs site covers both **pr
     title="Production Roadmap"
     description="Phased NestJS backend spine and product build plan."
     href="/docs/production-roadmap"
+  />
+  <Card
+    title="Product System Design"
+    description="Architecture, tenancy, and Smart Attendance MVP for AKES-scale networks."
+    href="/docs/product-system-design"
   />
   <Card
     title="Architecture"

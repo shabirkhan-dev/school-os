@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "motion/react";
 import type { CSSProperties, ReactNode } from "react";
 import { cn } from "../lib/utils";
 
@@ -26,11 +27,28 @@ export function Marquee({
 	gap = "2rem",
 	pauseOnHover = true,
 }: MarqueeProps) {
+	const reduceMotion = useReducedMotion();
 	const style: MarqueeStyle = {
 		"--atlas-gap": gap,
 		"--atlas-duration": `${durationSeconds}s`,
 		"--atlas-direction": reverse ? "reverse" : "normal",
 	};
+
+	if (reduceMotion) {
+		return (
+			<div
+				className={cn(
+					"atlas-marquee-mask relative flex w-full overflow-x-auto overscroll-x-contain",
+					className,
+				)}
+				style={{ gap }}
+			>
+				<div className="flex w-max shrink-0 items-stretch" style={{ gap, paddingRight: gap }}>
+					{children}
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div

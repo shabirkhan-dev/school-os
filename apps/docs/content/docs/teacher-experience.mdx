@@ -1,0 +1,147 @@
+---
+title: Teacher experience roadmap
+description: Phase 1–5 plan for a fast, AI-assisted teacher workflow in School OS web.
+---
+
+Teachers should spend seconds—not minutes—on routine work. The web admin surface already includes
+**My classes** (roster table + ID cards), **homework**, **assessments**, **test planner**, and a
+**teacher command center** on `/admin` (time-aware hero, instant approve actions, sidebar flow).
+
+## North star (stunning teacher UX)
+
+> The app **thinks ahead, acts first, asks permission later.** Common actions target the **3-second rule**
+> (confirm attendance, approve AI homework, open next class).
+
+| Layer (vision) | Phase | In product today |
+|----------------|-------|------------------|
+| Predictive | 2–3 | Next period + absence watch list on dashboard |
+| Pre-emptive | 1–2 | Homework draft counts; AI draft on homework page |
+| Contextual | 1 | Teaching / grading / communication / planning **mode** by time of day |
+| Voice-first | 4+ | Not started |
+| Ambient | 2+ | Quiet-hours badge (UI); digest notification later |
+| Emotional | 5 | “All clear” copy when caught up (no guilt notifications) |
+| Adaptive | 4+ | Not started |
+
+Full research notes live in product planning; this doc tracks **shippable PRs**.
+
+## Design principles
+
+1. **AI proposes, human approves** — drafts for homework, messages, and summaries; nothing sends without a tap.
+2. **Context follows the teacher** — current period, next class, and roster stay one click away.
+3. **Same permissions as today** — tenant guard + `homework.write`, `attendance.mark`, etc.; no bypass.
+4. **Mobile-ready later** — Phase 1 is web; parent/student mobile consumes published homework separately.
+
+## Phase 1 (MVP — implement in order)
+
+Ship as small PRs so each slice is reviewable and demo-able.
+
+### PR A — Morning digest on teacher home
+
+**Status:** Shipped — API `morningDigest` + **command center UI** (hero, instant actions, sidebar).
+
+**Goal:** One glance at start of day: classes today, unpublished homework drafts, attendance gaps
+from yesterday.
+
+**Frontend (redesign)**
+
+- `TeacherCommandHero` — mode badge, assistant narrative, quiet hours
+- `TeacherInstantActions` — three tap targets (attendance, homework, next class)
+- `TeacherFocusSidebar` — timetable + watch list + roadmap teaser
+
+**Backend**
+
+- Extend `GET .../staff/me/dashboard` (or add `.../staff/me/digest`) with:
+  - `upcomingPeriod` from timetable (next section subject in local timezone)
+  - `draftHomeworkCount`, `dueTodayCount`
+  - `yesterdayUnmarkedSections` (sections with no attendance session)
+
+**Frontend**
+
+- Card stack at top of `TeacherDashboard`: greeting + digest metrics + links to homework and
+  attendance.
+
+**Done when:** Seed teacher sees non-empty digest on a school day with timetable + homework seed.
+
+### PR B — Three-second attendance confirm
+
+**Status:** Shipped — `POST .../attendance/sessions/:sessionId/confirm-all-present`, dashboard
+links with `confirmAll=1`, toolbar **Confirm & save all present**.
+
+**Goal:** Bulk “mark all present” for the current class with optional exceptions.
+
+**Backend**
+
+- `confirmAllPresent` marks every actively enrolled student present (optional `exceptStudentIds`).
+
+**Frontend**
+
+- Attendance page auto-confirms when opened with `confirmAll=1`; sticky + toolbar actions.
+
+**Done when:** Teacher can confirm 25 students in one action; audit/history unchanged from single marks.
+
+### PR C — Approve AI homework from class context
+
+**Status:** Shipped — `ClassHomeworkAssignSheet` on **My classes → section** quick actions.
+
+**Goal:** From **My classes → section**, open AI draft pre-filled with section + subject; publish
+in one flow.
+
+**Backend**
+
+- Already have `POST /ai/academics/draft`; section subject id comes from teacher profile assignments.
+
+**Frontend**
+
+- Class roster **Assign homework** opens `ClassHomeworkAssignSheet` (AI draft + assign panel).
+- Deep link: `/admin/my-classes/:sectionId?assignHomework=1` (teacher home homework card uses next period).
+
+**Done when:** Teacher never navigates away from class to assign homework for that period.
+
+### Polish — First five minutes onboarding
+
+**Status:** Shipped — `TeacherOnboardingDialog` on first teacher home visit (localStorage prefs).
+
+**Goal:** Set plan style, notification preference, and quiet-hours badge in under a minute.
+
+**Done when:** New teacher sees wizard once; prefs persist on device until Phase 2 settings API.
+
+### PR D — Schedule assessment from class context
+
+**Status:** Shipped — `ClassAssessmentScheduleSheet` + `?assignAssessment=1` deep link.
+
+**Goal:** Same as PR C for tests/quizzes — stay on roster, publish to test planner.
+
+### Phase 2 (started) — Preferences UI
+
+**Status:** Partial — `TeacherPreferencesSheet` on home sidebar; hero respects plan style + quiet hours.
+
+**Remaining:** Org settings API, digest email/push stubs.
+
+### Phase 3 (started) — Student risk signals
+
+**Status:** Partial — `TeacherStudentInsights` in class profile drawer (attendance streak + homework load).
+
+**Remaining:** Submission tracking, richer risk scoring.
+
+## Phase 2 — Quiet hours & comms prefs (UI first)
+
+Settings UI for digest email/push (stub), WhatsApp quiet hours aligned with product vision doc.
+No outbound WhatsApp until Phase 7 in [Production Roadmap](/docs/production-roadmap).
+
+## Phase 3 — Student risk signals (read-only)
+
+Surface “has not submitted last N homework” and attendance streak on roster drawer; no auto-messages.
+
+## Phase 4 — Parent-visible publish pipeline
+
+Preview parent view before publish; optional scheduled publish time on homework.
+
+## Phase 5 — Co-teacher & cover
+
+Substitute teacher read-only roster + attendance for delegated section subjects.
+
+## Related docs
+
+- [Homework & assessments](/docs/academics-homework-assessments) — API and migrations
+- [Production Roadmap](/docs/production-roadmap) — trust engine and WhatsApp phases
+- [Product system design](/docs/product-system-design) — roles and permissions

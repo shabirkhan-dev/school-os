@@ -25,6 +25,11 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
 	title: SITE.title,
 	description: SITE.description,
+	openGraph: {
+		title: SITE.title,
+		description: SITE.description,
+		images: [{ url: "/brand/school-os-mark.png", alt: "School OS" }],
+	},
 };
 
 export default function LandingLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -1,31 +1,63 @@
 "use client";
 
-import { useAuth } from "@/context/auth-context";
 import { userFirstName } from "@/lib/user-display";
 import { cn } from "@/lib/utils";
+import type { DashboardMetrics } from "@/modules/dashboard";
+import { useDashboardI18n } from "@/modules/dashboard";
+import type { Campus } from "@/modules/tenants";
+import { useSessionStore } from "@/store";
 import { DatePill } from "./date-pill";
 import { ExportButton } from "./export-button";
 import { PeriodSelect } from "./period-select";
 
 type Props = {
 	name?: string;
+	tenantName?: string | null;
+	campuses?: Campus[];
+	insights?: DashboardMetrics["insights"];
 	className?: string;
 	onExport?: () => void;
 };
 
-export function DashboardHeader({ name, className, onExport }: Props) {
-	const { user } = useAuth();
+export function DashboardHeader({
+	name,
+	tenantName,
+	campuses = [],
+	insights,
+	className,
+	onExport,
+}: Props) {
+	const user = useSessionStore((state) => state.user);
+	const { t, intlLocale } = useDashboardI18n();
 	const greetingName = name ?? (user ? userFirstName(user.username) : "there");
-	const today = new Date().toLocaleDateString("en-US", {
+	const today = new Date().toLocaleDateString(intlLocale, {
 		weekday: "short",
 		month: "short",
 		day: "numeric",
 	});
-	const todayLong = new Date().toLocaleDateString("en-US", {
+	const todayLong = new Date().toLocaleDateString(intlLocale, {
 		weekday: "long",
 		month: "long",
 		day: "numeric",
 	});
+
+	const campusLine =
+		campuses.length > 0
+			? campuses
+					.slice(0, 3)
+					.map((campus) => campus.name)
+					.join(", ")
+			: t("header.addCampuses");
+
+	const statusLine = insights
+		? t("header.statusLine", {
+				total: insights.totalStudents.toLocaleString(intlLocale),
+				new: insights.newThisMonth,
+				year: insights.activeYearLabel,
+			})
+		: t("header.statusLoading");
+
+	const orgLabel = tenantName ?? t("header.organization");
 
 	return (
 		<section
@@ -37,21 +69,21 @@ export function DashboardHeader({ name, className, onExport }: Props) {
 			<div className="min-w-0">
 				<div className="mb-1.5 flex items-center gap-2 text-[11px] text-dashboard-text-muted uppercase tracking-[0.08em]">
 					<span className="size-1.5 rounded-full bg-emerald-500" />
-					<span className="sm:hidden">Live · District</span>
-					<span className="hidden sm:inline">Live overview · District</span>
+					<span className="sm:hidden">{t("header.liveMobile", { org: orgLabel })}</span>
+					<span className="hidden sm:inline">{t("header.liveDesktop", { org: orgLabel })}</span>
 				</div>
 				<h1 className="font-semibold text-[22px] text-dashboard-text-primary leading-tight tracking-tight sm:text-[24px]">
-					Welcome back, {greetingName}
+					{t("header.welcome", { name: greetingName })}
 				</h1>
 				<p className="mt-1.5 text-[13px] text-dashboard-text-secondary leading-5 sm:hidden">
-					{today} · Attendance + admissions need a look.
+					{today} · {statusLine}
 				</p>
 				<p className="mt-1.5 hidden max-w-xl text-[13px] text-dashboard-text-secondary leading-5 sm:block">
-					{todayLong} · Northwood, Riverside, and District Office in one pulse. Attendance dips and
-					admission backlog need a look before lunch.
+					{todayLong} · {campusLine}. {statusLine}
 				</p>
 				<p className="mt-1 hidden text-[12px] text-dashboard-text-dim sm:block">
-					Role: Campus admin · Data refreshed continuously from SIS
+					{t("header.synced")}
+					{insights ? t("header.updated", { time: insights.updatedAt }) : ""}
 				</p>
 			</div>
 

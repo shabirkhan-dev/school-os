@@ -1,0 +1,573 @@
+---
+title: Master Plan
+description: Full School OS presentation — smart operating system for Pakistani schools, not another digital register.
+full: true
+---
+
+**School OS** is the ultimate operating system for schools in Pakistan and similar networks — built
+for **owners, principals, admins, teachers, parents, and students**. It runs most operations on
+its own, asks humans only where judgment matters, and lets anyone take control at any time.
+
+> **Canonical presentation.** One page, full product + engineering plan. Detail lives in
+> [Product Vision](/docs/product-vision), [Production Roadmap](/docs/production-roadmap), and
+> [Product System Design](/docs/product-system-design).
+
+---
+
+## Slide 1 — What we are building
+
+| School OS **is** | School OS **is not** |
+| --- | --- |
+| A **smart school operating system** — detects, drafts, notifies, escalates | Another **digital register** where humans type everything |
+| **WhatsApp-native** trust engine for parents | Email-first ERP nobody opens |
+| **Human-in-the-loop** — AI proposes, people approve | Autonomous AI changing grades or sending sensitive messages alone |
+| **Modular monolith** that grows module by module | Microservices day one |
+| Built for **AKES-scale Pakistani networks** (200–2K students/campus) | Generic global template |
+
+**Reference network:** Aga Khan Schools (AKES) — Karachi, Lahore, Islamabad — multi-campus,
+consent-heavy, audit-ready.
+
+---
+
+## Slide 2 — The smart system principle
+
+Traditional school software:
+
+```text
+Human enters data → system stores data → human checks dashboard → human acts
+```
+
+**School OS:**
+
+```text
+System observes school state → detects gaps and risk → drafts the next action
+→ policy checks what is allowed → human approves OR overrides → system executes
+→ audit log records everything
+```
+
+<Mermaid
+  title="Smart loop — automate by default, human control always available"
+  chart={`
+flowchart LR
+  subgraph observe [Observe]
+    Events[Attendance fees homework events]
+  end
+  subgraph think [Think]
+    Detect[Detect gaps and risk]
+    Draft[Draft action or message]
+    Policy[Policy engine check]
+  end
+  subgraph act [Act]
+    Auto[Auto execute low risk]
+    Approve[Human approve high impact]
+    Override[Human override anytime]
+  end
+  subgraph record [Record]
+    Audit[Audit log]
+    Learn[Improve suggestions]
+  end
+  Events --> Detect
+  Detect --> Draft
+  Draft --> Policy
+  Policy --> Auto
+  Policy --> Approve
+  Approve --> Auto
+  Auto --> Audit
+  Override --> Audit
+  Audit --> Learn
+`}
+/>
+
+### Human vs machine — default rules
+
+| Action | Default | Human |
+| --- | --- | --- |
+| Mark present from teacher roster | **Auto** after teacher tap | Teacher confirms / overrides |
+| WhatsApp arrival alert | **Auto** after present mark | Principal can pause campus alerts |
+| Sick report from parent | **Auto** excused absent | Teacher flags mismatch if child arrives |
+| Unreachable guardian | **Auto** waterfall + create call task | Admin updates number, re-verify |
+| Fee reminder before due date | **Auto** draft + send utility template | Admin edits template / skips case |
+| Report card comment | **AI draft** | Teacher **must** approve before publish |
+| Grade change | **Never auto** | Teacher + audit trail |
+| Expel / sensitive message | **Never auto** | Principal step-up auth |
+
+**Design rule:** If a human would feel blindsided, require approval or offer one-tap override.
+
+---
+
+## Slide 3 — Who uses what
+
+<Mermaid
+  title="Surfaces by persona — no dedicated guard app"
+  chart={`
+flowchart TB
+  subgraph web [Web apps/web role dashboards]
+    Owner[Owner network KPIs revenue risk]
+    Principal[Principal live ops incidents]
+    Admin[Admin admissions records fees]
+    TeacherWeb[Teacher planning grades reports]
+  end
+
+  subgraph mobile [Mobile apps/mobile role experiences]
+    TeacherMob[Teacher mobile primary attendance homework]
+    ParentMob[Parent mobile safety sick report fees]
+    StudentMob[Student mobile timetable homework results]
+  end
+
+  subgraph channels [Channels]
+    WA[WhatsApp primary for parents]
+    SMS[SMS fallback]
+    Push[Push in-app]
+  end
+
+  Owner --> Principal
+  Principal --> Admin
+  TeacherMob --> WA
+  ParentMob --> WA
+  ParentMob --> Push
+  TeacherMob --> TeacherWeb
+`}
+/>
+
+| Persona | Primary | Secondary | Notes |
+| --- | --- | --- | --- |
+| **School owner** | Web — multi-campus KPIs, revenue, risk | Mobile summaries | Network roll-up |
+| **Principal** | Web — live pulse, incidents, staff | Mobile critical alerts | One campus focus |
+| **Admin staff** | Web — admissions, records, fees, compliance | — | Data quality owner |
+| **Teacher** | **Mobile** — attendance, homework, class comms | Web — planning, grading | **No guard app** |
+| **Parent / guardian** | **Parent mobile** + WhatsApp | — | Separate UX from student |
+| **Student** | **Student mobile** — schedule, homework, marks | Web older grades | No admin/parent features |
+
+**Mobile strategy:** One Expo codebase, **three role experiences** (`teacher`, `parent`, `student`
+tab stacks). Separate store listings later if needed.
+
+**Attendance capture:** Teachers (and optional admin kiosk on web) — **not** a gate-guard product.
+
+---
+
+## Slide 4 — Architecture (modular monolith first)
+
+<Mermaid
+  title="Production architecture — split workers later, not CRUD"
+  chart={`
+flowchart TB
+  subgraph clients [Clients]
+    W[Next.js web dashboards]
+    M[Expo mobile role apps]
+  end
+
+  subgraph monolith [NestJS modular monolith]
+    T[tenancy identity RBAC]
+    A[attendance]
+    C[communications outbox]
+    AC[academics]
+    F[finance]
+    AD[admissions]
+    I[intelligence AI gated]
+  end
+
+  subgraph infra [Infrastructure]
+    PG[(PostgreSQL source of truth)]
+    R[(Redis cache queues)]
+    WKR[Worker BullMQ outbox]
+  end
+
+  subgraph external [External]
+    BSP[WhatsApp BSP]
+    PAY[Payments PK and intl]
+    S3[Object storage]
+  end
+
+  W --> monolith
+  M --> monolith
+  monolith --> PG
+  monolith --> R
+  R --> WKR
+  WKR --> BSP
+  WKR --> PAY
+  monolith --> S3
+`}
+/>
+
+**Split later (only when justified):** notification worker (already separate process), WhatsApp
+adapter at scale, FastAPI AI service, PDF batch jobs, realtime gateway.
+
+**Never split early:** tenancy, auth, core CRUD — stays in monolith until team/load demands it.
+
+---
+
+## Slide 5 — Tenant architecture (valid from day one)
+
+A tenant is the **school organization** — mission, rules, branding, campuses — not just a
+`tenant_id` column.
+
+<Mermaid
+  title="Multi-campus tenant hierarchy"
+  chart={`
+flowchart TB
+  T[Tenant AKES Network mission logo policies timezone]
+  T --> C1[Campus Karachi]
+  T --> C2[Campus Lahore]
+  T --> C3[Campus Islamabad]
+  C1 --> Y1[Academic year 2026-27]
+  Y1 --> CL[Classes and sections]
+  CL --> ST[Students and guardians]
+  T --> TS[tenant_settings quiet hours grace windows alert policy]
+  T --> TB[tenant_branding white label later]
+`}
+/>
+
+### Tenant core (Wave 0 — before features)
+
+| Entity | Purpose |
+| --- | --- |
+| `tenants` | Legal name, slug, **mission**, logo, status, timezone `Asia/Karachi` |
+| `tenant_branding` | Colors, Urdu/English display name |
+| `tenant_settings` | Academic calendar, grace windows, quiet hours, communication policy |
+| `campuses` | Physical sites under tenant |
+| `tenant_memberships` | User ↔ tenant ↔ role |
+| `roles` | `owner`, `principal`, `admin`, `teacher`, `parent`, `student` |
+
+### Isolation (non-negotiable)
+
+- Every business row: `tenant_id` (+ `campus_id` where relevant)
+- Repository layer enforces scope — ignore client-supplied tenant
+- Postgres **RLS** on students, guardians, attendance, fees before pilot
+- Cross-tenant ID → **404**, not 403
+- Platform ops role separate, fully audited
+
+---
+
+## Slide 6 — Smart attendance (not a guard app)
+
+**Problem with gate-only scanning:** extra app, extra staff, bottleneck, training cost.
+
+**School OS approach:** attendance is **fast, reliable, teacher-owned**, with optional hardware.
+
+| Method | Who | Speed | When |
+| --- | --- | --- | --- |
+| **Class roster tap** | Teacher mobile | ~2 min/class | **Default daily** |
+| **Batch QR scan** | Teacher phone | ~5 sec/student | Large classes, first period |
+| **NFC student card** | Shared tablet at door | ~1 sec/tap | Phase 1.5 if school has ID cards |
+| **Parent pre-report** | Parent app | Before school | Sick, leave, travel |
+| **Auto absent + smart follow-up** | System | After grace window | No mark, no pre-report |
+| **Admin kiosk mode** | Web tablet optional | Gate rush | Same codebase, no guard persona |
+
+| Technology | Role |
+| --- | --- |
+| **QR** (signed rotating token on student ID) | MVP default — every phone, printable cards |
+| **NFC** | Add when cards exist — fastest tap |
+| **Face recognition** | Off by default — legal/consent heavy |
+
+<Mermaid
+  title="Updated killer demo — teacher-led, not guard-led"
+  chart={`
+sequenceDiagram
+  participant T as Teacher mobile
+  participant API as Nest API
+  participant O as Outbox worker
+  participant WA as WhatsApp
+  participant P as Parent
+  participant D as Principal dashboard
+
+  T->>API: Mark Hassan Raza present 7-B 8:17
+  API->>API: Transaction attendance plus outbox event
+  API->>D: Live update 32 of 35 present
+  O->>WA: Utility template Hassan present 8:17
+  WA->>P: WhatsApp alert
+  Note over P: If fail SMS email secondary guardian task
+`}
+/>
+
+---
+
+## Slide 7 — Real-world edge cases (built in, not bolted on)
+
+### Guardian contact graph
+
+Each student has:
+
+- **Primary guardian** (alerts first)
+- **Secondary guardian(s)** (fallback)
+- **Emergency contact** (voice escalation)
+- Per-channel: WhatsApp, SMS, email, push
+- **Reachability:** `verified` · `unverified` · `bounced` · `opted_out` · `invalid_number`
+
+### Notification waterfall (unreachable number)
+
+<Mermaid
+  title="Smart delivery — never silently fail"
+  chart={`
+flowchart TD
+  Start[Attendance marked present] --> WA1[WhatsApp primary guardian]
+  WA1 -->|delivered| Done[Log success show on parent feed]
+  WA1 -->|failed| WA2[WhatsApp secondary guardian]
+  WA2 -->|failed| SMS[SMS if valid number]
+  SMS -->|failed| Email[Email plus push parent app]
+  Email -->|failed| Task[Create admin task Call guardian]
+  Task --> Dash[Principal dashboard Unreachable 4]
+`}
+/>
+
+### Sick child (parent-initiated)
+
+```text
+Parent app before 7 AM → Sick + optional note
+→ System marks EXCUSED absent (no panic alert)
+→ Teacher roster shows excused sick reported 7:02
+→ If child still arrives → teacher override + audit
+```
+
+### True absent (smart, not dumb register)
+
+```text
+Grace window e.g. 8:45 AM still unmarked
+→ unverified absent
+→ WhatsApp Reply 1 if sick 2 if late
+→ no reply → auto task for class teacher
+→ principal sees follow-up queue not raw spreadsheet
+```
+
+### Other policies (tenant-configurable)
+
+- Quiet hours (safety can override)
+- Split custody: notify all vs primary only vs fail-over
+- OTP verify on opt-in before first message
+- Max non-critical alerts per child per day
+
+---
+
+## Slide 8 — Web dashboards (role-specific)
+
+One login, **different worlds** — not one dashboard with hidden menus.
+
+### Owner dashboard
+
+- Multi-campus **trust score** (attendance + delivery health)
+- Revenue: fees collected vs due
+- Admissions funnel across network
+- Consent % and unreachable guardian roll-up
+- AI risk summary (later wave)
+
+### Principal dashboard
+
+- **Live pulse:** present · absent · excused · late · unreachable
+- Class drill-down and staff view (later)
+- Incident feed: sick reports, failed alerts, overrides
+- One-click export for board / AKES network reviews
+
+### Admin dashboard
+
+- Student records, enroll, promote, transfer
+- Guardian contact health (invalid numbers, pending verify)
+- Fee status, documents vault
+- User provisioning (teachers, roles)
+
+### Teacher web (secondary to mobile)
+
+- Lesson planning, gradebook, homework builder
+- Test papers and mark entry
+- Report comments — **AI draft → teacher approve**
+- Class analytics
+
+---
+
+## Slide 9 — Mobile apps (parent ≠ student ≠ teacher)
+
+| App experience | Core jobs |
+| --- | --- |
+| **Teacher mobile** | Roster attendance · batch QR/NFC · homework in 3 taps · message class parents · today schedule |
+| **Parent mobile** | Child safety feed · **report sick/leave** · verify phone · homework · fees · messages · multi-child |
+| **Student mobile** | Timetable · homework due · test schedule · grades · submit work (later) · **no** guardian/admin data |
+
+Shared: auth, tenant context, design tokens — **different home screens and tab bars**.
+
+---
+
+## Slide 10 — Module waves (gradual smart OS)
+
+<Mermaid
+  title="Six waves — ship trust first, intelligence last"
+  chart={`
+timeline
+  title School OS module waves
+  section Wave 0 Foundation
+    Tenant identity RBAC policies : 4w
+  section Wave 1 Trust loop
+    Smart attendance guardian graph WhatsApp waterfall : 8w
+    Principal web Parent mobile Teacher mobile : 8w
+  section Wave 2 Comms and records
+    Announcements messaging Student admin Admissions : 12w
+    NFC cards optional : 12w
+  section Wave 3 Academics
+    Timetable planning Homework tests gradebook : 16w
+  section Wave 4 Finance
+    Fees invoices PK payments reminders : 16w
+  section Wave 5 Intelligence
+    Early warning AI comments briefings FAQ bot : 16w
+  section Wave 6 Scale
+    Bus GPS white-label selective microservices : 24w
+`}
+/>
+
+### Wave 0 — Foundation (weeks 1–4)
+
+**Ship:** Tenant + mission + campuses + settings + RBAC + policy tables
+**Exit:** Create school, campuses, users, roles; isolation tests pass
+
+### Wave 1 — Trust loop (weeks 5–12) — **Product Milestone 1**
+
+| Module | Smart behavior |
+| --- | --- |
+| Attendance | Teacher roster, batch QR, excused/sick pre-report, auto absent follow-up |
+| Guardians | Primary/secondary, consent, reachability state |
+| Notifications | WhatsApp → SMS → email → task waterfall |
+| Principal web | Live dashboard, unreachable list, override controls |
+| Parent mobile | Feed, sick report, verify number |
+| Teacher mobile | Roster attendance primary UX |
+
+**Done when:** scan/tap → WhatsApp &lt; 5s p95 · sick suppresses alert · unreachable creates task · zero cross-tenant leak
+
+### Wave 2 — Communication & records (months 4–6)
+
+Announcements · teacher–parent messaging (no personal numbers) · student admin · admissions CRM · optional NFC
+
+### Wave 3 — Academics (months 7–10)
+
+Timetable · teacher planning · homework & assignments · tests & papers · gradebook · report cards
+
+### Wave 4 — Finance (months 11–14)
+
+Fee plans · invoices · Stripe / Razorpay / Paymob / JazzCash · WhatsApp due reminders · receipts
+
+### Wave 5 — Intelligence (months 15–18)
+
+Early warning (attendance + grades + fees) · AI report comments (approve only) · principal briefings · parent FAQ bot (tenant RAG, escalate to human)
+
+### Wave 6 — Scale (year 2+)
+
+Bus + GPS · white-label · enterprise residency · split notifications/AI if load demands
+
+---
+
+## Slide 11 — Data model spine
+
+Everything plugs into one Postgres source of truth:
+
+```text
+tenants → campuses → academic_years → classes → sections
+students ↔ student_guardians ↔ guardians
+users ↔ tenant_memberships ↔ roles
+attendance_sessions → attendance_marks (present|absent|excused|late)
+attendance_events → notification_outbox → notification_attempts
+guardian_consents · tenant_communication_policies
+tasks (call parent · verify document · follow up absent)
+audit_logs
+```
+
+<Mermaid
+  title="Event-driven side effects — same transaction as truth"
+  chart={`
+flowchart LR
+  Write[Write Postgres attendance mark] --> Outbox[Outbox event same TX]
+  Outbox --> Worker[Worker idempotent]
+  Worker --> WA[WhatsApp]
+  Worker --> SMS[SMS]
+  Worker --> Task[Task if all fail]
+  Worker --> RT[Realtime dashboard]
+  Worker --> Audit[Audit log]
+`}
+/>
+
+---
+
+## Slide 12 — Engineering phases (aligned)
+
+| Engineering phase | Product wave |
+| --- | --- |
+| 0 Nest foundation | Wave 0 |
+| 1–4 DB auth RBAC | Wave 0 |
+| 5–6 Students guardians | Wave 1 |
+| 7 Attendance + events | Wave 1 |
+| 8 Audit | Wave 1 |
+| 9 Tasks policies | Wave 1 sick / unreachable |
+| 10 Queue WhatsApp | Wave 1 waterfall |
+
+See [Production Roadmap §15 Product Milestone 1](/docs/production-roadmap) for engineering detail.
+
+---
+
+## Slide 13 — Success metrics
+
+| Metric | Wave 1 target |
+| --- | --- |
+| Present mark → WhatsApp delivered | **&lt; 5s p95** |
+| Guardian opt-in before first alert | **100%** |
+| Cross-tenant data leak | **0** |
+| Unreachable guardians without task | **0** |
+| Parent sick report → no false panic alert | **100%** |
+| Teacher attendance time per class | **&lt; 2 min** |
+
+| Pilot offer | Scope |
+| --- | --- |
+| **$0 pilot** | ~100 students · one campus · Smart Attendance + alerts |
+
+---
+
+## Slide 14 — What we do not build early
+
+- Dedicated **guard app** as a product pillar
+- Face recognition / biometrics without legal review
+- Full accounting ERP
+- Autonomous AI on grades or sensitive messages
+- Microservices before modules prove value
+- Community OS branding in product UI
+
+---
+
+## Slide 15 — Immediate next steps
+
+1. **Schema PR** — tenants (mission), campuses, settings, guardians, policies
+2. **RBAC guards** — owner / principal / admin / teacher / parent / student
+3. **Teacher mobile wireframe** — class roster → tap present → API
+4. **Notification policy tests** — waterfall + sick flow as fixtures
+5. **Web role shells** — `/dashboard/owner`, `/principal`, `/admin`, `/teacher`
+6. **WhatsApp BSP** — Meta Cloud API vs Pakistan-routing partner
+7. **Landing + docs** — align demo copy to teacher-led loop (in progress)
+
+---
+
+## Slide 16 — Related docs
+
+<Cards>
+  <Card
+    title="Multi-Tenancy"
+    description="Tenants, campuses, RBAC, ABAC, policies, and isolation rules."
+    href="/docs/multi-tenancy"
+  />
+  <Card
+    title="Product Vision"
+    description="Positioning, personas, compliance, monetization."
+    href="/docs/product-vision"
+  />
+  <Card
+    title="Production Roadmap"
+    description="Nest engineering phases + Product Milestone 1."
+    href="/docs/production-roadmap"
+  />
+  <Card
+    title="Product System Design"
+    description="Tables, APIs, security, open decisions."
+    href="/docs/product-system-design"
+  />
+  <Card
+    title="Architecture"
+    description="Import boundaries and enforceable rules."
+    href="/docs/architecture"
+  />
+</Cards>
+
+---
+
+**Final principle:** School OS is the **smart operating system** for everyone in the building —
+automate the boring, escalate the risky, and never trap humans in a digital register.

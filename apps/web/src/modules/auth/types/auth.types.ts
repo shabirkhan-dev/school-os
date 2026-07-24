@@ -4,12 +4,14 @@ import type {
 	PublicKeyCredentialRequestOptionsJSON,
 	RegistrationResponseJSON,
 } from "@simplewebauthn/browser";
+import type { TenantMembership } from "@/modules/tenants";
 import type { User } from "@/modules/users/types/user.types";
 
 export interface AuthSession {
 	accessToken: string;
 	accessTokenExpiresAt: string;
 	user: User;
+	tenantContext?: TenantMembership | null;
 }
 
 export interface TwoFactorChallenge {

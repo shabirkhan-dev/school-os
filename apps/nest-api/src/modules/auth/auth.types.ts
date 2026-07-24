@@ -1,6 +1,23 @@
+import type { MembershipRecord } from '@/database/schema';
+
+import type { PermissionCode } from '@/modules/authorization/permission-codes';
 import type { PublicUser } from '@/modules/users/users.types';
 
-export type AccessTokenPayload = { sub: string; sid: string };
+export type PublicTenantContext = {
+	/** Membership id (same value as membershipId; included for web clients). */
+	id: string;
+	tenantId: string;
+	membershipId: string;
+	role: MembershipRecord['role'];
+	permissions: PermissionCode[];
+};
+
+export type AccessTokenPayload = {
+	sub: string;
+	sid: string;
+	tid?: string;
+	mid?: string;
+};
 
 export type RequestMetadata = {
 	ipAddress: string | null;
@@ -12,6 +29,7 @@ export type AuthSessionResult = {
 	accessTokenExpiresAt: string;
 	refreshToken: string;
 	user: PublicUser;
+	tenantContext?: PublicTenantContext | null;
 };
 
 export type PublicAuthSession = Omit<AuthSessionResult, 'refreshToken'>;

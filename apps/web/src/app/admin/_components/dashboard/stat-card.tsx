@@ -18,19 +18,20 @@ type Props = {
 	trend?: Trend;
 	bars: number[];
 	activeIndex?: number;
+	unavailable?: boolean;
 	className?: string;
 };
 
 const trendSpec: Record<Trend, { icon: typeof ArrowUp01Icon; chip: string; delta: string }> = {
 	up: {
 		icon: ArrowUp01Icon,
-		chip: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-		delta: "text-emerald-600 dark:text-emerald-400",
+		chip: "bg-primary/10 text-primary",
+		delta: "text-primary",
 	},
 	down: {
 		icon: ArrowDown01Icon,
-		chip: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-		delta: "text-rose-600 dark:text-rose-400",
+		chip: "bg-destructive/10 text-destructive",
+		delta: "text-destructive",
 	},
 	flat: {
 		icon: ArrowRight01Icon,
@@ -49,9 +50,10 @@ export function StatCard({
 	trend = "up",
 	bars,
 	activeIndex,
+	unavailable = false,
 	className,
 }: Props) {
-	const animated = useCountUp(value);
+	const animated = useCountUp(unavailable ? 0 : value);
 	const spec = trendSpec[trend];
 
 	return (
@@ -68,7 +70,7 @@ export function StatCard({
 					</div>
 					<div className="mt-2.5 flex items-baseline gap-2 sm:mt-3">
 						<span className="font-semibold text-[24px] text-dashboard-text-primary leading-none tracking-tight tabular-nums sm:text-[26px]">
-							{formatValue(animated)}
+							{unavailable ? formatValue(value) : formatValue(animated)}
 						</span>
 					</div>
 					{detail ? (

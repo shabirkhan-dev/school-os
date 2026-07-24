@@ -2,45 +2,23 @@
 
 import { ArrowDown01Icon, Cancel01Icon, Menu01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { SchoolOsBrand } from "@school-os/ui";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useId, useState } from "react";
-import { NAV_ITEMS, type NavItem, type NavSubItem, SITE } from "../data/landing.data";
+import { NAV_ITEMS, type NavItem, type NavSubItem } from "../data/landing.data";
 import { ATLAS_EASE, menuItemVariants, springSnappy, springSoft } from "../lib/motion";
+import { useAtlasTheme } from "../lib/theme";
 import { cn } from "../lib/utils";
 import { LandingAuthActions } from "./landing-auth-actions";
-
-function SchoolOsMark({ className }: { className?: string }) {
-	return (
-		<span
-			className={cn(
-				"relative grid size-7 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm",
-				className,
-			)}
-		>
-			<svg
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				strokeWidth="1.75"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-				className="size-4"
-				aria-hidden="true"
-			>
-				<title>School OS</title>
-				<path d="M12 7v12.5" />
-				<path d="M6.5 9.5C6.5 8 8 7 12 7s5.5 1 5.5 2.5V19c-1.8-.9-3.5-1.2-5.5-1.2S7.3 18.1 6.5 19V9.5z" />
-			</svg>
-		</span>
-	);
-}
+import { ThemeToggle } from "./theme-toggle";
 
 export function SiteHeader() {
 	const [openMenu, setOpenMenu] = useState<string | null>(null);
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [mobileSection, setMobileSection] = useState<string | null>("Resources");
 	const reduceMotion = useReducedMotion();
+	const { theme, toggleTheme, mounted } = useAtlasTheme();
 
 	const closeMobile = () => setMobileOpen(false);
 
@@ -55,10 +33,9 @@ export function SiteHeader() {
 				>
 					<Link
 						href="/"
-						className="flex shrink-0 items-center gap-2 rounded-lg px-1 font-semibold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
+						className="flex shrink-0 items-center rounded-lg px-1 outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
 					>
-						<SchoolOsMark />
-						{SITE.name}
+						<SchoolOsBrand markClassName="size-7 sm:size-8" nameClassName="text-base sm:text-lg" />
 					</Link>
 
 					<nav className="-translate-x-1/2 absolute left-1/2 hidden items-center gap-0.5 lg:flex">
@@ -91,6 +68,12 @@ export function SiteHeader() {
 					</nav>
 
 					<div className="flex items-center gap-2">
+						<ThemeToggle
+							theme={theme}
+							onToggle={toggleTheme}
+							mounted={mounted}
+							className="hidden sm:inline-flex"
+						/>
 						<LandingAuthActions />
 						<button
 							type="button"
@@ -145,6 +128,9 @@ export function SiteHeader() {
 								)}
 
 								<LandingAuthActions mobile onNavigate={closeMobile} />
+								<div className="mt-2 flex justify-center px-1.5 pb-1 sm:hidden">
+									<ThemeToggle theme={theme} onToggle={toggleTheme} mounted={mounted} />
+								</div>
 							</nav>
 						</motion.div>
 					) : null}

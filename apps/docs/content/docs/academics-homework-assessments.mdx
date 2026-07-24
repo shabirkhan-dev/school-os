@@ -1,0 +1,60 @@
+---
+title: Homework & assessments
+description: Nest API modules, migrations, permissions, and web routes for class assignments and test planning.
+---
+
+Homework and assessments share the same **assignment target** model (`whole_class` vs
+`selected_students`), teacher-scoped lists, and admin-wide visibility for management roles.
+
+## Database
+
+| Migration | Purpose |
+|-----------|---------|
+| `0017_homework_assessments` | Core tables: `homework_assignments`, `assessments`, `assessment_results`; teacher homework/assessments permissions |
+| `0018_homework_assessments_v2` | `assign_mode`, planner fields, `homework_recipients`, `assessment_recipients`; parent/student read permissions; test planner nav |
+
+After pulling these changes, apply migrations against the **same** database your Nest API uses:
+
+```bash
+bun --cwd apps/nest-api run db:migrate
+```
+
+Then restart `nest-api#dev` (or your Docker API container). A common local failure is
+`GET /api/v1/tenants/:tenantId/homework` returning **500** when `assign_mode` or recipient
+tables are missing — the migrator output should end with
+`Database migrations applied (drizzle migrator finished successfully).`
+
+## API (Nest)
+
+| Route prefix | Module | Notes |
+|--------------|--------|-------|
+| `/tenants/:tenantId/homework` | `homework` | Teachers see assignments for their section subjects; admins/owners see all; parents see published work for linked students |
+| `/tenants/:tenantId/assessments` | `assessments` | Same scoping pattern |
+| `/ai/academics/draft` | `ai` | Draft homework/assessment copy (teacher/admin) |
+
+Permissions: `homework.read`, `homework.write`, `assessments.read`, `assessments.write` (see
+`permission-codes.ts` in API and web).
+
+## Web (admin surface)
+
+| Path | Purpose |
+|------|---------|
+| `/admin/homework` | List, create, AI draft, assign whole class or selected students |
+| `/admin/homework/[homeworkId]` | Detail, roster targeting |
+| `/admin/assessments` | Assessments list |
+| `/admin/test-planner` | Calendar-style test planner |
+
+Teachers reach homework from navigation when `homework.read` is granted; class roster quick actions
+link into homework and attendance from **My classes**.
+
+## Seed data
+
+Northwood demo teachers (`seed.teacher.*@northwood.demo`, password `Teacher@123`) can list homework
+after seed + migrations. Re-seed only when you need fresh demo rows:
+
+```bash
+bun --cwd apps/nest-api run db:seed
+```
+
+See [Quick Start](/docs/quick-start) for Postgres and `DATABASE_URL` alignment between migrate and
+dev server.
