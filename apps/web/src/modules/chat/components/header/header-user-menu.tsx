@@ -1,9 +1,17 @@
 "use client";
 
 import { Logout01Icon, ShieldIcon, UserCircle02Icon } from "@hugeicons/core-free-icons";
+import { Button } from "@school-os/ui/components/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@school-os/ui/components/dropdown-menu";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
 
 import { useAuth } from "@/context/auth-context";
 import { userInitials } from "@/lib/user-display";
@@ -12,34 +20,6 @@ import { HeaderHugeIcon } from "@/modules/chat/components/header/huge-icon";
 export function HeaderUserMenu() {
 	const router = useRouter();
 	const { user, logout } = useAuth();
-	const [open, setOpen] = useState(false);
-	const menuId = useId();
-	const rootRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (!open) {
-			return;
-		}
-
-		function handlePointerDown(event: MouseEvent) {
-			if (!rootRef.current?.contains(event.target as Node)) {
-				setOpen(false);
-			}
-		}
-
-		function handleKeyDown(event: KeyboardEvent) {
-			if (event.key === "Escape") {
-				setOpen(false);
-			}
-		}
-
-		document.addEventListener("mousedown", handlePointerDown);
-		document.addEventListener("keydown", handleKeyDown);
-		return () => {
-			document.removeEventListener("mousedown", handlePointerDown);
-			document.removeEventListener("keydown", handleKeyDown);
-		};
-	}, [open]);
 
 	if (!user) {
 		return null;
@@ -48,73 +28,67 @@ export function HeaderUserMenu() {
 	const initials = userInitials(user.username);
 
 	async function handleLogout() {
-		setOpen(false);
 		await logout();
 		router.push("/login");
 	}
 
 	return (
-		<div className="account-menu" ref={rootRef}>
-			<button
-				className="avatar-button"
-				type="button"
+		<DropdownMenu>
+			<DropdownMenuTrigger
+				render={<Button variant="ghost" size="icon" className="avatar-button" />}
 				aria-label="Account menu"
-				aria-haspopup="menu"
-				aria-expanded={open}
-				aria-controls={menuId}
-				onClick={() => setOpen((current) => !current)}
 			>
 				<span className="avatar-button__initials" aria-hidden="true">
 					{initials}
 				</span>
-			</button>
+			</DropdownMenuTrigger>
 
-			{open ? (
-				<div className="account-menu__panel" id={menuId} role="menu">
-					<div className="account-menu__identity">
-						<span className="account-menu__avatar" aria-hidden="true">
-							{initials}
-						</span>
-						<div className="account-menu__meta">
-							<p className="account-menu__name">{user.username}</p>
-							<p className="account-menu__email">{user.email}</p>
-						</div>
+			<DropdownMenuContent align="end" className="account-menu__panel w-62">
+				<div className="account-menu__identity flex items-center gap-2.5 px-2 py-1.5">
+					<span
+						className="account-menu__avatar grid size-8 shrink-0 place-items-center rounded-full text-xs font-semibold text-white bg-[radial-gradient(circle_at_50%_25%,#ffffff_0_18%,transparent_19%),radial-gradient(circle_at_50%_110%,#8b5cf6_0_42%,transparent_43%),linear-gradient(135deg,#d8ccff,#7846ff)]"
+						aria-hidden="true"
+					>
+						{initials}
+					</span>
+					<div className="account-menu__meta min-w-0">
+						<p className="account-menu__name m-0 truncate text-sm font-semibold">{user.username}</p>
+						<p className="account-menu__email m-0 truncate text-xs text-muted-foreground">
+							{user.email}
+						</p>
 					</div>
+				</div>
 
-					<div className="account-menu__divider" />
+				<DropdownMenuSeparator className="account-menu__divider" />
 
-					<Link
+				<DropdownMenuGroup>
+					<DropdownMenuItem
+						render={<Link href="/chat/account/profile" />}
 						className="account-menu__item"
-						href="/chat/account/profile"
-						role="menuitem"
-						onClick={() => setOpen(false)}
 					>
 						<HeaderHugeIcon icon={UserCircle02Icon} />
 						<span>Profile</span>
-					</Link>
-					<Link
+					</DropdownMenuItem>
+					<DropdownMenuItem
+						render={<Link href="/chat/account/security" />}
 						className="account-menu__item"
-						href="/chat/account/security"
-						role="menuitem"
-						onClick={() => setOpen(false)}
 					>
 						<HeaderHugeIcon icon={ShieldIcon} />
 						<span>Security</span>
-					</Link>
+					</DropdownMenuItem>
+				</DropdownMenuGroup>
 
-					<div className="account-menu__divider" />
+				<DropdownMenuSeparator className="account-menu__divider" />
 
-					<button
-						className="account-menu__item account-menu__item--danger"
-						type="button"
-						role="menuitem"
-						onClick={() => void handleLogout()}
-					>
-						<HeaderHugeIcon icon={Logout01Icon} />
-						<span>Log out</span>
-					</button>
-				</div>
-			) : null}
-		</div>
+				<DropdownMenuItem
+					variant="destructive"
+					className="account-menu__item text-destructive focus:text-destructive"
+					onClick={() => void handleLogout()}
+				>
+					<HeaderHugeIcon icon={Logout01Icon} />
+					<span>Log out</span>
+				</DropdownMenuItem>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }

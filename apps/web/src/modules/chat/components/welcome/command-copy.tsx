@@ -1,4 +1,5 @@
 import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { Button } from "@school-os/ui/components/button";
 import { useEffect, useState } from "react";
 
 import { WelcomeHugeIcon } from "@/modules/chat/components/welcome/welcome-icon";
@@ -30,15 +31,16 @@ export function CommandCopy({ command, compact = false }: CommandCopyProps) {
 	return (
 		<div className={cn("command-copy", compact && "command-copy--compact")}>
 			<code>{command}</code>
-			<button
+			<Button
+				variant="ghost"
+				size="icon"
 				className="command-copy__button"
-				type="button"
 				aria-label={isCopied ? "Command copied" : "Copy command"}
 				title={isCopied ? "Copied" : "Copy command"}
 				onClick={copyCommand}
 			>
 				<WelcomeHugeIcon icon={isCopied ? Tick02Icon : Copy01Icon} />
-			</button>
+			</Button>
 		</div>
 	);
 }

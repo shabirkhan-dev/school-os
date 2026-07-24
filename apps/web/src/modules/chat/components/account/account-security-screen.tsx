@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@school-os/ui/components/button";
+import { Input } from "@school-os/ui/components/input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -108,7 +110,7 @@ export function AccountSecurityScreen() {
 					<form className="account-form" onSubmit={handlePasswordChange}>
 						<label className="account-field" htmlFor="chat-current-password">
 							<span>Current password</span>
-							<input
+							<Input
 								id="chat-current-password"
 								type="password"
 								value={currentPassword}
@@ -119,7 +121,7 @@ export function AccountSecurityScreen() {
 						</label>
 						<label className="account-field" htmlFor="chat-new-password">
 							<span>New password</span>
-							<input
+							<Input
 								id="chat-new-password"
 								type="password"
 								value={newPassword}
@@ -131,9 +133,9 @@ export function AccountSecurityScreen() {
 							/>
 							<small>Use at least 12 characters.</small>
 						</label>
-						<button className="account-button" type="submit" disabled={submitting}>
+						<Button className="account-button" type="submit" disabled={submitting}>
 							{submitting ? "Updating…" : "Change password"}
-						</button>
+						</Button>
 					</form>
 				</AccountPanel>
 
@@ -151,25 +153,25 @@ export function AccountSecurityScreen() {
 										{new Date(session.lastUsedAt).toLocaleString()}
 									</span>
 								</div>
-								<button
+								<Button
+									variant="ghost"
 									className="account-button account-button--ghost"
-									type="button"
 									onClick={() => void handleRevoke(session)}
 								>
 									Revoke
-								</button>
+								</Button>
 							</div>
 						))}
-						<button
+						<Button
+							variant="destructive"
 							className="account-button account-button--danger"
-							type="button"
 							onClick={async () => {
 								await logoutAll();
 								router.push("/login");
 							}}
 						>
 							Sign out everywhere
-						</button>
+						</Button>
 					</div>
 				</AccountPanel>
 			</section>

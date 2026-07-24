@@ -1,15 +1,7 @@
-import { Search01Icon } from "@hugeicons/core-free-icons";
-
-import { HeaderHugeIcon } from "@/modules/chat/components/header/huge-icon";
+import { SearchInput } from "@school-os/ui/components/search-input";
 
 export function HeaderSearch() {
 	return (
-		<label className="global-search">
-			<HeaderHugeIcon icon={Search01Icon} />
-			<input aria-label="Search" placeholder="Search" />
-			<span className="search-shortcut" aria-hidden="true">
-				⌘K
-			</span>
-		</label>
+		<SearchInput aria-label="Search" placeholder="Search" showShortcut className="global-search" />
 	);
 }

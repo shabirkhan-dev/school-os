@@ -9,6 +9,8 @@ import {
 	SentIcon,
 	SparklesIcon,
 } from "@hugeicons/core-free-icons";
+import { Button } from "@school-os/ui/components/button";
+import { Textarea } from "@school-os/ui/components/textarea";
 import { type FormEvent, type KeyboardEvent, useState } from "react";
 
 import { ChatHugeIcon } from "@/modules/chat/components/chat/chat-icon";
@@ -74,7 +76,7 @@ export function ChatComposer({
 	return (
 		<form className="chat-composer" onSubmit={handleSubmit}>
 			<div className="chat-composer__panel">
-				<textarea
+				<Textarea
 					aria-label="Message"
 					placeholder={placeholder}
 					rows={3}
@@ -86,29 +88,45 @@ export function ChatComposer({
 
 				<div className="chat-composer__toolbar">
 					<div className="chat-composer__tools">
-						<button className="chat-tool-button" type="button" aria-label="Add attachment">
+						<Button
+							variant="outline"
+							size="icon"
+							className="chat-tool-button"
+							aria-label="Add attachment"
+						>
 							<ChatHugeIcon icon={PlusSignIcon} />
-						</button>
-						<button className="chat-tool-button" type="button" aria-label="Choose tools">
+						</Button>
+						<Button
+							variant="outline"
+							size="icon"
+							className="chat-tool-button"
+							aria-label="Choose tools"
+						>
 							<ChatHugeIcon icon={AiNetworkIcon} />
-						</button>
-						<button className="chat-super-computer" type="button">
+						</Button>
+						<Button variant="ghost" size="sm" className="chat-super-computer">
 							<ChatHugeIcon icon={SentIcon} />
 							<span>Super Computer</span>
 							<span className="chat-new-badge">New</span>
-						</button>
+						</Button>
 					</div>
 
 					<div className="chat-composer__actions">
-						<button className="chat-model-button" type="button">
+						<Button variant="ghost" size="sm" className="chat-model-button">
 							<ChatHugeIcon icon={SparklesIcon} />
 							<span>{modelLabel}</span>
 							<ChatHugeIcon icon={ArrowDown01Icon} size={14} />
-						</button>
-						<button className="chat-mic-button" type="button" aria-label="Use microphone">
+						</Button>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="chat-mic-button"
+							aria-label="Use microphone"
+						>
 							<ChatHugeIcon icon={Mic01Icon} />
-						</button>
-						<button
+						</Button>
+						<Button
+							size="icon"
 							className="chat-send-button"
 							type="submit"
 							aria-label="Send message"
@@ -119,7 +137,7 @@ export function ChatComposer({
 								strokeWidth={1.8}
 								className={busy ? "chat-send-button__spin" : undefined}
 							/>
-						</button>
+						</Button>
 					</div>
 				</div>
 			</div>
@@ -130,7 +148,7 @@ export function ChatComposer({
 						<ChatHugeIcon icon={CrownIcon} />
 						<span>Upgrade to PRO</span>
 					</span>
-					<button type="button">Upgrade</button>
+					<Button size="xs">Upgrade</Button>
 				</div>
 			) : null}
 		</form>

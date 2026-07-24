@@ -1,4 +1,5 @@
 import { Add01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { Button } from "@school-os/ui/components/button";
 
 import { AppBrandIcon } from "@/modules/chat/components/brand-icons";
 import type { MarketplaceApp } from "@/modules/chat/components/marketplace/marketplace.data";
@@ -20,9 +21,9 @@ export function FeaturedAppRow({ app }: FeaturedAppRowProps) {
 				<h3>{app.name}</h3>
 				<p>{app.description}</p>
 			</div>
-			<button className="row-action" type="button" aria-label={actionLabel}>
+			<Button variant="ghost" size="icon" className="row-action" aria-label={actionLabel}>
 				<MarketplaceHugeIcon icon={app.connected ? Tick02Icon : Add01Icon} />
-			</button>
+			</Button>
 		</article>
 	);
 }

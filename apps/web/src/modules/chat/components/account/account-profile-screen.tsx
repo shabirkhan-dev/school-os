@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@school-os/ui/components/button";
+import { Input } from "@school-os/ui/components/input";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -91,7 +93,7 @@ export function AccountProfileScreen() {
 					<form className="account-form" onSubmit={handleSave}>
 						<label className="account-field" htmlFor="chat-profile-username">
 							<span>Username</span>
-							<input
+							<Input
 								id="chat-profile-username"
 								value={username}
 								onChange={(event) => setUsername(event.target.value)}
@@ -103,13 +105,13 @@ export function AccountProfileScreen() {
 							/>
 							<small>3–64 characters. Letters, numbers, dots, underscores, and hyphens only.</small>
 						</label>
-						<button
+						<Button
 							className="account-button"
 							type="submit"
 							disabled={submitting || username === user.username}
 						>
 							{submitting ? "Saving…" : "Save changes"}
-						</button>
+						</Button>
 					</form>
 				</AccountPanel>
 
