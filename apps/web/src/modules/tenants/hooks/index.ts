@@ -12,3 +12,4 @@ export {
 	useTenantQuery,
 	useTenantsQuery,
 } from "./use-tenant-queries";
+export { useWorkspaceSwitcherPolicy } from "./use-workspace-switcher-policy";

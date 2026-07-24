@@ -30,7 +30,8 @@ import { useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { userInitials } from "@/lib/user-display";
 import { cn } from "@/lib/utils";
-import { useTenantContext } from "@/modules/tenants";
+import { useTenantContext, useWorkspaceSwitcherPolicy } from "@/modules/tenants";
+import { useSessionStore } from "@/store";
 import { AdminNavigationMenu } from "./admin-navigation-menu";
 
 type School = { id: string; name: string; kind: string; mark: string };
@@ -52,6 +53,8 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 	const { user, logout } = useAuth();
 	const { activeTenant, activeCampus, campuses, setActiveCampusId, setActiveTenantId } =
 		useTenantContext();
+	const tenants = useSessionStore((state) => state.tenants);
+	const workspacePolicy = useWorkspaceSwitcherPolicy();
 	const [collapsed, setCollapsed] = useState(false);
 
 	const schools: School[] = campuses.map((campus) => ({
@@ -64,6 +67,16 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 	const school = schools.find((s) => s.id === schoolId) ?? schools[0];
 	const tenantLabel = activeTenant?.name ?? "Organization";
 	const isCollapsed = !mobile && collapsed;
+	const workspaceTitle = !workspacePolicy.allowCampusSwitch
+		? workspacePolicy.workspaceSubtitle.includes("children")
+			? tenantLabel
+			: (school?.name ?? tenantLabel)
+		: (school?.name ?? "Add a campus");
+	const workspaceHint = !workspacePolicy.allowCampusSwitch
+		? workspacePolicy.workspaceSubtitle
+		: tenantLabel;
+	const canOpenWorkspaceMenu =
+		workspacePolicy.allowCampusSwitch || workspacePolicy.allowOrganizationSwitch;
 	const width = mobile ? "w-full" : isCollapsed ? "w-[76px]" : "w-[260px]";
 	const displayName = user?.username ?? "Account";
 	const displayEmail = user?.email ?? "";
@@ -114,102 +127,159 @@ export function AdminSidebar({ className, mobile = false, onNavigate }: AdminSid
 
 				{/* Workspace switcher */}
 				<div className={cn("px-3 pt-4 pb-3", mobile && "pr-14")}>
-					<DropdownMenu>
-						<DropdownMenuTrigger
-							render={(props) => (
-								<button
-									type="button"
-									{...props}
-									className={cn(
-										"group/trigger flex w-full items-center gap-3 rounded-lg bg-dashboard-surface px-2 py-2 text-left transition-all hover:bg-dashboard-surface-hover active:scale-[0.985]",
-										isCollapsed && "justify-center px-1",
-									)}
-								>
-									<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-dashboard-accent-soft text-dashboard-accent">
-										<span className="font-bold text-[15px] leading-none">
-											{school?.mark ?? tenantLabel.charAt(0).toUpperCase()}
-										</span>
-									</div>
-									{!isCollapsed && (
-										<>
-											<div className="min-w-0 flex-1">
-												<div className="text-[11px] text-dashboard-text-dim leading-tight">
-													{tenantLabel}
+					{canOpenWorkspaceMenu ? (
+						<DropdownMenu>
+							<DropdownMenuTrigger
+								render={(props) => (
+									<button
+										type="button"
+										{...props}
+										className={cn(
+											"group/trigger flex w-full items-center gap-3 rounded-lg bg-dashboard-surface px-2 py-2 text-left transition-all hover:bg-dashboard-surface-hover active:scale-[0.985]",
+											isCollapsed && "justify-center px-1",
+										)}
+									>
+										<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-dashboard-accent-soft text-dashboard-accent">
+											<span className="font-bold text-[15px] leading-none">
+												{school?.mark ?? tenantLabel.charAt(0).toUpperCase()}
+											</span>
+										</div>
+										{!isCollapsed && (
+											<>
+												<div className="min-w-0 flex-1">
+													<div className="text-[11px] text-dashboard-text-dim leading-tight">
+														{workspaceHint}
+													</div>
+													<div className="truncate font-semibold text-[13px] text-dashboard-text-secondary leading-tight">
+														{workspaceTitle}
+													</div>
 												</div>
-												<div className="truncate font-semibold text-[13px] text-dashboard-text-secondary leading-tight">
-													{school?.name ?? "Add a campus"}
-												</div>
-											</div>
-											<HugeiconsIcon
-												icon={UnfoldMoreIcon}
-												size={16}
-												strokeWidth={1.8}
-												className="text-dashboard-text-dim transition-colors group-hover/trigger:text-dashboard-text-secondary"
-											/>
-										</>
-									)}
-								</button>
-							)}
-						/>
-						<DropdownMenuContent
-							align="start"
-							sideOffset={8}
-							className="w-[244px] border-dashboard-border bg-dashboard-surface text-dashboard-text-secondary"
-						>
-							<DropdownMenuGroup>
-								<DropdownMenuLabel className="text-[10.5px] text-dashboard-text-dim uppercase">
-									Switch campus
-								</DropdownMenuLabel>
-							</DropdownMenuGroup>
-							<DropdownMenuSeparator className="bg-dashboard-border" />
-							{schools.length === 0 ? (
-								<DropdownMenuItem
-									render={
-										<Link
-											href={
-												activeTenant
-													? `/admin/tenants/${activeTenant.id}/campuses`
-													: "/admin/onboarding/tenant"
-											}
-											onClick={onNavigate}
-										/>
-									}
-									className="gap-3 focus:bg-dashboard-hover-strong"
-								>
-									<div className="text-[13px] text-dashboard-text-muted">Add your first campus</div>
-								</DropdownMenuItem>
-							) : (
-								schools.map((s) => {
-									const selected = s.id === schoolId;
-									return (
-										<DropdownMenuItem
-											key={s.id}
-											onClick={() => {
-												if (activeTenant) setActiveTenantId(activeTenant.id);
-												setActiveCampusId(s.id);
-											}}
-											className="gap-3 focus:bg-dashboard-hover-strong"
-										>
-											<div className="flex size-8 items-center justify-center rounded-md bg-dashboard-accent-soft font-bold text-[13px] text-dashboard-accent">
-												{s.mark}
-											</div>
-											<div className="min-w-0 flex-1">
-												<div className="truncate font-medium text-[13px]">{s.name}</div>
-												<div className="text-[11px] text-dashboard-text-dim">{s.kind}</div>
-											</div>
-											{selected ? (
 												<HugeiconsIcon
-													icon={Tick02Icon}
+													icon={UnfoldMoreIcon}
 													size={16}
-													className="text-dashboard-accent"
+													strokeWidth={1.8}
+													className="text-dashboard-text-dim transition-colors group-hover/trigger:text-dashboard-text-secondary"
 												/>
-											) : null}
-										</DropdownMenuItem>
-									);
-								})
+											</>
+										)}
+									</button>
+								)}
+							/>
+							<DropdownMenuContent
+								align="start"
+								sideOffset={8}
+								className="w-[244px] border-dashboard-border bg-dashboard-surface text-dashboard-text-secondary"
+							>
+								{workspacePolicy.allowOrganizationSwitch && tenants.length > 1 ? (
+									<>
+										<DropdownMenuGroup>
+											<DropdownMenuLabel className="text-[10.5px] text-dashboard-text-dim uppercase">
+												Organizations
+											</DropdownMenuLabel>
+										</DropdownMenuGroup>
+										{tenants.map((tenant) => (
+											<DropdownMenuItem
+												key={tenant.id}
+												onClick={() => setActiveTenantId(tenant.id)}
+												className="gap-3 focus:bg-dashboard-hover-strong"
+											>
+												<div className="truncate font-medium text-[13px]">{tenant.name}</div>
+												{tenant.id === activeTenant?.id ? (
+													<HugeiconsIcon
+														icon={Tick02Icon}
+														size={16}
+														className="ms-auto text-dashboard-accent"
+													/>
+												) : null}
+											</DropdownMenuItem>
+										))}
+										<DropdownMenuSeparator className="bg-dashboard-border" />
+									</>
+								) : null}
+								{workspacePolicy.allowCampusSwitch ? (
+									<>
+										<DropdownMenuGroup>
+											<DropdownMenuLabel className="text-[10.5px] text-dashboard-text-dim uppercase">
+												Switch campus
+											</DropdownMenuLabel>
+										</DropdownMenuGroup>
+										<DropdownMenuSeparator className="bg-dashboard-border" />
+										{schools.length === 0 ? (
+											<DropdownMenuItem
+												render={
+													<Link
+														href={
+															activeTenant
+																? `/admin/tenants/${activeTenant.id}/campuses`
+																: "/admin/onboarding/tenant"
+														}
+														onClick={onNavigate}
+													/>
+												}
+												className="gap-3 focus:bg-dashboard-hover-strong"
+											>
+												<div className="text-[13px] text-dashboard-text-muted">
+													Add your first campus
+												</div>
+											</DropdownMenuItem>
+										) : (
+											schools.map((s) => {
+												const selected = s.id === schoolId;
+												return (
+													<DropdownMenuItem
+														key={s.id}
+														onClick={() => {
+															if (activeTenant) setActiveTenantId(activeTenant.id);
+															setActiveCampusId(s.id);
+														}}
+														className="gap-3 focus:bg-dashboard-hover-strong"
+													>
+														<div className="flex size-8 items-center justify-center rounded-md bg-dashboard-accent-soft font-bold text-[13px] text-dashboard-accent">
+															{s.mark}
+														</div>
+														<div className="min-w-0 flex-1">
+															<div className="truncate font-medium text-[13px]">{s.name}</div>
+															<div className="text-[11px] text-dashboard-text-dim">{s.kind}</div>
+														</div>
+														{selected ? (
+															<HugeiconsIcon
+																icon={Tick02Icon}
+																size={16}
+																className="text-dashboard-accent"
+															/>
+														) : null}
+													</DropdownMenuItem>
+												);
+											})
+										)}
+									</>
+								) : null}
+							</DropdownMenuContent>
+						</DropdownMenu>
+					) : (
+						<div
+							className={cn(
+								"flex w-full items-center gap-3 rounded-lg bg-dashboard-surface px-2 py-2",
+								isCollapsed && "justify-center px-1",
 							)}
-						</DropdownMenuContent>
-					</DropdownMenu>
+						>
+							<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-dashboard-accent-soft text-dashboard-accent">
+								<span className="font-bold text-[15px] leading-none">
+									{school?.mark ?? tenantLabel.charAt(0).toUpperCase()}
+								</span>
+							</div>
+							{!isCollapsed && (
+								<div className="min-w-0 flex-1">
+									<div className="text-[11px] text-dashboard-text-dim leading-tight">
+										{workspaceHint}
+									</div>
+									<div className="truncate font-semibold text-[13px] text-dashboard-text-secondary leading-tight">
+										{workspaceTitle}
+									</div>
+								</div>
+							)}
+						</div>
+					)}
 				</div>
 
 				{/* Nav */}

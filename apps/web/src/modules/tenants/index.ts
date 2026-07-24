@@ -1,6 +1,7 @@
 export {
 	CampusCreateForm,
 	CampusList,
+	RoleCampusScope,
 	TenantCreateForm,
 	TenantOnboardingGate,
 	TenantOrganizationConfigForm,
@@ -23,5 +24,6 @@ export {
 	useTenantsQuery,
 	useUpdateOrganizationConfigMutation,
 	useUpdateTenantMutation,
+	useWorkspaceSwitcherPolicy,
 } from "./hooks";
 export type * from "./types/tenant.types";
