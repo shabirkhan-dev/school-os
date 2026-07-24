@@ -120,6 +120,20 @@
       "when": 1786000647371,
       "tag": "0016_timetable",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1786100647371,
+      "tag": "0017_homework_assessments",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1786200647371,
+      "tag": "0018_homework_assessments_v2",
+      "breakpoints": true
     }
   ]
 }

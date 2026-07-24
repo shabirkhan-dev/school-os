@@ -29,6 +29,7 @@ export class TenantGuard implements CanActivate {
 		}
 
 		const membership = await this.memberships.requireActiveMembership(request.user.sub, tenantId);
+		await this.permissions.ensureCacheFresh();
 		const roleRows = await this.memberships.listRolesForMembership(membership.id);
 		const roles =
 			roleRows.length > 0 ? roleRows.map((row) => row.role) : ([membership.role] as const);

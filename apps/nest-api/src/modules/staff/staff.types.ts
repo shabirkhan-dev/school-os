@@ -26,6 +26,32 @@ export type PublicTeacher = {
 	subjectAssignmentCount: number;
 };
 
+export type PublicSectionSubjectOption = {
+	id: string;
+	sectionId: string;
+	sectionName: string;
+	subjectId: string;
+	subjectCode: string;
+	subjectName: string;
+	teacherMembershipId: string | null;
+};
+
+export function toPublicSectionSubjectOption(row: {
+	assignment: { id: string; sectionId: string; teacherMembershipId: string | null };
+	section: { id: string; name: string };
+	subject: { id: string; code: string; name: string };
+}): PublicSectionSubjectOption {
+	return {
+		id: row.assignment.id,
+		sectionId: row.section.id,
+		sectionName: row.section.name,
+		subjectId: row.subject.id,
+		subjectCode: row.subject.code,
+		subjectName: row.subject.name,
+		teacherMembershipId: row.assignment.teacherMembershipId,
+	};
+}
+
 export type PublicSubjectAssignment = {
 	id: string;
 	sectionId: string;

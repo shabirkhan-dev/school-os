@@ -8,10 +8,19 @@ import { PermissionsRepository } from './permissions.repository';
 @Injectable()
 export class PermissionsService implements OnModuleInit {
 	private rolePermissions = new Map<string, ReadonlySet<PermissionCode>>();
+	private cacheLoadedAt = 0;
+	private readonly cacheTtlMs = 5_000;
 
 	constructor(private readonly permissionsRepository: PermissionsRepository) {}
 
 	async onModuleInit(): Promise<void> {
+		await this.refreshCache();
+	}
+
+	async ensureCacheFresh(): Promise<void> {
+		if (Date.now() - this.cacheLoadedAt < this.cacheTtlMs) {
+			return;
+		}
 		await this.refreshCache();
 	}
 
@@ -20,6 +29,7 @@ export class PermissionsService implements OnModuleInit {
 		this.rolePermissions = new Map(
 			[...map.entries()].map(([role, codes]) => [role, codes as ReadonlySet<PermissionCode>]),
 		);
+		this.cacheLoadedAt = Date.now();
 	}
 
 	listCatalog() {

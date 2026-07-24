@@ -578,6 +578,7 @@ export class AuthService {
 		}
 
 		const roles = await this.memberships.listRoleCodes(membership.id, membership.role);
+		await this.permissions.refreshCache();
 
 		return {
 			id: membership.id,

@@ -1,3 +1,4 @@
+import type { Enrollment, Student } from "@/modules/students/types/student.types";
 import type { TeacherDaySchedule } from "@/modules/timetable";
 
 export type TeacherProfile = {
@@ -120,21 +121,8 @@ export type TeacherDashboard = {
 };
 
 export type TeacherSectionStudent = {
-	student: {
-		id: string;
-		studentCode: string;
-		firstName: string;
-		lastName: string;
-		fullName: string;
-		email: string | null;
-		phone: string | null;
-		status: string;
-	};
-	enrollment: {
-		id: string;
-		status: string;
-		enrolledOn: string;
-	};
+	student: Student;
+	enrollment: Enrollment;
 };
 
 export type UpsertStaffProfileInput = {

@@ -15,6 +15,7 @@ describe('TenantGuard', () => {
 	beforeEach(() => {
 		memberships = {
 			requireActiveMembership: vi.fn(),
+			listRolesForMembership: vi.fn().mockResolvedValue([]),
 		} as unknown as Mocked<MembershipsService>;
 		guard = new TenantGuard(memberships, createMockPermissionsService());
 	});
@@ -24,6 +25,10 @@ describe('TenantGuard', () => {
 			user: { sub: 'user-id', sid: 'session-id', tid: 'tenant-a', mid: 'membership-a' },
 			params: { tenantId: 'tenant-b' },
 		} as AuthenticatedRequest & { params: { tenantId: string } };
+
+		memberships.requireActiveMembership.mockRejectedValue(
+			new NotFoundException({ code: 'TENANT_NOT_FOUND', message: 'Tenant not found' }),
+		);
 
 		await expect(
 			guard.canActivate({
@@ -66,6 +71,7 @@ describe('TenantGuard', () => {
 			membershipId: 'membership-a',
 			userId: 'user-id',
 			role: 'owner',
+			roles: ['owner'],
 			campusId: null,
 			permissions: expect.arrayContaining(Object.values(PermissionCodes)),
 		});

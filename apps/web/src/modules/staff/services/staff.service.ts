@@ -51,6 +51,20 @@ export const staffService = {
 		),
 	listSubjects: (accessToken: string, tenantId: string) =>
 		apiClient.get<{ subjects: Subject[] }>(`/tenants/${tenantId}/subjects`, { accessToken }),
+	listSectionSubjects: (accessToken: string, tenantId: string, campusId?: string) => {
+		const search = campusId ? `?campusId=${encodeURIComponent(campusId)}` : "";
+		return apiClient.get<{
+			sectionSubjects: Array<{
+				id: string;
+				sectionId: string;
+				sectionName: string;
+				subjectId: string;
+				subjectCode: string;
+				subjectName: string;
+				teacherMembershipId: string | null;
+			}>;
+		}>(`/tenants/${tenantId}/section-subjects${search}`, { accessToken });
+	},
 	createSubject: (accessToken: string, tenantId: string, input: CreateSubjectInput) =>
 		apiClient.post<{ subject: Subject }>(`/tenants/${tenantId}/subjects`, input, { accessToken }),
 	assignSectionSubject: (accessToken: string, tenantId: string, input: AssignSectionSubjectInput) =>

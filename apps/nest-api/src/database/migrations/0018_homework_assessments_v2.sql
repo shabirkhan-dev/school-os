@@ -1,0 +1,63 @@
+CREATE TYPE "assignment_target_mode" AS ENUM ('whole_class', 'selected_students');
+--> statement-breakpoint
+ALTER TABLE "homework_assignments"
+	ADD COLUMN "assign_mode" "assignment_target_mode" NOT NULL DEFAULT 'whole_class',
+	ADD COLUMN "estimated_minutes" integer,
+	ADD COLUMN "materials" text;
+--> statement-breakpoint
+ALTER TABLE "assessments"
+	ADD COLUMN "assign_mode" "assignment_target_mode" NOT NULL DEFAULT 'whole_class',
+	ADD COLUMN "starts_at" timestamp with time zone,
+	ADD COLUMN "duration_minutes" integer,
+	ADD COLUMN "room" varchar(120),
+	ADD COLUMN "instructions" text;
+--> statement-breakpoint
+CREATE TABLE "homework_recipients" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"tenant_id" uuid NOT NULL REFERENCES "tenants"("id") ON DELETE CASCADE,
+	"homework_id" uuid NOT NULL REFERENCES "homework_assignments"("id") ON DELETE CASCADE,
+	"student_id" uuid NOT NULL REFERENCES "students"("id") ON DELETE CASCADE,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX "homework_recipients_homework_student_unique" ON "homework_recipients" ("homework_id", "student_id");
+--> statement-breakpoint
+CREATE INDEX "homework_recipients_tenant_id_idx" ON "homework_recipients" ("tenant_id");
+--> statement-breakpoint
+CREATE TABLE "assessment_recipients" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"tenant_id" uuid NOT NULL REFERENCES "tenants"("id") ON DELETE CASCADE,
+	"assessment_id" uuid NOT NULL REFERENCES "assessments"("id") ON DELETE CASCADE,
+	"student_id" uuid NOT NULL REFERENCES "students"("id") ON DELETE CASCADE,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX "assessment_recipients_assessment_student_unique" ON "assessment_recipients" ("assessment_id", "student_id");
+--> statement-breakpoint
+CREATE INDEX "assessment_recipients_tenant_id_idx" ON "assessment_recipients" ("tenant_id");
+--> statement-breakpoint
+INSERT INTO "role_permissions" ("role_id", "permission_id")
+SELECT r.id, p.id
+FROM "roles" r
+CROSS JOIN "permissions" p
+WHERE r.tenant_id IS NULL
+	AND r.code IN ('parent', 'student')
+	AND p.code IN ('homework.read', 'assessments.read')
+ON CONFLICT DO NOTHING;
+--> statement-breakpoint
+INSERT INTO "navigation_items" ("key", "label", "href", "icon_key", "section_heading", "required_permission", "visible_to_roles", "sort_order", "is_enabled")
+VALUES
+	('test-planner', 'Test planner', '/admin/test-planner', 'calendar', 'Main Menu', 'assessments.read', ARRAY['teacher', 'owner', 'principal', 'admin'], 48, true)
+ON CONFLICT ("surface", "key") DO UPDATE
+SET
+	"label" = EXCLUDED."label",
+	"href" = EXCLUDED."href",
+	"icon_key" = EXCLUDED."icon_key",
+	"required_permission" = EXCLUDED."required_permission",
+	"visible_to_roles" = EXCLUDED."visible_to_roles",
+	"sort_order" = EXCLUDED."sort_order",
+	"is_enabled" = EXCLUDED."is_enabled";
+--> statement-breakpoint
+UPDATE "navigation_items"
+SET "icon_key" = 'file'
+WHERE "key" = 'homework' AND "surface" = 'admin';

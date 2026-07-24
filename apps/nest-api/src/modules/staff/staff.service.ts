@@ -25,6 +25,7 @@ import {
 	type PublicTeacherDashboardAttendanceSummary,
 	type PublicTeacherDashboardPriorityAction,
 	type PublicTeacherDashboardSection,
+	toPublicSectionSubjectOption,
 	toPublicStaffProfile,
 	toPublicSubject,
 	toPublicSubjectAssignment,
@@ -305,6 +306,12 @@ export class StaffService {
 		}
 
 		return this.upsertTeacherProfileFields(tenantId, membershipId, input);
+	}
+
+	async listSectionSubjects(userId: string, tenantId: string, campusId?: string) {
+		await this.membershipAccess.requirePermission(userId, tenantId, PermissionCodes.ACADEMIC_READ);
+		const rows = await this.staff.listAllSectionSubjects(tenantId, campusId);
+		return { sectionSubjects: rows.map(toPublicSectionSubjectOption) };
 	}
 
 	async listSubjects(userId: string, tenantId: string) {

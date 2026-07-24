@@ -2,6 +2,7 @@
 
 import {
 	Calendar03Icon,
+	File02Icon,
 	StudentIcon,
 	TeacherIcon,
 	UserGroupIcon,
@@ -65,7 +66,30 @@ export function TeacherQuickActions({
 					<HugeiconsIcon icon={TeacherIcon} data-icon="inline-start" strokeWidth={2} />
 					Teaching profile
 				</Button>
-				<Button size="sm" variant="outline" disabled>
+				<Button
+					size="sm"
+					variant="outline"
+					nativeButton={false}
+					render={<Link href="/admin/test-planner" />}
+				>
+					<HugeiconsIcon icon={Calendar03Icon} data-icon="inline-start" strokeWidth={2} />
+					Test planner
+				</Button>
+				<Button
+					size="sm"
+					variant="outline"
+					nativeButton={false}
+					render={<Link href="/admin/assessments" />}
+				>
+					<HugeiconsIcon icon={File02Icon} data-icon="inline-start" strokeWidth={2} />
+					Tests & grades
+				</Button>
+				<Button
+					size="sm"
+					variant="outline"
+					nativeButton={false}
+					render={<Link href="/admin/homework" />}
+				>
 					<HugeiconsIcon icon={StudentIcon} data-icon="inline-start" strokeWidth={2} />
 					Homework
 				</Button>

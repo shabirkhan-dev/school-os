@@ -124,6 +124,29 @@ export class StaffRepository {
 			);
 	}
 
+	async listAllSectionSubjects(tenantId: string, campusId?: string) {
+		const conditions = [
+			eq(sectionSubjects.tenantId, tenantId),
+			isNull(sections.deletedAt),
+			isNull(subjects.deletedAt),
+		];
+		if (campusId) {
+			conditions.push(eq(sections.campusId, campusId));
+		}
+
+		return this.database.db
+			.select({
+				assignment: sectionSubjects,
+				section: sections,
+				subject: subjects,
+			})
+			.from(sectionSubjects)
+			.innerJoin(sections, eq(sectionSubjects.sectionId, sections.id))
+			.innerJoin(subjects, eq(sectionSubjects.subjectId, subjects.id))
+			.where(and(...conditions))
+			.orderBy(asc(sections.name), asc(subjects.name));
+	}
+
 	async listSubjects(tenantId: string) {
 		return this.database.db
 			.select()
@@ -140,6 +163,38 @@ export class StaffRepository {
 	async assignSectionSubject(input: typeof sectionSubjects.$inferInsert) {
 		const [row] = await this.database.db.insert(sectionSubjects).values(input).returning();
 		return row;
+	}
+
+	async findSectionSubjectById(tenantId: string, sectionSubjectId: string) {
+		const [row] = await this.database.db
+			.select({
+				assignment: sectionSubjects,
+				section: sections,
+				subject: subjects,
+			})
+			.from(sectionSubjects)
+			.innerJoin(sections, eq(sectionSubjects.sectionId, sections.id))
+			.innerJoin(subjects, eq(sectionSubjects.subjectId, subjects.id))
+			.where(
+				and(
+					eq(sectionSubjects.tenantId, tenantId),
+					eq(sectionSubjects.id, sectionSubjectId),
+					isNull(sections.deletedAt),
+					isNull(subjects.deletedAt),
+				),
+			)
+			.limit(1);
+		return row ?? null;
+	}
+
+	async teacherCanAccessSectionSubject(
+		tenantId: string,
+		membershipId: string,
+		sectionSubjectId: string,
+	) {
+		const row = await this.findSectionSubjectById(tenantId, sectionSubjectId);
+		if (!row) return false;
+		return row.assignment.teacherMembershipId === membershipId;
 	}
 
 	async findMembership(tenantId: string, membershipId: string) {

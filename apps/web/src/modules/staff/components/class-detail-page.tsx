@@ -1,37 +1,74 @@
 "use client";
 
-import { ArrowLeft01Icon, Calendar03Icon } from "@hugeicons/core-free-icons";
+import {
+	ArrowLeft01Icon,
+	Calendar03Icon,
+	Copy01Icon,
+	CreditCardIcon,
+	MoreHorizontalIcon,
+	TableIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert, AlertDescription } from "@school-os/ui/components/alert";
 import { Badge } from "@school-os/ui/components/badge";
 import { Button } from "@school-os/ui/components/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@school-os/ui/components/dropdown-menu";
 import { Spinner } from "@school-os/ui/components/spinner";
+import { ToggleGroup, ToggleGroupItem } from "@school-os/ui/components/toggle-group";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AdminPageShell } from "@/components/admin";
 import {
 	DataTable,
 	type DataTableColumn,
+	DataTablePagination,
 	DataTableShell,
+	DataTableToolbar,
 	defaultSortFn,
 	useClientDataTable,
 } from "@/components/data-table";
-import { useClassesQuery } from "@/modules/academic";
+import { useAcademicYearsQuery, useClassesQuery } from "@/modules/academic";
 import { formatSectionLabel } from "@/modules/academic/utils/format-section-label";
-import { useTenantContext } from "@/modules/tenants";
+import { StudentAvatar } from "@/modules/students/components/student-avatar";
+import { StudentRosterCards } from "@/modules/students/components/student-roster-cards";
+import type { Student } from "@/modules/students/types/student.types";
+import {
+	formatStudentGender,
+	studentStatusBadgeVariant,
+} from "@/modules/students/utils/student-ui.utils";
+import { PermissionCodes, usePermissions, useTenantContext } from "@/modules/tenants";
 import { useMySectionStudentsQuery, useMyTeacherProfileQuery } from "../hooks/use-staff-queries";
 import type { TeacherSectionStudent } from "../types/staff.types";
+import { ClassRosterQuickActions } from "./class-roster-quick-actions";
+import { ClassStudentProfileDrawer } from "./class-student-profile-drawer";
 
 type Props = {
 	sectionId: string;
 };
 
+type RosterView = "table" | "cards";
+
 export function ClassDetailPage({ sectionId }: Props) {
 	const { activeTenant, campuses } = useTenantContext();
+	const { can } = usePermissions();
 	const tenantId = activeTenant?.id ?? null;
+	const canReadStudents = can(PermissionCodes.STUDENTS_READ);
+
 	const profileQuery = useMyTeacherProfileQuery(tenantId);
 	const studentsQuery = useMySectionStudentsQuery(tenantId, sectionId);
 	const classesQuery = useClassesQuery(tenantId, Boolean(tenantId));
+	const yearsQuery = useAcademicYearsQuery(tenantId, Boolean(tenantId));
+
+	const [rosterView, setRosterView] = useState<RosterView>("table");
+	const [rosterSearch, setRosterSearch] = useState("");
+	const [statusFilter, setStatusFilter] = useState("");
+	const [profileStudentId, setProfileStudentId] = useState<string | null>(null);
+	const [profileOpen, setProfileOpen] = useState(false);
 
 	const classNameById = useMemo(
 		() => new Map((classesQuery.data ?? []).map((item) => [item.id, item.name])),
@@ -44,27 +81,114 @@ export function ClassDetailPage({ sectionId }: Props) {
 
 	const section = profileQuery.data?.accessibleSections.find((item) => item.id === sectionId);
 
+	const sectionLabel = useMemo(() => {
+		if (!section) return "";
+		return formatSectionLabel(
+			section,
+			classNameById.get(section.classId),
+			campusNameById.get(section.campusId),
+		);
+	}, [campusNameById, classNameById, section]);
+
+	const activeYearLabel = useMemo(() => {
+		if (!section) return undefined;
+		const year = yearsQuery.data?.find((item) => item.id === section.academicYearId);
+		return year?.name;
+	}, [section, yearsQuery.data]);
+
+	const sectionSubjectId = useMemo(() => {
+		if (!section || section.accessType !== "subject") return null;
+		return (
+			profileQuery.data?.subjectAssignments.find((assignment) => assignment.sectionId === sectionId)
+				?.id ?? null
+		);
+	}, [profileQuery.data?.subjectAssignments, section, sectionId]);
+
+	const rosterRows = useMemo(
+		() => (studentsQuery.data ?? []).map((row) => row.student),
+		[studentsQuery.data],
+	);
+
+	const sectionLabelByStudentId = useMemo(() => {
+		const map = new Map<string, string>();
+		for (const student of rosterRows) {
+			map.set(student.id, sectionLabel);
+		}
+		return map;
+	}, [rosterRows, sectionLabel]);
+
+	const openProfile = useCallback((studentId: string) => {
+		setProfileStudentId(studentId);
+		setProfileOpen(true);
+	}, []);
+
+	const copyStudentCode = useCallback(async (code: string) => {
+		try {
+			await navigator.clipboard.writeText(code);
+		} catch {
+			// Clipboard unavailable — ignore silently.
+		}
+	}, []);
+
 	const columns = useMemo(
 		(): DataTableColumn<TeacherSectionStudent>[] => [
+			{
+				id: "avatar",
+				header: "",
+				className: "w-[52px]",
+				cell: (row) => <StudentAvatar student={row.student} size="sm" />,
+			},
 			{
 				id: "student",
 				header: "Student",
 				sortable: true,
 				sortValue: (row) => row.student.fullName,
 				cell: (row) => (
-					<div>
-						<p className="font-medium">{row.student.fullName}</p>
-						<p className="text-[12px] text-dashboard-text-muted">{row.student.studentCode}</p>
-					</div>
+					<button
+						type="button"
+						className="min-w-[140px] text-start hover:underline"
+						onClick={() => openProfile(row.student.id)}
+					>
+						<p className="font-medium text-foreground">{row.student.fullName}</p>
+						<p className="font-mono text-[12px] text-muted-foreground">{row.student.studentCode}</p>
+					</button>
 				),
 			},
 			{
 				id: "contact",
 				header: "Contact",
+				sortable: true,
+				sortValue: (row) => row.student.email ?? row.student.phone ?? "",
 				cell: (row) => (
-					<span className="text-dashboard-text-secondary">
-						{row.student.email ?? row.student.phone ?? "—"}
+					<div className="min-w-[160px] text-muted-foreground text-sm">
+						<p className="truncate">{row.student.email ?? "—"}</p>
+						{row.student.phone ? <p className="text-[12px]">{row.student.phone}</p> : null}
+					</div>
+				),
+			},
+			{
+				id: "gender",
+				header: "Gender",
+				sortable: true,
+				sortValue: (row) => row.student.gender ?? "",
+				cell: (row) => (
+					<span className="text-muted-foreground text-sm capitalize">
+						{formatStudentGender(row.student.gender)}
 					</span>
+				),
+			},
+			{
+				id: "emergency",
+				header: "Emergency",
+				sortable: true,
+				sortValue: (row) => row.student.emergencyContactName ?? "",
+				cell: (row) => (
+					<div className="min-w-[120px] text-muted-foreground text-sm">
+						<p>{row.student.emergencyContactName ?? "—"}</p>
+						{row.student.emergencyContactPhone ? (
+							<p className="text-[12px]">{row.student.emergencyContactPhone}</p>
+						) : null}
+					</div>
 				),
 			},
 			{
@@ -72,16 +196,81 @@ export function ClassDetailPage({ sectionId }: Props) {
 				header: "Status",
 				sortable: true,
 				sortValue: (row) => row.student.status,
-				cell: (row) => <span className="capitalize">{row.student.status}</span>,
+				cell: (row) => (
+					<Badge variant={studentStatusBadgeVariant(row.student.status)} className="capitalize">
+						{row.student.status}
+					</Badge>
+				),
+			},
+			{
+				id: "actions",
+				header: <span className="sr-only">Actions</span>,
+				headerClassName: "text-right",
+				className: "text-right",
+				cell: (row) => (
+					<DropdownMenu>
+						<DropdownMenuTrigger
+							render={
+								<Button
+									type="button"
+									variant="ghost"
+									size="icon-sm"
+									aria-label={`Actions for ${row.student.fullName}`}
+								/>
+							}
+						>
+							<HugeiconsIcon icon={MoreHorizontalIcon} strokeWidth={2} />
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							{canReadStudents ? (
+								<DropdownMenuItem onClick={() => openProfile(row.student.id)}>
+									View profile & ID
+								</DropdownMenuItem>
+							) : null}
+							<DropdownMenuItem onClick={() => void copyStudentCode(row.student.studentCode)}>
+								<HugeiconsIcon icon={Copy01Icon} data-icon="inline-start" strokeWidth={2} />
+								Copy student code
+							</DropdownMenuItem>
+							{row.student.email ? (
+								<DropdownMenuItem onClick={() => void copyStudentCode(row.student.email ?? "")}>
+									Copy email
+								</DropdownMenuItem>
+							) : null}
+						</DropdownMenuContent>
+					</DropdownMenu>
+				),
 			},
 		],
-		[],
+		[canReadStudents, copyStudentCode, openProfile],
 	);
 
 	const table = useClientDataTable({
 		data: studentsQuery.data ?? [],
+		searchQuery: rosterSearch,
+		searchFn: (row, queryText) => {
+			const haystack = [
+				row.student.fullName,
+				row.student.studentCode,
+				row.student.email,
+				row.student.phone,
+				row.student.emergencyContactName,
+			]
+				.filter(Boolean)
+				.join(" ")
+				.toLowerCase();
+			return haystack.includes(queryText);
+		},
+		filterFn: (row, filters) => {
+			if (filters.status && row.student.status !== filters.status) return false;
+			return true;
+		},
 		sortFn: (rows, sort) => defaultSortFn(rows, sort, columns),
 	});
+
+	const cardStudents = useMemo(
+		() => table.rows.map((row) => row.student),
+		[table.rows],
+	) as Student[];
 
 	if (!tenantId) {
 		return (
@@ -109,23 +298,20 @@ export function ClassDetailPage({ sectionId }: Props) {
 		);
 	}
 
-	const sectionLabel = formatSectionLabel(
-		section,
-		classNameById.get(section.classId),
-		campusNameById.get(section.campusId),
-	);
+	const activeCount = rosterRows.filter((student) => student.status === "active").length;
 
 	return (
 		<AdminPageShell
 			title={sectionLabel}
 			description={
 				section.accessType === "homeroom"
-					? "Homeroom class roster and quick actions."
-					: `${section.subjectName ?? "Subject"} class roster.`
+					? "Homeroom roster with ID cards, search, and classroom quick actions."
+					: `${section.subjectName ?? "Subject"} roster with search, ID cards, and teaching shortcuts.`
 			}
 			breadcrumb={{ label: "My classes", href: "/admin/my-classes" }}
+			maxWidth="7xl"
 			actions={
-				<div className="flex gap-2">
+				<div className="flex flex-wrap gap-2">
 					<Button
 						variant="outline"
 						size="sm"
@@ -148,7 +334,7 @@ export function ClassDetailPage({ sectionId }: Props) {
 				</div>
 			}
 		>
-			<div className="mb-4 flex flex-wrap items-center gap-2">
+			<div className="mb-5 flex flex-wrap items-center gap-2">
 				<Badge
 					variant={section.accessType === "homeroom" ? "default" : "outline"}
 					className="capitalize"
@@ -156,23 +342,122 @@ export function ClassDetailPage({ sectionId }: Props) {
 					{section.accessType === "homeroom" ? "Homeroom" : section.subjectCode}
 				</Badge>
 				<span className="text-[13px] text-dashboard-text-muted">
-					{table.totalRows} active student{table.totalRows === 1 ? "" : "s"}
+					{activeCount} active · {table.totalRows} enrolled
 				</span>
+				{activeYearLabel ? (
+					<span className="text-[13px] text-dashboard-text-muted">· {activeYearLabel}</span>
+				) : null}
 			</div>
 
-			<DataTableShell>
-				<DataTable
-					borderless
-					columns={columns}
-					rows={table.rows}
-					getRowId={(row) => row.student.id}
-					loading={studentsQuery.isLoading}
-					sort={table.sort}
-					onSort={table.toggleSort}
-					emptyTitle="No students enrolled"
-					emptyDescription="Students appear here once enrolled in this section."
-				/>
+			<ClassRosterQuickActions
+				className="mb-6"
+				sectionId={sectionId}
+				section={section}
+				sectionSubjectId={sectionSubjectId}
+				onShowIdCards={() => setRosterView("cards")}
+			/>
+
+			<DataTableShell
+				toolbar={
+					<DataTableToolbar
+						search={rosterSearch}
+						onSearchChange={(value) => {
+							setRosterSearch(value);
+							table.resetPage();
+						}}
+						searchPlaceholder="Search students by name, code, email…"
+						filters={[
+							{
+								id: "status",
+								label: "Status",
+								value: statusFilter,
+								onChange: (value) => {
+									setStatusFilter(value);
+									table.setFilter("status", value);
+								},
+								items: [
+									{ label: "Active", value: "active" },
+									{ label: "Inactive", value: "inactive" },
+									{ label: "Graduated", value: "graduated" },
+									{ label: "Withdrawn", value: "withdrawn" },
+								],
+							},
+						]}
+					>
+						<ToggleGroup
+							value={[rosterView]}
+							onValueChange={(next) => {
+								const selected = next[0] as RosterView | undefined;
+								if (selected) setRosterView(selected);
+							}}
+							variant="outline"
+							size="sm"
+							spacing={0}
+							aria-label="Roster view"
+						>
+							<ToggleGroupItem value="table" className="gap-1.5 px-2.5">
+								<HugeiconsIcon icon={TableIcon} strokeWidth={2} className="size-3.5" />
+								<span className="hidden sm:inline">Table</span>
+							</ToggleGroupItem>
+							<ToggleGroupItem value="cards" className="gap-1.5 px-2.5">
+								<HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} className="size-3.5" />
+								<span className="hidden sm:inline">ID cards</span>
+							</ToggleGroupItem>
+						</ToggleGroup>
+					</DataTableToolbar>
+				}
+				footer={
+					rosterView === "table" ? (
+						<DataTablePagination
+							pageIndex={table.pageIndex}
+							pageCount={table.pageCount}
+							pageSize={table.pageSize}
+							totalRows={table.totalRows}
+							onPageChange={table.setPageIndex}
+							onPageSizeChange={(size) => {
+								table.setPageSize(size);
+								table.setPageIndex(0);
+							}}
+						/>
+					) : null
+				}
+			>
+				{rosterView === "table" ? (
+					<DataTable
+						borderless
+						columns={columns}
+						rows={table.rows}
+						getRowId={(row) => row.student.id}
+						loading={studentsQuery.isLoading}
+						sort={table.sort}
+						onSort={table.toggleSort}
+						emptyTitle="No students enrolled"
+						emptyDescription="Students appear here once enrolled in this section."
+					/>
+				) : (
+					<StudentRosterCards
+						students={cardStudents}
+						schoolName={activeTenant?.name ?? "School"}
+						tenantId={tenantId}
+						sectionLabelByStudentId={sectionLabelByStudentId}
+						academicYearLabel={activeYearLabel}
+						loading={studentsQuery.isLoading}
+						onStudentClick={canReadStudents ? (student) => openProfile(student.id) : undefined}
+					/>
+				)}
 			</DataTableShell>
+
+			{canReadStudents ? (
+				<ClassStudentProfileDrawer
+					open={profileOpen}
+					onOpenChange={setProfileOpen}
+					tenantId={tenantId}
+					schoolName={activeTenant?.name ?? "School"}
+					studentId={profileStudentId}
+					sectionLabel={sectionLabel}
+					academicYearLabel={activeYearLabel}
+				/>
+			) : null}
 		</AdminPageShell>
 	);
 }

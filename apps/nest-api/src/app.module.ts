@@ -6,6 +6,7 @@ import { ConfigModule } from '@/config/config.module';
 import { DatabaseModule } from '@/database/database.module';
 import { AcademicModule } from '@/modules/academic/academic.module';
 import { AiModule } from '@/modules/ai/ai.module';
+import { AssessmentsModule } from '@/modules/assessments/assessments.module';
 import { AttendanceModule } from '@/modules/attendance/attendance.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { AuthorizationModule } from '@/modules/authorization/authorization.module';
@@ -13,6 +14,7 @@ import { BillingModule } from '@/modules/billing/billing.module';
 import { CampusesModule } from '@/modules/campuses/campuses.module';
 import { GuardiansModule } from '@/modules/guardians/guardians.module';
 import { HealthModule } from '@/modules/health/health.module';
+import { HomeworkModule } from '@/modules/homework/homework.module';
 import { MembersModule } from '@/modules/members/members.module';
 import { NavigationModule } from '@/modules/navigation/navigation.module';
 import { ProfilesModule } from '@/modules/profiles/profiles.module';
@@ -37,6 +39,8 @@ import { UsersModule } from '@/modules/users/users.module';
 		AcademicModule,
 		StudentsModule,
 		AttendanceModule,
+		HomeworkModule,
+		AssessmentsModule,
 		MembersModule,
 		NavigationModule,
 		StaffModule,

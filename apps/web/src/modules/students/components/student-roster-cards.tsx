@@ -13,6 +13,7 @@ type Props = {
 	academicYearLabel?: string;
 	loading?: boolean;
 	className?: string;
+	onStudentClick?: (student: Student) => void;
 };
 
 export function StudentRosterCards({
@@ -23,6 +24,7 @@ export function StudentRosterCards({
 	academicYearLabel,
 	loading,
 	className,
+	onStudentClick,
 }: Props) {
 	if (loading) {
 		return (
@@ -51,17 +53,33 @@ export function StudentRosterCards({
 
 	return (
 		<div className={cn("grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4", className)}>
-			{students.map((student) => (
-				<StudentIdCard
-					key={student.id}
-					student={student}
-					schoolName={schoolName}
-					tenantId={tenantId}
-					sectionLabel={sectionLabelByStudentId.get(student.id)}
-					academicYearLabel={academicYearLabel}
-					className="mx-auto w-full"
-				/>
-			))}
+			{students.map((student) => {
+				const card = (
+					<StudentIdCard
+						student={student}
+						schoolName={schoolName}
+						tenantId={tenantId}
+						sectionLabel={sectionLabelByStudentId.get(student.id)}
+						academicYearLabel={academicYearLabel}
+						className="mx-auto w-full"
+					/>
+				);
+
+				if (!onStudentClick) {
+					return <div key={student.id}>{card}</div>;
+				}
+
+				return (
+					<button
+						key={student.id}
+						type="button"
+						className="cursor-pointer rounded-2xl text-start transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+						onClick={() => onStudentClick(student)}
+					>
+						{card}
+					</button>
+				);
+			})}
 		</div>
 	);
 }

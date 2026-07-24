@@ -36,6 +36,7 @@ export class MembershipsService {
 
 	async requirePermission(userId: string, tenantId: string, permission: PermissionCode) {
 		const membership = await this.requireActiveMembership(userId, tenantId);
+		await this.permissions.ensureCacheFresh();
 		const roles = await this.listRoleCodes(membership.id, membership.role);
 		const granted = this.permissions.getPermissionsForRoles(roles);
 		if (!granted.includes(permission)) {

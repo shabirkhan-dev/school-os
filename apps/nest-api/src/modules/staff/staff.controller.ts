@@ -110,6 +110,16 @@ export class StaffController {
 		return this.staff.createSubject(user.sub, tenantId, body);
 	}
 
+	@Get('section-subjects')
+	@ApiOperation({ summary: 'List class subject assignments for homework and assessments' })
+	listSectionSubjects(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Query('campusId') campusId?: string,
+	) {
+		return this.staff.listSectionSubjects(user.sub, tenantId, campusId);
+	}
+
 	@Post('section-subjects')
 	@ApiOperation({ summary: 'Assign a teacher to teach a subject in a section' })
 	assignSectionSubject(

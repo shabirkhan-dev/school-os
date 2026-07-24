@@ -44,6 +44,7 @@ const NAVIGATION_ICON_REGISTRY: Record<string, IconType> = {
 	"user-settings": UserSettings01Icon,
 	puzzle: PuzzleIcon,
 	help: HelpCircleIcon,
+	homework: File01Icon,
 	settings: Settings02Icon,
 	building: Building03Icon,
 	"user-circle": UserCircle02Icon,

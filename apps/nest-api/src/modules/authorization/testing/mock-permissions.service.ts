@@ -10,11 +10,17 @@ const readOnlyTenantAccess = new Set<PermissionCode>([
 	PermissionCodes.STUDENTS_READ,
 	PermissionCodes.ATTENDANCE_READ,
 	PermissionCodes.TENANT_MEMBERSHIP_READ,
+	PermissionCodes.HOMEWORK_READ,
+	PermissionCodes.ASSESSMENTS_READ,
 ]);
 
 const teacherTenantAccess = new Set<PermissionCode>([
 	...readOnlyTenantAccess,
 	PermissionCodes.ATTENDANCE_MARK,
+	PermissionCodes.HOMEWORK_READ,
+	PermissionCodes.HOMEWORK_WRITE,
+	PermissionCodes.ASSESSMENTS_READ,
+	PermissionCodes.ASSESSMENTS_WRITE,
 ]);
 
 const roleMatrix: Record<MembershipRecord['role'], ReadonlySet<PermissionCode>> = {
@@ -53,5 +59,7 @@ export function createMockPermissionsService(): PermissionsService {
 			}
 			return [...merged];
 		},
+		async ensureCacheFresh() {},
+		async refreshCache() {},
 	} as unknown as PermissionsService;
 }

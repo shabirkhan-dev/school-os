@@ -1,4 +1,7 @@
 export * from './academic-years.schema';
+export * from './assessment-recipients.schema';
+export * from './assessments.schema';
+export * from './assignment-target-mode.schema';
 export * from './attendance-events.schema';
 export * from './attendance-marks.schema';
 export * from './attendance-sessions.schema';
@@ -9,6 +12,8 @@ export * from './campuses.schema';
 export * from './classes.schema';
 export * from './enrollments.schema';
 export * from './guardians.schema';
+export * from './homework-assignments.schema';
+export * from './homework-recipients.schema';
 export * from './membership-invites.schema';
 export * from './membership-roles.schema';
 export * from './memberships.schema';

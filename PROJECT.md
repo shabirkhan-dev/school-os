@@ -173,6 +173,21 @@ More details: docs app `/docs/docker` and `docker/README.md`.
 - Override process: docs app `/docs/overrides`
 - Use workspace imports as `@school-os/<package>`
 
+## Product modules (Nest + web admin)
+
+Recent admin and teacher surfaces wired to the Nest API:
+
+| Module | Web routes | Notes |
+| --- | --- | --- |
+| Students | `/admin/students` | Table + **ID card** roster view, admit/enroll, profile drawer |
+| My classes (teacher) | `/admin/my-classes`, `/admin/my-classes/[sectionId]` | Same table + **ID cards**, search/filter, profile drawer, classroom shortcuts |
+| Homework | `/admin/homework`, detail by id | Whole-class or selected students, AI draft assist |
+| Assessments | `/admin/assessments` | Scheduling, targeting, links to planner |
+| Test planner | `/admin/test-planner` | Week view of scheduled assessments |
+
+Migrations `0017_homework_assessments` and `0018_homework_assessments_v2` add homework/assessment tables,
+recipients, planner fields, and role permissions. Apply with `bun --cwd apps/nest-api run db:migrate`.
+
 ## Related docs
 
 - `README.md` - quick start and high-level navigation

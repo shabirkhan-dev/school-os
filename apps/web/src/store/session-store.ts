@@ -209,7 +209,5 @@ export function selectCan(state: SessionState, permission: PermissionCode): bool
 }
 
 export function selectPermissionsLoading(state: SessionState): boolean {
-	return Boolean(
-		state.activeTenantId && (state.tenantSwitching || state.membershipLoading) && !state.membership,
-	);
+	return Boolean(state.activeTenantId && (state.tenantSwitching || state.membershipLoading));
 }
