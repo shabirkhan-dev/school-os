@@ -7,7 +7,9 @@ import {
 	File02Icon,
 	SparklesIcon,
 } from "@hugeicons/core-free-icons";
+import type { IconSvgElement } from "@hugeicons/react";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Card, CardContent } from "@school-os/ui/components/card";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { TeacherAccessibleSection } from "../types/staff.types";
@@ -22,6 +24,40 @@ type Props = {
 	className?: string;
 };
 
+type TileBodyProps = {
+	icon: IconSvgElement;
+	tone: string;
+	title: string;
+	description: string;
+};
+
+const tileWrapperClasses =
+	"group/tile block h-full w-full rounded-[14px] text-start outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+
+function QuickActionTileBody({ icon, tone, title, description }: TileBodyProps) {
+	return (
+		<Card
+			size="sm"
+			className={cn(
+				"h-full rounded-[14px] border shadow-xs transition-all duration-200",
+				"group-hover/tile:-translate-y-0.5 group-hover/tile:border-primary/40 group-hover/tile:shadow-md",
+			)}
+		>
+			<CardContent className="flex items-start gap-3">
+				<span className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg", tone)}>
+					<HugeiconsIcon icon={icon} size={20} strokeWidth={2} />
+				</span>
+				<span className="min-w-0">
+					<span className="block font-medium text-sm">{title}</span>
+					<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
+						{description}
+					</span>
+				</span>
+			</CardContent>
+		</Card>
+	);
+}
+
 export function ClassRosterQuickActions({
 	sectionId,
 	section,
@@ -34,127 +70,84 @@ export function ClassRosterQuickActions({
 	const isHomeroom = section.accessType === "homeroom";
 	const attendanceHref = `/admin/attendance?sectionId=${sectionId}&confirmAll=1`;
 
-	const homeworkCard = onAssignHomework ? (
-		<button
-			type="button"
-			onClick={onAssignHomework}
-			className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-start shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
-		>
-			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-teal-500/10 text-teal-700 dark:text-teal-300">
-				<HugeiconsIcon icon={BookOpen02Icon} size={20} strokeWidth={2} />
-			</span>
-			<span className="min-w-0">
-				<span className="block font-medium text-sm">Assign homework</span>
-				<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
-					{sectionSubjectId
+	const homeworkTile = onAssignHomework ? (
+		<button type="button" onClick={onAssignHomework} className={tileWrapperClasses}>
+			<QuickActionTileBody
+				icon={BookOpen02Icon}
+				tone="bg-teal-500/10 text-teal-700 dark:text-teal-300"
+				title="Assign homework"
+				description={
+					sectionSubjectId
 						? `AI draft for ${section.subjectName ?? "this class"} — stay on roster.`
-						: "Pick a subject and publish with AI assist."}
-				</span>
-			</span>
+						: "Pick a subject and publish with AI assist."
+				}
+			/>
 		</button>
 	) : (
-		<Link
-			href="/admin/homework"
-			className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
-		>
-			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-teal-500/10 text-teal-700 dark:text-teal-300">
-				<HugeiconsIcon icon={BookOpen02Icon} size={20} strokeWidth={2} />
-			</span>
-			<span className="min-w-0">
-				<span className="block font-medium text-sm">Assign homework</span>
-				<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
-					Open homework to assign class work.
-				</span>
-			</span>
+		<Link href="/admin/homework" className={tileWrapperClasses}>
+			<QuickActionTileBody
+				icon={BookOpen02Icon}
+				tone="bg-teal-500/10 text-teal-700 dark:text-teal-300"
+				title="Assign homework"
+				description="Open homework to assign class work."
+			/>
 		</Link>
 	);
 
-	const assessmentCard = onScheduleAssessment ? (
-		<button
-			type="button"
-			onClick={onScheduleAssessment}
-			className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-start shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
-		>
-			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300">
-				<HugeiconsIcon icon={File02Icon} size={20} strokeWidth={2} />
-			</span>
-			<span className="min-w-0">
-				<span className="block font-medium text-sm">Schedule test</span>
-				<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
-					Quiz or exam for this class — synced to test planner.
-				</span>
-			</span>
+	const assessmentTile = onScheduleAssessment ? (
+		<button type="button" onClick={onScheduleAssessment} className={tileWrapperClasses}>
+			<QuickActionTileBody
+				icon={File02Icon}
+				tone="bg-violet-500/10 text-violet-700 dark:text-violet-300"
+				title="Schedule test"
+				description="Quiz or exam for this class — synced to test planner."
+			/>
 		</button>
 	) : (
-		<Link
-			href="/admin/assessments"
-			className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
-		>
-			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300">
-				<HugeiconsIcon icon={File02Icon} size={20} strokeWidth={2} />
-			</span>
-			<span className="min-w-0">
-				<span className="block font-medium text-sm">Schedule test</span>
-				<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
-					Add an assessment or exam for this class.
-				</span>
-			</span>
+		<Link href="/admin/assessments" className={tileWrapperClasses}>
+			<QuickActionTileBody
+				icon={File02Icon}
+				tone="bg-violet-500/10 text-violet-700 dark:text-violet-300"
+				title="Schedule test"
+				description="Add an assessment or exam for this class."
+			/>
 		</Link>
 	);
 
 	return (
 		<section className={cn("grid gap-2 sm:grid-cols-2 xl:grid-cols-4", className)}>
 			{isHomeroom ? (
-				<Link
-					href={attendanceHref}
-					className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
-				>
-					<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-						<HugeiconsIcon icon={Calendar03Icon} size={20} strokeWidth={2} />
-					</span>
-					<span className="min-w-0">
-						<span className="block font-medium text-sm">Mark attendance</span>
-						<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
-							Take today&apos;s homeroom roll call in one tap.
-						</span>
-					</span>
+				<Link href={attendanceHref} className={tileWrapperClasses}>
+					<QuickActionTileBody
+						icon={Calendar03Icon}
+						tone="bg-primary/10 text-primary"
+						title="Mark attendance"
+						description="Take today's homeroom roll call in one tap."
+					/>
 				</Link>
 			) : null}
 
-			{homeworkCard}
+			{homeworkTile}
 
-			{assessmentCard}
+			{assessmentTile}
 
-			<Link
-				href="/admin/test-planner"
-				className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
-			>
-				<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-800 dark:text-amber-200">
-					<HugeiconsIcon icon={SparklesIcon} size={20} strokeWidth={2} />
-				</span>
-				<span className="min-w-0">
-					<span className="block font-medium text-sm">Test planner</span>
-					<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
-						See your week at a glance and avoid clashes.
-					</span>
-				</span>
+			<Link href="/admin/test-planner" className={tileWrapperClasses}>
+				<QuickActionTileBody
+					icon={SparklesIcon}
+					tone="bg-amber-500/10 text-amber-800 dark:text-amber-200"
+					title="Test planner"
+					description="See your week at a glance and avoid clashes."
+				/>
 			</Link>
 
 			{onShowIdCards ? (
-				<button
-					type="button"
-					onClick={onShowIdCards}
-					className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-start shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/20"
-				>
-					<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-700 dark:text-sky-300">
-						<HugeiconsIcon icon={CreditCardIcon} size={20} strokeWidth={2} />
-					</span>
-					<span className="min-w-0">
-						<span className="block font-medium text-sm">ID card view</span>
-						<span className="mt-0.5 block text-[12px] text-muted-foreground leading-snug">
-							Switch to printable student ID cards.
-						</span>
-					</span>
+				<button type="button" onClick={onShowIdCards} className={tileWrapperClasses}>
+					<QuickActionTileBody
+						icon={CreditCardIcon}
+						tone="bg-sky-500/10 text-sky-700 dark:text-sky-300"
+						title="ID card view"
+						description="Switch to printable student ID cards."
+					/>
 				</button>
 			) : null}
 		</section>
