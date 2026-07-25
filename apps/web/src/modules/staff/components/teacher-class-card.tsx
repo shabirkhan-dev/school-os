@@ -31,12 +31,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@school-os/ui/components/dropdown-menu";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@school-os/ui/components/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@school-os/ui/components/tooltip";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -263,59 +258,55 @@ export function TeacherClassCard({
 					{homeworkButton}
 					{assessmentButton}
 
-					<TooltipProvider>
-						<DropdownMenu>
-							<Tooltip>
-								<TooltipTrigger
-									render={
-										<DropdownMenuTrigger
-											render={
-												<Button
-													size="sm"
-													variant="ghost"
-													className="ms-auto size-7 px-0"
-													aria-label={`More actions for ${label}`}
-												/>
-											}
-										/>
-									}
-								>
-									<HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
-								</TooltipTrigger>
-								<TooltipContent>More actions</TooltipContent>
-							</Tooltip>
-							<DropdownMenuContent align="end" className="min-w-48">
-								<DropdownMenuLabel>{label}</DropdownMenuLabel>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem render={<Link href={`/admin/my-classes/${section.id}`} />}>
-									<HugeiconsIcon icon={UserGroupIcon} strokeWidth={2} />
-									View roster
-								</DropdownMenuItem>
-								{isHomeroom ? (
-									<DropdownMenuItem
+					<DropdownMenu>
+						<Tooltip>
+							<TooltipTrigger
+								render={
+									<DropdownMenuTrigger
 										render={
-											<Link href={`/admin/attendance?sectionId=${section.id}&confirmAll=1`} />
+											<Button
+												size="sm"
+												variant="ghost"
+												className="ms-auto size-7 px-0"
+												aria-label={`More actions for ${label}`}
+											/>
 										}
-									>
-										<HugeiconsIcon icon={Calendar03Icon} strokeWidth={2} />
-										Mark attendance
-									</DropdownMenuItem>
-								) : null}
+									/>
+								}
+							>
+								<HugeiconsIcon icon={MoreVerticalIcon} strokeWidth={2} />
+							</TooltipTrigger>
+							<TooltipContent>More actions</TooltipContent>
+						</Tooltip>
+						<DropdownMenuContent align="end" className="min-w-48">
+							<DropdownMenuLabel>{label}</DropdownMenuLabel>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem render={<Link href={`/admin/my-classes/${section.id}`} />}>
+								<HugeiconsIcon icon={UserGroupIcon} strokeWidth={2} />
+								View roster
+							</DropdownMenuItem>
+							{isHomeroom ? (
 								<DropdownMenuItem
-									render={<Link href={`/admin/my-classes/${section.id}?assignHomework=1`} />}
+									render={<Link href={`/admin/attendance?sectionId=${section.id}&confirmAll=1`} />}
 								>
-									<HugeiconsIcon icon={BookOpen02Icon} strokeWidth={2} />
-									Assign homework
+									<HugeiconsIcon icon={Calendar03Icon} strokeWidth={2} />
+									Mark attendance
 								</DropdownMenuItem>
-								<DropdownMenuItem
-									render={<Link href={`/admin/my-classes/${section.id}?assignAssessment=1`} />}
-								>
-									<HugeiconsIcon icon={File02Icon} strokeWidth={2} />
-									Schedule test
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					</TooltipProvider>
+							) : null}
+							<DropdownMenuItem
+								render={<Link href={`/admin/my-classes/${section.id}?assignHomework=1`} />}
+							>
+								<HugeiconsIcon icon={BookOpen02Icon} strokeWidth={2} />
+								Assign homework
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								render={<Link href={`/admin/my-classes/${section.id}?assignAssessment=1`} />}
+							>
+								<HugeiconsIcon icon={File02Icon} strokeWidth={2} />
+								Schedule test
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
 				</CardFooter>
 			</Card>
 		</motion.div>

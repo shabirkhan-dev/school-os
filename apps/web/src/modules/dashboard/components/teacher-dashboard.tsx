@@ -1,13 +1,14 @@
 "use client";
 
 import { Alert, AlertDescription } from "@school-os/ui/components/alert";
-import { Spinner } from "@school-os/ui/components/spinner";
+import { Skeleton } from "@school-os/ui/components/skeleton";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { FadeIn } from "@/app/admin/_components/dashboard/fade-in";
 import { AdminPageShell } from "@/components/admin";
 import { useClassesQuery } from "@/modules/academic";
 import { formatSectionLabel } from "@/modules/academic/utils/format-section-label";
+import { MyClassesEmptyState } from "@/modules/staff/components/my-classes-empty-state";
 import { TeacherClassCard } from "@/modules/staff/components/teacher-class-card";
 import { TeacherCommandHero } from "@/modules/staff/components/teacher-command-hero";
 import { TeacherFocusSidebar } from "@/modules/staff/components/teacher-focus-sidebar";
@@ -32,6 +33,61 @@ function greetingForHour(hour: number): string {
 	if (hour < 12) return "Good morning";
 	if (hour < 17) return "Good afternoon";
 	return "Good evening";
+}
+
+function SectionCardSkeleton() {
+	return (
+		<div className="flex flex-col gap-3 rounded-[14px] border border-dashboard-border bg-dashboard-card-outer p-4">
+			<div className="flex items-center justify-between">
+				<Skeleton className="h-5 w-24 rounded-full" />
+				<Skeleton className="h-4 w-16" />
+			</div>
+			<Skeleton className="h-5 w-44" />
+			<Skeleton className="h-4 w-32" />
+			<div className="mt-1 flex gap-2 border-t border-dashboard-border-subtle pt-3">
+				<Skeleton className="h-7 flex-1 rounded-md" />
+				<Skeleton className="h-7 w-20 rounded-md" />
+				<Skeleton className="h-7 w-20 rounded-md" />
+				<Skeleton className="h-7 w-7 rounded-md" />
+			</div>
+		</div>
+	);
+}
+
+function TeacherDashboardSkeleton() {
+	return (
+		<AdminPageShell
+			title="Home"
+			description="Teacher command center"
+			maxWidth="7xl"
+			className="px-3 sm:px-6 lg:px-8"
+		>
+			<Skeleton className="mb-6 h-36 w-full rounded-2xl" />
+			<div className="mb-8 grid gap-3 md:grid-cols-3">
+				{["ia-1", "ia-2", "ia-3"].map((iaKey) => (
+					<Skeleton key={iaKey} className="h-28 rounded-xl" />
+				))}
+			</div>
+			<div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
+				<section>
+					<div className="mb-4 flex items-center justify-between gap-3">
+						<div className="space-y-1.5">
+							<Skeleton className="h-5 w-32" />
+							<Skeleton className="h-4 w-48" />
+						</div>
+						<Skeleton className="h-4 w-14" />
+					</div>
+					<Skeleton className="mb-2 h-3 w-20" />
+					<div className="grid gap-3 sm:grid-cols-2">
+						{["sc-1", "sc-2"].map((scKey) => (
+							<SectionCardSkeleton key={scKey} />
+						))}
+					</div>
+				</section>
+				<Skeleton className="h-72 rounded-2xl" />
+			</div>
+		</AdminPageShell>
+	);
 }
 
 export function TeacherDashboard() {
@@ -82,11 +138,7 @@ export function TeacherDashboard() {
 	}
 
 	if (dashboardQuery.isLoading || classesQuery.isLoading) {
-		return (
-			<div className="flex min-h-[320px] items-center justify-center">
-				<Spinner className="size-8" />
-			</div>
-		);
+		return <TeacherDashboardSkeleton />;
 	}
 
 	if (dashboardQuery.isError || !dashboardQuery.data) {
@@ -179,10 +231,7 @@ export function TeacherDashboard() {
 						</div>
 
 						{sections.length === 0 ? (
-							<p className="rounded-2xl border border-border border-dashed px-4 py-12 text-center text-[13px] text-muted-foreground">
-								No classes assigned yet. Contact your administrator to assign homeroom or subject
-								classes.
-							</p>
+							<MyClassesEmptyState variant="no-sections" />
 						) : (
 							<div className="space-y-6">
 								{homeroomSections.length > 0 ? (
@@ -191,7 +240,7 @@ export function TeacherDashboard() {
 											Homeroom
 										</p>
 										<div className="grid gap-3 sm:grid-cols-2">
-											{homeroomSections.map((item) => {
+											{homeroomSections.map((item, index) => {
 												const key = `${item.section.id}-${item.section.subjectId ?? "homeroom"}`;
 												return (
 													<TeacherClassCard
@@ -204,6 +253,7 @@ export function TeacherDashboard() {
 														)}
 														campusName={campusNameById.get(item.section.campusId)}
 														metrics={sectionMetricsByKey.get(key) ?? item}
+														revealDelay={Math.min(index * 0.04, 0.32)}
 													/>
 												);
 											})}
@@ -216,7 +266,7 @@ export function TeacherDashboard() {
 											Subject classes
 										</p>
 										<div className="grid gap-3 sm:grid-cols-2">
-											{subjectSections.map((item) => {
+											{subjectSections.map((item, index) => {
 												const key = `${item.section.id}-${item.section.subjectId ?? "homeroom"}`;
 												return (
 													<TeacherClassCard
@@ -229,6 +279,7 @@ export function TeacherDashboard() {
 														)}
 														campusName={campusNameById.get(item.section.campusId)}
 														metrics={sectionMetricsByKey.get(key) ?? item}
+														revealDelay={Math.min((homeroomSections.length + index) * 0.04, 0.32)}
 													/>
 												);
 											})}
