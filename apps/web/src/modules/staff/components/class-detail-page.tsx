@@ -4,27 +4,20 @@ import {
 	ArrowLeft01Icon,
 	BookOpen02Icon,
 	Calendar03Icon,
-	Copy01Icon,
 	CreditCardIcon,
-	MoreHorizontalIcon,
 	TableIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert, AlertDescription } from "@school-os/ui/components/alert";
 import { Badge } from "@school-os/ui/components/badge";
 import { Button } from "@school-os/ui/components/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@school-os/ui/components/dropdown-menu";
 import { Spinner } from "@school-os/ui/components/spinner";
 import { ToggleGroup, ToggleGroupItem } from "@school-os/ui/components/toggle-group";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdminPageShell } from "@/components/admin";
+import { CopyButton } from "@/components/copy-button";
 import {
 	DataTable,
 	type DataTableColumn,
@@ -157,14 +150,6 @@ export function ClassDetailPage({ sectionId }: Props) {
 		setProfileOpen(true);
 	}, []);
 
-	const copyStudentCode = useCallback(async (code: string) => {
-		try {
-			await navigator.clipboard.writeText(code);
-		} catch {
-			// Clipboard unavailable — ignore silently.
-		}
-	}, []);
-
 	const columns = useMemo(
 		(): DataTableColumn<TeacherSectionStudent>[] => [
 			{
@@ -179,17 +164,22 @@ export function ClassDetailPage({ sectionId }: Props) {
 				sortable: true,
 				sortValue: (row) => row.student.fullName,
 				cell: (row) => (
-					<Button
-						variant="link"
-						size="sm"
-						className="h-auto min-w-[140px] flex-col items-start gap-0 whitespace-normal p-0 text-start"
-						onClick={() => openProfile(row.student.id)}
-					>
-						<span className="font-medium text-sm text-foreground">{row.student.fullName}</span>
-						<span className="block font-mono text-[12px] text-muted-foreground">
-							{row.student.studentCode}
-						</span>
-					</Button>
+					<div className="flex min-w-[140px] items-center gap-2">
+						<div className="min-w-0 flex-1">
+							<Button
+								variant="link"
+								size="sm"
+								className="h-auto p-0 text-start"
+								onClick={() => openProfile(row.student.id)}
+							>
+								<span className="font-medium text-sm text-foreground">{row.student.fullName}</span>
+							</Button>
+							<span className="block font-mono text-[12px] text-muted-foreground">
+								{row.student.studentCode}
+							</span>
+						</div>
+						<CopyButton value={row.student.studentCode} label="Copy student code" />
+					</div>
 				),
 			},
 			{
@@ -198,9 +188,12 @@ export function ClassDetailPage({ sectionId }: Props) {
 				sortable: true,
 				sortValue: (row) => row.student.email ?? row.student.phone ?? "",
 				cell: (row) => (
-					<div className="min-w-[160px] text-muted-foreground text-sm">
-						<p className="truncate">{row.student.email ?? "—"}</p>
-						{row.student.phone ? <p className="text-[12px]">{row.student.phone}</p> : null}
+					<div className="flex min-w-[160px] items-center gap-2">
+						<div className="min-w-0 flex-1 text-muted-foreground text-sm">
+							<p className="truncate">{row.student.email ?? "—"}</p>
+							{row.student.phone ? <p className="text-[12px]">{row.student.phone}</p> : null}
+						</div>
+						{row.student.phone ? <CopyButton value={row.student.phone} label="Copy phone" /> : null}
 					</div>
 				),
 			},
@@ -216,15 +209,34 @@ export function ClassDetailPage({ sectionId }: Props) {
 				),
 			},
 			{
+				id: "bloodGroup",
+				header: "Blood",
+				sortable: true,
+				sortValue: (row) => row.student.bloodGroup ?? "",
+				cell: (row) =>
+					row.student.bloodGroup ? (
+						<Badge variant="outline" className="font-mono">
+							{row.student.bloodGroup}
+						</Badge>
+					) : (
+						<span className="text-muted-foreground text-sm">—</span>
+					),
+			},
+			{
 				id: "emergency",
 				header: "Emergency",
 				sortable: true,
 				sortValue: (row) => row.student.emergencyContactName ?? "",
 				cell: (row) => (
-					<div className="min-w-[120px] text-muted-foreground text-sm">
-						<p>{row.student.emergencyContactName ?? "—"}</p>
+					<div className="flex min-w-[120px] items-center gap-2">
+						<div className="min-w-0 flex-1 text-muted-foreground text-sm">
+							<p className="truncate">{row.student.emergencyContactName ?? "—"}</p>
+							{row.student.emergencyContactPhone ? (
+								<p className="text-[12px]">{row.student.emergencyContactPhone}</p>
+							) : null}
+						</div>
 						{row.student.emergencyContactPhone ? (
-							<p className="text-[12px]">{row.student.emergencyContactPhone}</p>
+							<CopyButton value={row.student.emergencyContactPhone} label="Copy emergency phone" />
 						) : null}
 					</div>
 				),
@@ -240,46 +252,8 @@ export function ClassDetailPage({ sectionId }: Props) {
 					</Badge>
 				),
 			},
-			{
-				id: "actions",
-				header: <span className="sr-only">Actions</span>,
-				headerClassName: "text-right",
-				className: "text-right",
-				cell: (row) => (
-					<DropdownMenu>
-						<DropdownMenuTrigger
-							render={
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon-sm"
-									aria-label={`Actions for ${row.student.fullName}`}
-								/>
-							}
-						>
-							<HugeiconsIcon icon={MoreHorizontalIcon} strokeWidth={2} />
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							{canReadStudents ? (
-								<DropdownMenuItem onClick={() => openProfile(row.student.id)}>
-									View profile & ID
-								</DropdownMenuItem>
-							) : null}
-							<DropdownMenuItem onClick={() => void copyStudentCode(row.student.studentCode)}>
-								<HugeiconsIcon icon={Copy01Icon} data-icon="inline-start" strokeWidth={2} />
-								Copy student code
-							</DropdownMenuItem>
-							{row.student.email ? (
-								<DropdownMenuItem onClick={() => void copyStudentCode(row.student.email ?? "")}>
-									Copy email
-								</DropdownMenuItem>
-							) : null}
-						</DropdownMenuContent>
-					</DropdownMenu>
-				),
-			},
 		],
-		[canReadStudents, copyStudentCode, openProfile],
+		[openProfile],
 	);
 
 	const table = useClientDataTable({
