@@ -11,7 +11,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert, AlertDescription } from "@school-os/ui/components/alert";
 import { Badge } from "@school-os/ui/components/badge";
 import { Button } from "@school-os/ui/components/button";
-import { Spinner } from "@school-os/ui/components/spinner";
+import { Skeleton } from "@school-os/ui/components/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@school-os/ui/components/toggle-group";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -294,9 +294,23 @@ export function ClassDetailPage({ sectionId }: Props) {
 
 	if (profileQuery.isLoading || classesQuery.isLoading) {
 		return (
-			<div className="flex min-h-[280px] items-center justify-center">
-				<Spinner className="size-6" />
-			</div>
+			<AdminPageShell title="Loading class…" maxWidth="7xl">
+				<div className="mb-5 flex flex-wrap items-center gap-2">
+					<Skeleton className="h-5 w-24 rounded-full" />
+					<Skeleton className="h-4 w-36" />
+				</div>
+				<div className="mb-6 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+					{["qa-1", "qa-2", "qa-3", "qa-4"].map((qaKey) => (
+						<Skeleton key={qaKey} className="h-[84px] rounded-[14px]" />
+					))}
+				</div>
+				<Skeleton className="mb-3 h-9 w-full rounded-lg sm:w-72" />
+				<div className="flex flex-col gap-2">
+					{["row-1", "row-2", "row-3", "row-4", "row-5"].map((rowKey) => (
+						<Skeleton key={rowKey} className="h-12 w-full rounded-lg" />
+					))}
+				</div>
+			</AdminPageShell>
 		);
 	}
 
@@ -330,7 +344,12 @@ export function ClassDetailPage({ sectionId }: Props) {
 						nativeButton={false}
 						render={<Link href="/admin/my-classes" />}
 					>
-						<HugeiconsIcon icon={ArrowLeft01Icon} data-icon="inline-start" strokeWidth={2} />
+						<HugeiconsIcon
+							icon={ArrowLeft01Icon}
+							data-icon="inline-start"
+							strokeWidth={2}
+							className="rtl:rotate-180"
+						/>
 						Back
 					</Button>
 					{section.accessType === "homeroom" ? (
