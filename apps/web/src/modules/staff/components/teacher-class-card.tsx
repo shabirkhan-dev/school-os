@@ -26,6 +26,7 @@ import {
 import {
 	DropdownMenu,
 	DropdownMenuContent,
+	DropdownMenuGroup,
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
@@ -279,32 +280,36 @@ export function TeacherClassCard({
 							<TooltipContent>More actions</TooltipContent>
 						</Tooltip>
 						<DropdownMenuContent align="end" className="min-w-48">
-							<DropdownMenuLabel>{label}</DropdownMenuLabel>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem render={<Link href={`/admin/my-classes/${section.id}`} />}>
-								<HugeiconsIcon icon={UserGroupIcon} strokeWidth={2} />
-								View roster
-							</DropdownMenuItem>
-							{isHomeroom ? (
-								<DropdownMenuItem
-									render={<Link href={`/admin/attendance?sectionId=${section.id}&confirmAll=1`} />}
-								>
-									<HugeiconsIcon icon={Calendar03Icon} strokeWidth={2} />
-									Mark attendance
+							<DropdownMenuGroup>
+								<DropdownMenuLabel>{label}</DropdownMenuLabel>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem render={<Link href={`/admin/my-classes/${section.id}`} />}>
+									<HugeiconsIcon icon={UserGroupIcon} strokeWidth={2} />
+									View roster
 								</DropdownMenuItem>
-							) : null}
-							<DropdownMenuItem
-								render={<Link href={`/admin/my-classes/${section.id}?assignHomework=1`} />}
-							>
-								<HugeiconsIcon icon={BookOpen02Icon} strokeWidth={2} />
-								Assign homework
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								render={<Link href={`/admin/my-classes/${section.id}?assignAssessment=1`} />}
-							>
-								<HugeiconsIcon icon={File02Icon} strokeWidth={2} />
-								Schedule test
-							</DropdownMenuItem>
+								{isHomeroom ? (
+									<DropdownMenuItem
+										render={
+											<Link href={`/admin/attendance?sectionId=${section.id}&confirmAll=1`} />
+										}
+									>
+										<HugeiconsIcon icon={Calendar03Icon} strokeWidth={2} />
+										Mark attendance
+									</DropdownMenuItem>
+								) : null}
+								<DropdownMenuItem
+									render={<Link href={`/admin/my-classes/${section.id}?assignHomework=1`} />}
+								>
+									<HugeiconsIcon icon={BookOpen02Icon} strokeWidth={2} />
+									Assign homework
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									render={<Link href={`/admin/my-classes/${section.id}?assignAssessment=1`} />}
+								>
+									<HugeiconsIcon icon={File02Icon} strokeWidth={2} />
+									Schedule test
+								</DropdownMenuItem>
+							</DropdownMenuGroup>
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</CardFooter>
