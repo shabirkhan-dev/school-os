@@ -130,6 +130,11 @@ export function AttendancePage() {
 		() => initialSessionDate || new Date().toLocaleDateString("en-CA"),
 	);
 	const [sessionId, setSessionId] = useState<string | null>(null);
+	// One-way latch: once a session has loaded, the attendance content subtree stays
+	// mounted forever. This prevents the whole summary/toolbar/roster/sticky-bar subtree
+	// from unmounting (and visually "jumping") when the section or date changes and the
+	// sessionId transitions — only the data inside swaps, never the component tree.
+	const [sessionLoaded, setSessionLoaded] = useState(false);
 	const [savedMarks, setSavedMarks] = useState<Record<string, AttendanceMarkStatus>>({});
 	const [markDraft, setMarkDraft] = useState<Record<string, AttendanceMarkStatus>>({});
 	const [statusFilter, setStatusFilter] = useState<AttendanceStatusFilter>("all");
@@ -165,9 +170,18 @@ export function AttendancePage() {
 		loadSession.isPending ||
 		(isTeacherScoped ? sectionStudentsQuery.isFetching : enrollmentsQuery.isFetching);
 
+	/**
+	 * True while the session for the *current* section/date is being fetched. Unlike
+	 * `isSwitchingSection` (which also covers the initial load), this is only set once a
+	 * session has already been shown, so the content subtree stays mounted and only the
+	 * data inside it swaps during a section/date change.
+	 */
+	const isSwitchingSession = sessionLoaded && isSwitchingSection;
+
 	const applySessionView = useCallback(
 		(result: Awaited<ReturnType<typeof loadSession.mutateAsync>>) => {
 			setSessionId(result.session.id);
+			setSessionLoaded(true);
 			const existing: Record<string, AttendanceMarkStatus> = {};
 			for (const mark of result.marks) {
 				existing[mark.studentId] = mark.status;
@@ -511,7 +525,7 @@ export function AttendancePage() {
 				</Alert>
 			</div>
 
-			{sessionId ? (
+			{sessionLoaded ? (
 				<div className="space-y-4">
 					<div className="rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4 sm:p-5">
 						<AttendanceSummaryStrip
@@ -539,7 +553,7 @@ export function AttendancePage() {
 						/>
 
 						<div className="relative mt-4">
-							{isSwitchingSection && rosterStudents.length > 0 ? (
+							{isSwitchingSession ? (
 								<div
 									className="absolute inset-0 z-10 flex items-center justify-center rounded-[10px] bg-dashboard-surface/60 backdrop-blur-[1px]"
 									aria-hidden
@@ -549,13 +563,13 @@ export function AttendancePage() {
 							) : null}
 							<div
 								className={cn(
-									"transition-opacity duration-200",
-									isSwitchingSection && rosterStudents.length > 0 && "opacity-50",
+									"min-h-[220px] transition-opacity duration-200",
+									isSwitchingSession && "opacity-50",
 								)}
-								aria-busy={isSwitchingSection}
+								aria-busy={isSwitchingSession}
 							>
 								{rosterStudents.length === 0 ? (
-									isSwitchingSection ? (
+									isSwitchingSession ? (
 										<RosterSkeleton />
 									) : (
 										<p className="py-8 text-center text-[13px] text-dashboard-text-muted">
