@@ -84,6 +84,7 @@ export {
 	InputGroupTextarea,
 } from "./components/input-group";
 export { Label } from "./components/label";
+export { MotionProvider, useMotion } from "./components/motion-provider";
 export {
 	Pagination,
 	PaginationContent,

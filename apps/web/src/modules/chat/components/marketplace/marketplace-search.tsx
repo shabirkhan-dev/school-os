@@ -1,12 +1,11 @@
-import { Search01Icon } from "@hugeicons/core-free-icons";
-
-import { MarketplaceHugeIcon } from "@/modules/chat/components/marketplace/marketplace-icon";
+import { SearchInput } from "@school-os/ui/components/search-input";
 
 export function MarketplaceSearch() {
 	return (
-		<label className="market-search">
-			<MarketplaceHugeIcon icon={Search01Icon} />
-			<input aria-label="Search marketplace" placeholder="Search marketplace..." />
-		</label>
+		<SearchInput
+			aria-label="Search marketplace"
+			placeholder="Search marketplace..."
+			className="market-search"
+		/>
 	);
 }

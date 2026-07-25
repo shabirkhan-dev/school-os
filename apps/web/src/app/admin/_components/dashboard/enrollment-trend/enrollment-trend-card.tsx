@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { Button } from "@school-os/ui/components/button";
 import { cn } from "@/lib/utils";
 import type { DashboardMetrics } from "@/modules/dashboard";
 import { DashboardForwardIcon } from "@/modules/dashboard";
@@ -86,13 +87,14 @@ export function EnrollmentTrendCard({ months, insights, className }: Props) {
 
 			<DashboardCardFooter
 				action={
-					<button
-						type="button"
-						className="inline-flex items-center gap-1 font-medium text-[12px] text-dashboard-accent transition-colors hover:text-dashboard-accent-hover"
+					<Button
+						variant="link"
+						size="sm"
+						className="h-auto gap-1 p-0 text-[12px] text-dashboard-accent no-underline hover:text-dashboard-accent-hover hover:no-underline"
 					>
 						Open students
 						<DashboardForwardIcon icon={ArrowRight01Icon} size={13} strokeWidth={2} />
-					</button>
+					</Button>
 				}
 			>
 				<span>

@@ -11,6 +11,7 @@ import { SelectField } from "@school-os/ui/components/select-field";
 import { Spinner } from "@school-os/ui/components/spinner";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import { useClassesQuery, useSectionsQuery } from "@/modules/academic";
 import { formatSectionLabel } from "@/modules/academic/utils/format-section-label";
 import {
@@ -30,6 +31,8 @@ import {
 	usePermissions,
 	useTenantContext,
 } from "@/modules/tenants";
+import { AttendanceScannerPanel, type ScanResult } from "../scanner/attendance-scanner-panel";
+import { scanFeedback } from "../scanner/scan-feedback";
 import {
 	type AttendanceStatusFilter,
 	buildSmartDefaultDraft,
@@ -39,6 +42,27 @@ import {
 import { AttendanceRosterGrid } from "./attendance-roster-grid";
 import { AttendanceSmartToolbar } from "./attendance-smart-toolbar";
 import { AttendanceSummaryStrip } from "./attendance-summary-strip";
+
+/** Lightweight skeleton that matches the roster card layout to prevent layout shift. */
+function RosterSkeleton() {
+	return (
+		<div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3" aria-hidden>
+			{["a", "b", "c", "d", "e", "f"].map((id) => (
+				<div
+					key={id}
+					className="flex animate-pulse items-center gap-3 rounded-[14px] border border-dashboard-border bg-dashboard-surface px-3 py-3"
+				>
+					<span className="size-10 shrink-0 rounded-xl bg-dashboard-surface-strong" />
+					<span className="min-w-0 flex-1 space-y-1.5">
+						<span className="block h-3 w-3/4 rounded bg-dashboard-surface-strong" />
+						<span className="block h-2.5 w-1/2 rounded bg-dashboard-surface-strong" />
+					</span>
+					<span className="h-5 w-12 shrink-0 rounded-full bg-dashboard-surface-strong" />
+				</div>
+			))}
+		</div>
+	);
+}
 
 export function AttendancePage() {
 	const searchParams = useSearchParams();
@@ -108,13 +132,17 @@ export function AttendancePage() {
 		() => initialSessionDate || new Date().toLocaleDateString("en-CA"),
 	);
 	const [sessionId, setSessionId] = useState<string | null>(null);
+	// One-way latch: once a session has loaded, the attendance content subtree stays
+	// mounted forever. This prevents the whole summary/toolbar/roster/sticky-bar subtree
+	// from unmounting (and visually "jumping") when the section or date changes and the
+	// sessionId transitions — only the data inside swaps, never the component tree.
+	const [sessionLoaded, setSessionLoaded] = useState(false);
 	const [savedMarks, setSavedMarks] = useState<Record<string, AttendanceMarkStatus>>({});
 	const [markDraft, setMarkDraft] = useState<Record<string, AttendanceMarkStatus>>({});
 	const [statusFilter, setStatusFilter] = useState<AttendanceStatusFilter>("all");
 	const [search, setSearch] = useState("");
 	const [scanMode, setScanMode] = useState(false);
-	const [scanValue, setScanValue] = useState("");
-	const [lastScanMessage, setLastScanMessage] = useState<string | null>(null);
+	const [lastScanResult, setLastScanResult] = useState<ScanResult | null>(null);
 	const [highlightStudentId, setHighlightStudentId] = useState<string | null>(null);
 	const [message, setMessage] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -138,9 +166,23 @@ export function AttendancePage() {
 	const markAttendance = useMarkAttendanceMutation(tenantId ?? "", sessionId ?? "");
 	const confirmAllPresent = useConfirmAllPresentMutation(tenantId ?? "");
 
+	/** True while a filter change is loading a new session — used for subtle UI feedback. */
+	const isSwitchingSection =
+		loadSession.isPending ||
+		(isTeacherScoped ? sectionStudentsQuery.isFetching : enrollmentsQuery.isFetching);
+
+	/**
+	 * True while the session for the *current* section/date is being fetched. Unlike
+	 * `isSwitchingSection` (which also covers the initial load), this is only set once a
+	 * session has already been shown, so the content subtree stays mounted and only the
+	 * data inside it swaps during a section/date change.
+	 */
+	const isSwitchingSession = sessionLoaded && isSwitchingSection;
+
 	const applySessionView = useCallback(
 		(result: Awaited<ReturnType<typeof loadSession.mutateAsync>>) => {
 			setSessionId(result.session.id);
+			setSessionLoaded(true);
 			const existing: Record<string, AttendanceMarkStatus> = {};
 			for (const mark of result.marks) {
 				existing[mark.studentId] = mark.status;
@@ -235,9 +277,9 @@ export function AttendancePage() {
 		const key = `${sectionId}:${sessionDate}`;
 		if (autoLoadedKey.current === key) return;
 		autoLoadedKey.current = key;
-		setSessionId(null);
-		setSavedMarks({});
-		setMarkDraft({});
+		// Don't clear sessionId/savedMarks/markDraft here — keepPreviousData on the
+		// roster queries and the mutation's onSuccess (applySessionView) handle the
+		// transition so the UI never collapses mid-switch.
 		void loadSessionForSelection();
 	}, [sectionId, sessionDate, tenantId, loadSessionForSelection]);
 
@@ -346,20 +388,30 @@ export function AttendancePage() {
 		setMessage("Unmarked students flagged absent for follow-up");
 	}
 
-	function handleScanSubmit() {
-		const code = scanValue.trim().toLowerCase();
+	function handleScanDecode(rawValue: string) {
+		const code = rawValue.trim().toLowerCase();
 		if (!code) return;
 		const student = rosterStudents.find(
 			(row) => row.studentCode.toLowerCase() === code || row.id === code,
 		);
 		if (!student) {
-			setLastScanMessage(`No match for "${scanValue.trim()}" in this section`);
+			scanFeedback.error();
+			setLastScanResult({
+				message: `No match for "${rawValue.trim()}" in this section`,
+				tone: "error",
+			});
 			return;
 		}
+		const alreadyPresent = markDraft[student.id] === "present";
 		setMarkDraft((current) => ({ ...current, [student.id]: "present" }));
 		setHighlightStudentId(student.id);
-		setLastScanMessage(`Marked ${student.fullName} present`);
-		setScanValue("");
+		if (alreadyPresent) {
+			scanFeedback.alreadyMarked();
+			setLastScanResult({ message: `${student.fullName} already marked present`, tone: "already" });
+		} else {
+			scanFeedback.success();
+			setLastScanResult({ message: `Marked ${student.fullName} present`, tone: "success" });
+		}
 		window.setTimeout(() => setHighlightStudentId(null), 1200);
 	}
 
@@ -484,7 +536,7 @@ export function AttendancePage() {
 				</Alert>
 			</div>
 
-			{sessionId ? (
+			{sessionLoaded ? (
 				<div className="space-y-4">
 					<div className="rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4 sm:p-5">
 						<AttendanceSummaryStrip
@@ -500,45 +552,66 @@ export function AttendancePage() {
 							onSearchChange={setSearch}
 							scanMode={scanMode}
 							onScanModeChange={setScanMode}
-							scanValue={scanValue}
-							onScanValueChange={setScanValue}
-							onScanSubmit={handleScanSubmit}
 							onMarkAllPresent={handleMarkAllPresent}
 							onMarkUnmarkedAbsent={handleMarkUnmarkedAbsent}
 							onConfirmAllPresentSave={() => void handleConfirmAllPresentSave()}
 							confirmAllPending={confirmAllPresent.isPending}
 							canMark={canMarkThisSection}
-							lastScanMessage={lastScanMessage}
 						/>
 
-						<div className="mt-4">
-							{enrollmentsQuery.isLoading ||
-							studentsQuery.isLoading ||
-							sectionStudentsQuery.isLoading ? (
-								<div className="flex justify-center py-12">
-									<Spinner className="size-6" />
+						{scanMode && canMarkThisSection ? (
+							<div className="mt-4">
+								<AttendanceScannerPanel
+									onDecode={handleScanDecode}
+									lastResult={lastScanResult}
+									markedCount={liveSummary.present + liveSummary.late}
+									totalCount={rosterIds.length}
+								/>
+							</div>
+						) : null}
+
+						<div className="relative mt-4">
+							{isSwitchingSession ? (
+								<div
+									className="absolute inset-0 z-10 flex items-center justify-center rounded-[10px] bg-dashboard-surface/60 backdrop-blur-[1px]"
+									aria-hidden
+								>
+									<Spinner className="size-5 text-dashboard-text-muted" />
 								</div>
-							) : rosterStudents.length === 0 ? (
-								<p className="py-8 text-center text-[13px] text-dashboard-text-muted">
-									No active enrollments in this section.
-								</p>
-							) : (
-								<>
-									<p className="mb-3 text-[12px] text-dashboard-text-muted">
-										Tap a student to cycle: Present → Late → Absent → Excused → Left early →
-										Unmarked
-									</p>
-									<AttendanceRosterGrid
-										roster={filteredRoster}
-										markDraft={markDraft}
-										highlightStudentId={highlightStudentId}
-										canMark={canMarkThisSection}
-										onStatusChange={(studentId, status) =>
-											setMarkDraft((current) => ({ ...current, [studentId]: status }))
-										}
-									/>
-								</>
-							)}
+							) : null}
+							<div
+								className={cn(
+									"min-h-[220px] transition-opacity duration-200",
+									isSwitchingSession && "opacity-50",
+								)}
+								aria-busy={isSwitchingSession}
+							>
+								{rosterStudents.length === 0 ? (
+									isSwitchingSession ? (
+										<RosterSkeleton />
+									) : (
+										<p className="py-8 text-center text-[13px] text-dashboard-text-muted">
+											No active enrollments in this section.
+										</p>
+									)
+								) : (
+									<>
+										<p className="mb-3 text-[12px] text-dashboard-text-muted">
+											Tap a student to cycle: Present → Late → Absent → Excused → Left early →
+											Unmarked
+										</p>
+										<AttendanceRosterGrid
+											roster={filteredRoster}
+											markDraft={markDraft}
+											highlightStudentId={highlightStudentId}
+											canMark={canMarkThisSection}
+											onStatusChange={(studentId, status) =>
+												setMarkDraft((current) => ({ ...current, [studentId]: status }))
+											}
+										/>
+									</>
+								)}
+							</div>
 						</div>
 					</div>
 

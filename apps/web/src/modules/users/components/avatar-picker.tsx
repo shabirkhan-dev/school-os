@@ -6,6 +6,7 @@ import { Button } from "@school-os/ui/components/button";
 import { Field, FieldDescription, FieldLabel } from "@school-os/ui/components/field";
 import { Spinner } from "@school-os/ui/components/spinner";
 import { useId, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import { buildAvatarTemplates } from "../lib/avatar-templates";
 
 export function AvatarPicker({
@@ -93,19 +94,20 @@ export function AvatarPicker({
 						{templates.map((template) => {
 							const selected = value === template.url;
 							return (
-								<button
+								<Button
 									key={template.id}
-									type="button"
+									variant="outline"
+									size="icon"
 									disabled={busy}
 									title={template.label}
+									aria-pressed={selected}
 									onClick={() => onSelectTemplate(template.url)}
-									className={[
-										"relative aspect-square overflow-hidden rounded-xl border transition",
+									className={cn(
+										"relative aspect-square size-auto overflow-hidden rounded-xl bg-transparent transition hover:bg-transparent disabled:opacity-60 dark:bg-transparent dark:hover:bg-transparent",
 										selected
 											? "border-emerald-500 ring-2 ring-emerald-500/30"
 											: "border-dashboard-border hover:border-dashboard-text-muted",
-										busy ? "opacity-60" : "",
-									].join(" ")}
+									)}
 								>
 									{/* biome-ignore lint/performance/noImgElement: dicebear template previews */}
 									<img
@@ -120,7 +122,7 @@ export function AvatarPicker({
 											<HugeiconsIcon icon={Tick02Icon} className="size-3" strokeWidth={2.2} />
 										</span>
 									) : null}
-								</button>
+								</Button>
 							);
 						})}
 					</div>

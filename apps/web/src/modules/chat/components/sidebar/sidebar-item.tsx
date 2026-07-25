@@ -1,4 +1,6 @@
 import { Folder01Icon } from "@hugeicons/core-free-icons";
+import { Button } from "@school-os/ui/components/button";
+import { cn } from "@/lib/utils";
 import type { SidebarIcon } from "@/modules/chat/components/sidebar/sidebar.types";
 import { SidebarHugeIcon } from "@/modules/chat/components/sidebar/sidebar-icon";
 
@@ -18,15 +20,15 @@ export function SidebarItem({
 	onSelect,
 }: SidebarItemProps) {
 	return (
-		<button
+		<Button
+			variant="ghost"
 			aria-current={active ? "page" : undefined}
-			className={active ? "side-item is-active" : "side-item"}
-			type="button"
+			className={cn("side-item justify-start", active && "is-active")}
 			onClick={() => onSelect?.(label)}
 		>
 			<SidebarHugeIcon icon={icon} />
 			<span className="side-item__label">{label}</span>
 			{badge ? <span className="new-badge">{badge}</span> : null}
-		</button>
+		</Button>
 	);
 }

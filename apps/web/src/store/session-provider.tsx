@@ -46,11 +46,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 		return session;
 	}, [establishSession]);
 
+	// Initial session bootstrap: only show loading if there is no persisted session.
+	// When a session was rehydrated from sessionStorage, refresh silently in the
+	// background so the user never sees a flash of unauthenticated/loading state.
 	useEffect(() => {
-		setAuthLoading(true);
-		refreshSession()
-			.catch(() => clearSession())
-			.finally(() => setAuthLoading(false));
+		const { token: existingToken, hydrated } = useSessionStore.getState();
+		if (!hydrated || !existingToken) {
+			// First visit or no stored session — show loading while we try to refresh.
+			setAuthLoading(true);
+			refreshSession()
+				.catch(() => clearSession())
+				.finally(() => setAuthLoading(false));
+		} else {
+			// Session was restored from sessionStorage — validate silently.
+			refreshSession().catch(() => clearSession());
+		}
 	}, [clearSession, refreshSession, setAuthLoading]);
 
 	useEffect(() => {

@@ -1,4 +1,5 @@
 import { AiBrain01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { Button } from "@school-os/ui/components/button";
 import { useState } from "react";
 
 import { CommandCopy } from "@/modules/chat/components/welcome/command-copy";
@@ -20,14 +21,15 @@ export function WelcomeScreen() {
 				<div className="dot-field welcome-screen__dots" />
 
 				<div className="welcome-hero">
-					<button
+					<Button
+						variant="ghost"
+						size="icon"
 						className="welcome-hero__icon"
-						type="button"
 						aria-label="Open Alpaca welcome"
 						onClick={() => setIsWelcomeModalOpen(true)}
 					>
 						<WelcomeHugeIcon icon={AiBrain01Icon} size={34} strokeWidth={1.35} />
-					</button>
+					</Button>
 					<h1>Build AI apps locally</h1>
 					<p>Run powerful open models in minutes.</p>
 					<CommandCopy command={installCommand} />

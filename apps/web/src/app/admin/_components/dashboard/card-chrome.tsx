@@ -2,6 +2,7 @@
 
 import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
 import {
 	Tooltip,
 	TooltipContent,
@@ -45,17 +46,17 @@ export function DashboardCardHeader({
 						<TooltipProvider delay={200}>
 							<Tooltip>
 								<TooltipTrigger
-									render={(props) => (
-										<button
-											type="button"
-											{...props}
-											className="rounded-md text-dashboard-text-faint transition-colors hover:text-dashboard-text-muted"
+									render={
+										<Button
+											variant="ghost"
+											size="icon"
 											aria-label={`About ${title}`}
-										>
-											<HugeiconsIcon icon={InformationCircleIcon} size={13} strokeWidth={1.8} />
-										</button>
-									)}
-								/>
+											className="size-auto rounded-md p-0 text-dashboard-text-faint hover:bg-transparent hover:text-dashboard-text-muted"
+										/>
+									}
+								>
+									<HugeiconsIcon icon={InformationCircleIcon} size={13} strokeWidth={1.8} />
+								</TooltipTrigger>
 								<TooltipContent side="top" className="max-w-[240px]">
 									{info}
 								</TooltipContent>

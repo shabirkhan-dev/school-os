@@ -1,4 +1,5 @@
 import { MessengerIcon, SlackIcon, WhatsappIcon } from "@hugeicons/core-free-icons";
+import { Button } from "@school-os/ui/components/button";
 
 import { ChatHugeIcon } from "@/modules/chat/components/chat/chat-icon";
 
@@ -10,7 +11,7 @@ const channelIcons = [
 
 export function ChannelPrompt() {
 	return (
-		<button className="chat-channel-prompt" type="button">
+		<Button variant="ghost" className="chat-channel-prompt">
 			<span className="chat-channel-prompt__visual" aria-hidden="true">
 				{channelIcons.map(({ icon, color }) => (
 					<span className="chat-channel-prompt__app" key={color}>
@@ -22,6 +23,6 @@ export function ChannelPrompt() {
 				<strong>Connect your channel</strong>
 				<span>Connect Slack, Zendesk, or Intercom so</span>
 			</span>
-		</button>
+		</Button>
 	);
 }

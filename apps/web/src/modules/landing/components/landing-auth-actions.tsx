@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@school-os/ui/components/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -9,6 +10,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@school-os/ui/components/dropdown-menu";
+import { Skeleton } from "@school-os/ui/components/skeleton";
 import { motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -31,13 +33,13 @@ export function LandingAuthActions({ mobile = false, onNavigate }: LandingAuthAc
 	if (loading) {
 		return mobile ? (
 			<div className="mt-3 flex flex-col gap-2.5 px-1.5 pt-1">
-				<div className="h-12 animate-pulse rounded-full bg-muted" />
-				<div className="h-12 animate-pulse rounded-full bg-muted/70" />
+				<Skeleton className="h-12 rounded-full" />
+				<Skeleton className="h-12 rounded-full bg-muted/70" />
 			</div>
 		) : (
 			<div className="hidden items-center gap-2 sm:flex" aria-hidden>
-				<span className="h-8 w-14 animate-pulse rounded-full bg-muted" />
-				<span className="h-8 w-24 animate-pulse rounded-full bg-muted/70" />
+				<Skeleton className="h-8 w-14 rounded-full" />
+				<Skeleton className="h-8 w-24 rounded-full bg-muted/70" />
 			</div>
 		);
 	}
@@ -135,12 +137,13 @@ function DesktopSignedIn({
 			<DropdownMenu>
 				<DropdownMenuTrigger
 					render={(props) => (
-						<button
+						<Button
 							type="button"
+							variant="outline"
 							{...props}
 							aria-label="Account menu"
 							className={cn(
-								"inline-flex h-8 max-w-[11rem] items-center gap-2 rounded-full border border-border/60 bg-card px-1.5 pr-2.5 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/30",
+								"h-8 max-w-[11rem] gap-2 rounded-full border-border/60 bg-card px-1.5 pr-2.5 hover:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/30 dark:bg-card dark:hover:bg-muted",
 							)}
 						>
 							<span className="relative grid size-6 shrink-0 place-items-center overflow-hidden rounded-full bg-foreground font-semibold text-[10px] text-background">
@@ -160,7 +163,7 @@ function DesktopSignedIn({
 							<span className="hidden truncate font-medium text-foreground text-xs sm:inline">
 								{name}
 							</span>
-						</button>
+						</Button>
 					)}
 				/>
 				<DropdownMenuContent align="end" sideOffset={8} className="min-w-48">
@@ -255,13 +258,14 @@ function MobileSignedIn({
 			>
 				Billing
 			</Link>
-			<button
+			<Button
 				type="button"
+				variant="ghost"
 				onClick={() => void handleLogout()}
-				className="inline-flex h-11 items-center justify-center rounded-full px-4 text-center font-medium text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground"
+				className="h-11 rounded-full px-4 text-muted-foreground hover:bg-muted hover:text-foreground"
 			>
 				Sign out
-			</button>
+			</Button>
 		</div>
 	);
 }

@@ -2,6 +2,7 @@
 
 import { Add01Icon, ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -91,19 +92,21 @@ export function CalendarPicker({ value, onChange, className }: Props) {
 				<div className="font-semibold text-[15px] text-dashboard-text-primary">
 					{MONTH_NAMES[view.getMonth()]}, {view.getFullYear()}
 				</div>
-				<button
-					type="button"
+				<Button
+					variant="outline"
+					size="sm"
 					onClick={goToday}
-					className="ms-1 rounded-full border border-dashboard-border-strong bg-dashboard-hover px-3 py-1 font-medium text-[11px] text-dashboard-text-secondary transition-colors hover:bg-dashboard-hover-strong"
+					className="ms-1 h-auto rounded-full border-dashboard-border-strong bg-dashboard-hover px-3 py-1 text-[11px] text-dashboard-text-secondary hover:bg-dashboard-hover-strong dark:border-dashboard-border-strong dark:bg-dashboard-hover dark:hover:bg-dashboard-hover-strong"
 				>
 					Today
-				</button>
+				</Button>
 				<div className="ms-1 flex items-center gap-1">
-					<button
-						type="button"
+					<Button
+						variant="ghost"
+						size="icon"
 						aria-label="Previous month"
 						onClick={() => setView(addMonths(view, -1))}
-						className="flex size-7 items-center justify-center rounded-full text-dashboard-text-muted transition-colors hover:bg-dashboard-hover hover:text-dashboard-text-primary"
+						className="size-7 rounded-full text-dashboard-text-muted hover:bg-dashboard-hover hover:text-dashboard-text-primary dark:hover:bg-dashboard-hover"
 					>
 						<HugeiconsIcon
 							icon={ArrowLeft01Icon}
@@ -111,12 +114,13 @@ export function CalendarPicker({ value, onChange, className }: Props) {
 							strokeWidth={2}
 							className="rtl:rotate-180"
 						/>
-					</button>
-					<button
-						type="button"
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon"
 						aria-label="Next month"
 						onClick={() => setView(addMonths(view, 1))}
-						className="flex size-7 items-center justify-center rounded-full text-dashboard-text-muted transition-colors hover:bg-dashboard-hover hover:text-dashboard-text-primary"
+						className="size-7 rounded-full text-dashboard-text-muted hover:bg-dashboard-hover hover:text-dashboard-text-primary dark:hover:bg-dashboard-hover"
 					>
 						<HugeiconsIcon
 							icon={ArrowRight01Icon}
@@ -124,15 +128,15 @@ export function CalendarPicker({ value, onChange, className }: Props) {
 							strokeWidth={2}
 							className="rtl:rotate-180"
 						/>
-					</button>
+					</Button>
 				</div>
-				<button
-					type="button"
+				<Button
+					size="icon"
 					aria-label="Add"
-					className="ms-auto flex size-8 items-center justify-center rounded-full bg-dashboard-accent text-white transition-all hover:bg-dashboard-accent-hover active:scale-95"
+					className="ms-auto size-8 rounded-full bg-dashboard-accent text-white hover:bg-dashboard-accent-hover active:scale-95"
 				>
 					<HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2.4} />
-				</button>
+				</Button>
 			</div>
 
 			{/* Weekday pills */}

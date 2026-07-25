@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { requireToken } from "@/lib/api/require-token";
 import { useAuth } from "@/modules/auth/context/auth-context";
 import { studentQueryKeys } from "../queries/student-query-keys";
@@ -91,6 +91,7 @@ export function useSectionEnrollmentsQuery(
 				.then((response) => response.enrollments);
 		},
 		enabled: enabled && Boolean(token && tenantId && sectionId),
+		placeholderData: keepPreviousData,
 	});
 }
 

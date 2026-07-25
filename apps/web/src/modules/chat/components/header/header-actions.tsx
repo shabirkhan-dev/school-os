@@ -1,14 +1,16 @@
 import { Message01Icon, Notification03Icon, UserAdd01Icon } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
+
 import { HeaderUserMenu } from "@/modules/chat/components/header/header-user-menu";
 import { HeaderHugeIcon } from "@/modules/chat/components/header/huge-icon";
 import { ThemeToggle } from "@/modules/chat/components/header/theme-toggle";
 
 function HeaderIconButton({ label, icon }: { label: string; icon: IconSvgElement }) {
 	return (
-		<button className="icon-button" type="button" aria-label={label}>
+		<Button variant="ghost" size="icon" className="icon-button" aria-label={label}>
 			<HeaderHugeIcon icon={icon} />
-		</button>
+		</Button>
 	);
 }
 
@@ -18,10 +20,10 @@ export function HeaderActions() {
 			<ThemeToggle />
 			<HeaderIconButton label="Notifications" icon={Notification03Icon} />
 			<HeaderIconButton label="Messages" icon={Message01Icon} />
-			<button className="invite-button" type="button">
+			<Button variant="ghost" size="sm" className="invite-button">
 				<HeaderHugeIcon icon={UserAdd01Icon} />
 				<span>Invite</span>
-			</button>
+			</Button>
 			<HeaderUserMenu />
 		</div>
 	);

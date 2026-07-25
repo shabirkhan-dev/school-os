@@ -7,6 +7,7 @@ import {
 	SecurityCheckIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import {
@@ -239,22 +240,26 @@ function TeamCard({
 							<p className="text-pretty text-foreground/90 text-sm leading-6">{member.bio}</p>
 							<div>
 								<div className="flex items-center gap-2">
-									<button
+									<Button
 										type="button"
+										variant="outline"
+										size="icon"
 										aria-label={`${member.name} on GitHub`}
 										onClick={(event) => event.stopPropagation()}
-										className="grid size-8 place-items-center rounded-full border border-white/15 bg-white/5 text-foreground/80 transition-colors hover:bg-white/10"
+										className="size-8 rounded-full border-white/15 bg-white/5 text-foreground/80 hover:bg-white/10 hover:text-foreground dark:bg-white/5 dark:hover:bg-white/10"
 									>
 										<GitHubGlyph className="size-3.5" />
-									</button>
-									<button
+									</Button>
+									<Button
 										type="button"
+										variant="outline"
+										size="icon"
 										aria-label={`${member.name} on X`}
 										onClick={(event) => event.stopPropagation()}
-										className="grid size-8 place-items-center rounded-full border border-white/15 bg-white/5 text-foreground/80 transition-colors hover:bg-white/10"
+										className="size-8 rounded-full border-white/15 bg-white/5 text-foreground/80 hover:bg-white/10 hover:text-foreground dark:bg-white/5 dark:hover:bg-white/10"
 									>
 										<XGlyph className="size-3.5" />
-									</button>
+									</Button>
 									<span className="ml-1 inline-flex items-center gap-1 font-medium text-foreground text-sm">
 										Profile
 										<HugeiconsIcon

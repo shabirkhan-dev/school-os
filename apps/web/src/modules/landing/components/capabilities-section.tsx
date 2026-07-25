@@ -2,6 +2,7 @@
 
 import { Alert02Icon, BracesIcon, SparklesIcon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@school-os/ui/components/button";
 import { motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -280,19 +281,20 @@ function ApprovalVisual() {
 			</div>
 			<p className="mt-2 font-mono text-white text-xs">Send AI-drafted report comment?</p>
 			<div className="mt-3 flex gap-2">
-				<button
+				<Button
 					type="button"
-					className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-400 py-2 font-medium text-[11px] text-neutral-900"
+					className="h-auto grow rounded-lg bg-emerald-400 py-2 text-[11px] text-neutral-900 hover:bg-emerald-300"
 				>
 					<HugeiconsIcon icon={Tick02Icon} className="size-3" aria-hidden={true} />
 					Approve
-				</button>
-				<button
+				</Button>
+				<Button
 					type="button"
-					className="flex-1 rounded-lg border border-white/20 bg-white/10 py-2 font-medium text-[11px] text-white"
+					variant="ghost"
+					className="h-auto grow rounded-lg border border-white/20 bg-white/10 py-2 text-[11px] text-white hover:bg-white/20 hover:text-white"
 				>
 					Edit
-				</button>
+				</Button>
 			</div>
 		</div>
 	);
