@@ -10,8 +10,8 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@school-os/ui/components/button";
+import { EmptyState } from "@school-os/ui/components/empty-state";
 import { motion, useReducedMotion } from "motion/react";
-import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -38,81 +38,61 @@ export function MyClassesEmptyState({
 }: Props) {
 	const reducedMotion = useReducedMotion();
 
-	const iconTile = (icon: ReactNode, tone: "accent" | "muted") => (
-		<div
-			className={cn(
-				"mx-auto flex size-14 items-center justify-center rounded-2xl",
-				tone === "accent"
-					? "bg-dashboard-accent-soft text-dashboard-accent"
-					: "bg-muted text-muted-foreground",
-			)}
-		>
-			{icon}
-		</div>
-	);
+	const noResultsLead = searchQuery
+		? `Nothing matches “${searchQuery}”`
+		: "Nothing matches your filters";
+	const noResultsScope = filterLabel ? ` under the “${filterLabel}” filter` : "";
+	const noResultsDescription = `${noResultsLead}${noResultsScope}. Try a different name, subject code, or campus.`;
 
 	return (
 		<motion.div
 			initial={reducedMotion ? false : { opacity: 0, y: 10 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-			className={cn(
-				"rounded-[14px] border border-dashed border-dashboard-border-strong bg-dashboard-card-inner px-6 py-14 text-center",
-				className,
-			)}
 		>
 			{variant === "no-sections" ? (
-				<>
-					{iconTile(<HugeiconsIcon icon={School01Icon} size={26} strokeWidth={1.8} />, "accent")}
-					<h3 className="mt-5 font-semibold text-[17px] text-dashboard-text-primary tracking-tight">
-						Your classroom is waiting
-					</h3>
-					<p className="mx-auto mt-2 max-w-md text-[13px] text-muted-foreground leading-relaxed">
-						No homeroom or subject classes are assigned to you in this organization yet. Ask an
-						administrator to add you as a homeroom teacher or subject instructor — your sections
-						will appear here the moment they do.
-					</p>
-					<div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-						{FLOW_ITEMS.map((item) => (
-							<span
-								key={item.text}
-								className="flex items-center gap-1.5 rounded-full border border-dashboard-border bg-dashboard-card-outer px-3 py-1.5 text-[12px] font-medium text-dashboard-text-secondary"
-							>
-								<HugeiconsIcon
-									icon={item.icon}
-									size={14}
-									strokeWidth={2}
-									className="text-dashboard-accent"
-								/>
-								{item.text}
-							</span>
-						))}
-					</div>
-				</>
+				<EmptyState
+					icon={<HugeiconsIcon icon={School01Icon} size={26} strokeWidth={1.8} />}
+					iconClassName="bg-dashboard-accent-soft text-dashboard-accent"
+					title="Your classroom is waiting"
+					description="No homeroom or subject classes are assigned to you in this organization yet. Ask an administrator to add you as a homeroom teacher or subject instructor — your sections will appear here the moment they do."
+					footer={FLOW_ITEMS.map((item) => (
+						<span
+							key={item.text}
+							className="flex items-center gap-1.5 rounded-full border border-dashboard-border bg-dashboard-card-outer px-3 py-1.5 text-[12px] font-medium text-dashboard-text-secondary"
+						>
+							<HugeiconsIcon
+								icon={item.icon}
+								size={14}
+								strokeWidth={2}
+								className="text-dashboard-accent"
+							/>
+							{item.text}
+						</span>
+					))}
+					className={cn(
+						"rounded-[14px] border-dashboard-border-strong bg-dashboard-card-inner",
+						className,
+					)}
+				/>
 			) : (
-				<>
-					{iconTile(<HugeiconsIcon icon={Search01Icon} size={24} strokeWidth={1.8} />, "muted")}
-					<h3 className="mt-5 font-semibold text-[16px] text-dashboard-text-primary tracking-tight">
-						No matching classes
-					</h3>
-					<p className="mx-auto mt-2 max-w-md text-[13px] text-muted-foreground leading-relaxed">
-						Nothing matches
-						{searchQuery ? (
-							<>
-								{" "}
-								<span className="font-medium text-foreground">“{searchQuery}”</span>
-							</>
-						) : null}
-						{filterLabel ? <> under the “{filterLabel}” filter</> : null}. Try a different name,
-						subject code, or campus.
-					</p>
-					{onClearFilters ? (
-						<Button variant="outline" size="sm" className="mt-5" onClick={onClearFilters}>
-							<HugeiconsIcon icon={RefreshIcon} data-icon="inline-start" strokeWidth={2} />
-							Clear search &amp; filters
-						</Button>
-					) : null}
-				</>
+				<EmptyState
+					icon={<HugeiconsIcon icon={Search01Icon} size={24} strokeWidth={1.8} />}
+					title="No matching classes"
+					description={noResultsDescription}
+					action={
+						onClearFilters ? (
+							<Button variant="outline" size="sm" onClick={onClearFilters}>
+								<HugeiconsIcon icon={RefreshIcon} data-icon="inline-start" strokeWidth={2} />
+								Clear search &amp; filters
+							</Button>
+						) : null
+					}
+					className={cn(
+						"rounded-[14px] border-dashboard-border-strong bg-dashboard-card-inner",
+						className,
+					)}
+				/>
 			)}
 		</motion.div>
 	);
