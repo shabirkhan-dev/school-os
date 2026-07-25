@@ -31,6 +31,8 @@ import {
 	usePermissions,
 	useTenantContext,
 } from "@/modules/tenants";
+import { AttendanceScannerPanel, type ScanResult } from "../scanner/attendance-scanner-panel";
+import { scanFeedback } from "../scanner/scan-feedback";
 import {
 	type AttendanceStatusFilter,
 	buildSmartDefaultDraft,
@@ -140,8 +142,7 @@ export function AttendancePage() {
 	const [statusFilter, setStatusFilter] = useState<AttendanceStatusFilter>("all");
 	const [search, setSearch] = useState("");
 	const [scanMode, setScanMode] = useState(false);
-	const [scanValue, setScanValue] = useState("");
-	const [lastScanMessage, setLastScanMessage] = useState<string | null>(null);
+	const [lastScanResult, setLastScanResult] = useState<ScanResult | null>(null);
 	const [highlightStudentId, setHighlightStudentId] = useState<string | null>(null);
 	const [message, setMessage] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -387,20 +388,30 @@ export function AttendancePage() {
 		setMessage("Unmarked students flagged absent for follow-up");
 	}
 
-	function handleScanSubmit() {
-		const code = scanValue.trim().toLowerCase();
+	function handleScanDecode(rawValue: string) {
+		const code = rawValue.trim().toLowerCase();
 		if (!code) return;
 		const student = rosterStudents.find(
 			(row) => row.studentCode.toLowerCase() === code || row.id === code,
 		);
 		if (!student) {
-			setLastScanMessage(`No match for "${scanValue.trim()}" in this section`);
+			scanFeedback.error();
+			setLastScanResult({
+				message: `No match for "${rawValue.trim()}" in this section`,
+				tone: "error",
+			});
 			return;
 		}
+		const alreadyPresent = markDraft[student.id] === "present";
 		setMarkDraft((current) => ({ ...current, [student.id]: "present" }));
 		setHighlightStudentId(student.id);
-		setLastScanMessage(`Marked ${student.fullName} present`);
-		setScanValue("");
+		if (alreadyPresent) {
+			scanFeedback.alreadyMarked();
+			setLastScanResult({ message: `${student.fullName} already marked present`, tone: "already" });
+		} else {
+			scanFeedback.success();
+			setLastScanResult({ message: `Marked ${student.fullName} present`, tone: "success" });
+		}
 		window.setTimeout(() => setHighlightStudentId(null), 1200);
 	}
 
@@ -541,16 +552,23 @@ export function AttendancePage() {
 							onSearchChange={setSearch}
 							scanMode={scanMode}
 							onScanModeChange={setScanMode}
-							scanValue={scanValue}
-							onScanValueChange={setScanValue}
-							onScanSubmit={handleScanSubmit}
 							onMarkAllPresent={handleMarkAllPresent}
 							onMarkUnmarkedAbsent={handleMarkUnmarkedAbsent}
 							onConfirmAllPresentSave={() => void handleConfirmAllPresentSave()}
 							confirmAllPending={confirmAllPresent.isPending}
 							canMark={canMarkThisSection}
-							lastScanMessage={lastScanMessage}
 						/>
+
+						{scanMode && canMarkThisSection ? (
+							<div className="mt-4">
+								<AttendanceScannerPanel
+									onDecode={handleScanDecode}
+									lastResult={lastScanResult}
+									markedCount={liveSummary.present + liveSummary.late}
+									totalCount={rosterIds.length}
+								/>
+							</div>
+						) : null}
 
 						<div className="relative mt-4">
 							{isSwitchingSession ? (
