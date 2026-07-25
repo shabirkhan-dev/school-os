@@ -41,7 +41,16 @@ export function AttendanceRosterGrid({
 				const highlighted = highlightStudentId === student.id;
 
 				return (
-					<li key={student.id}>
+					<li key={student.id} className="relative">
+						{/* One-shot pulse ring when a scan marks this student. The key retriggers
+							the keyframe on every scan; the kill-switch zeroes its duration. */}
+						{highlighted ? (
+							<span
+								key={highlightStudentId}
+								aria-hidden
+								className="pointer-events-none absolute inset-0 animate-[attendance-scan-pulse_0.9s_ease-out_forwards] rounded-[14px] ring-2 ring-dashboard-accent"
+							/>
+						) : null}
 						<button
 							type="button"
 							disabled={!canMark}
@@ -50,16 +59,17 @@ export function AttendanceRosterGrid({
 								onStatusChange(student.id, cycleAttendanceStatus(status));
 							}}
 							className={cn(
-								"flex w-full items-center gap-3 rounded-[14px] border px-3 py-3 text-left transition-all",
-								"border-dashboard-border bg-dashboard-surface hover:bg-dashboard-surface-hover",
-								highlighted && "ring-2 ring-dashboard-accent",
-								canMark && "active:scale-[0.99]",
+								"flex w-full items-center gap-3 rounded-[14px] border px-3 py-3 text-start",
+								"border-dashboard-border bg-dashboard-surface transition-all duration-200",
+								canMark &&
+									"hover:-translate-y-px hover:border-dashboard-border-strong hover:shadow-sm active:scale-[0.99]",
+								highlighted && "border-dashboard-accent/50",
 								!canMark && "cursor-default opacity-80",
 							)}
 						>
 							<span
 								className={cn(
-									"flex size-10 shrink-0 items-center justify-center rounded-xl font-semibold text-[12px] ring-1",
+									"flex size-10 shrink-0 items-center justify-center rounded-xl font-semibold text-[12px] ring-1 transition-colors duration-300",
 									config.tone,
 									config.ring,
 								)}
@@ -77,7 +87,7 @@ export function AttendanceRosterGrid({
 							</span>
 							<span
 								className={cn(
-									"shrink-0 rounded-full px-2 py-0.5 font-medium text-[10px]",
+									"shrink-0 rounded-full px-2 py-0.5 font-medium text-[10px] transition-colors duration-300",
 									config.tone,
 								)}
 							>

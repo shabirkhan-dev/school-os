@@ -13,43 +13,49 @@ export const ATTENDANCE_STATUS_ORDER: AttendanceMarkStatus[] = [
 
 export const ATTENDANCE_STATUS_CONFIG: Record<
 	AttendanceMarkStatus,
-	{ label: string; short: string; tone: string; ring: string }
+	{ label: string; short: string; tone: string; ring: string; dot: string }
 > = {
 	present: {
 		label: "Present",
 		short: "P",
 		tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
 		ring: "ring-emerald-500/40",
+		dot: "bg-emerald-500",
 	},
 	late: {
 		label: "Late",
 		short: "L",
 		tone: "bg-amber-500/15 text-amber-800 dark:text-amber-300",
 		ring: "ring-amber-500/40",
+		dot: "bg-amber-500",
 	},
 	absent: {
 		label: "Absent",
 		short: "A",
 		tone: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
 		ring: "ring-rose-500/40",
+		dot: "bg-rose-500",
 	},
 	excused: {
 		label: "Excused",
 		short: "E",
 		tone: "bg-sky-500/15 text-sky-800 dark:text-sky-300",
 		ring: "ring-sky-500/40",
+		dot: "bg-sky-500",
 	},
 	left_early: {
 		label: "Left early",
 		short: "LE",
 		tone: "bg-orange-500/15 text-orange-800 dark:text-orange-300",
 		ring: "ring-orange-500/40",
+		dot: "bg-orange-500",
 	},
 	unknown: {
 		label: "Unmarked",
 		short: "?",
 		tone: "bg-dashboard-surface-strong text-dashboard-text-muted",
 		ring: "ring-dashboard-border",
+		dot: "bg-dashboard-text-dim",
 	},
 };
 
