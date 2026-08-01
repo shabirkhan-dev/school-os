@@ -74,11 +74,11 @@ export const useSessionStore = create<SessionState>()(
 			hydrated: false,
 
 			tenants: [],
-			tenantsLoading: false,
+			tenantsLoading: true,
 			activeTenantId: null,
 			activeCampusId: null,
 			campuses: [],
-			campusesLoading: false,
+			campusesLoading: true,
 			tenantSwitching: false,
 			membershipLoading: false,
 
@@ -219,12 +219,19 @@ export const useSessionStore = create<SessionState>()(
 			merge: (persistedState, currentState) => {
 				const persisted = persistedState as Partial<SessionState> | undefined;
 				const merged = { ...currentState, ...persisted };
+				const hasSession = Boolean(merged.token);
 				return {
 					...merged,
 					// Session restored from sessionStorage — skip the loading flash.
 					// The background refresh will silently validate/rotate the token.
 					hydrated: true,
 					authLoading: merged.token ? false : currentState.authLoading,
+					// A restored session still has to re-fetch tenants/campuses. Flag them as
+					// loading so tenant/campus guards (e.g. TenantOnboardingGate) wait for the
+					// real lists instead of redirecting on the empty pre-fetch state that exists
+					// between rehydration and SessionProvider's effects settling.
+					tenantsLoading: hasSession || merged.tenantsLoading,
+					campusesLoading: hasSession || merged.campusesLoading,
 				};
 			},
 		},

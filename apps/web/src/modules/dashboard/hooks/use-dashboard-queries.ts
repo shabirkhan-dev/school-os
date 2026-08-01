@@ -19,26 +19,27 @@ type DashboardMetricsOptions = {
 
 export function useDashboardMetricsQuery(enabled = true, options?: DashboardMetricsOptions) {
 	const { token } = useAuth();
-	const { activeTenant, campuses } = useTenantContext();
+	const { activeTenant, activeCampus, campuses } = useTenantContext();
 	const tenantId = activeTenant?.id ?? null;
+	const campusId = activeCampus?.id ?? null;
 	const schoolPulse = options?.schoolPulse ?? false;
 
 	const pulseQuery = useSchoolDayPulseQuery(tenantId, enabled && schoolPulse);
 
 	const yearsQuery = useAcademicYearsQuery(tenantId, enabled);
 	const classesQuery = useClassesQuery(tenantId, enabled);
-	const sectionsQuery = useSectionsQuery(tenantId, null, enabled);
+	const sectionsQuery = useSectionsQuery(tenantId, campusId, enabled);
 	const teachersQuery = useTeachersQuery(tenantId, enabled);
 	const membersQuery = useMembersQuery(tenantId, enabled);
 
 	const [studentsQuery, enrollmentsQuery] = useQueries({
 		queries: [
 			{
-				queryKey: ["dashboard", tenantId, "students"],
+				queryKey: ["dashboard", tenantId, campusId, "students"],
 				queryFn: () => {
 					if (!tenantId) throw new Error("Tenant id required");
 					return studentsService
-						.list(requireToken(token), tenantId)
+						.list(requireToken(token), tenantId, campusId ? { campusId } : undefined)
 						.then((response) => response.students);
 				},
 				enabled: enabled && Boolean(token && tenantId),
