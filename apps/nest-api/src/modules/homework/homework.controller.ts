@@ -6,6 +6,7 @@ import {
 	ParseUUIDPipe,
 	Patch,
 	Post,
+	Put,
 	Query,
 	UseGuards,
 } from '@nestjs/common';
@@ -26,13 +27,18 @@ import {
 	UpdateHomeworkDto,
 } from './homework.dto';
 import { HomeworkService } from './homework.service';
+import { BulkUpdateSubmissionsDto, SubmitHomeworkDto } from './homework-submissions.dto';
+import { HomeworkSubmissionsService } from './homework-submissions.service';
 
 @ApiTags('Homework')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, TenantGuard, PermissionsGuard)
 @Controller({ path: 'tenants/:tenantId/homework', version: '1' })
 export class HomeworkController {
-	constructor(private readonly homework: HomeworkService) {}
+	constructor(
+		private readonly homework: HomeworkService,
+		private readonly submissions: HomeworkSubmissionsService,
+	) {}
 
 	@Get()
 	@RequirePermissions(PermissionCodes.HOMEWORK_READ)
@@ -77,5 +83,41 @@ export class HomeworkController {
 		@Body() body: UpdateHomeworkDto,
 	) {
 		return this.homework.update(user.sub, tenantId, homeworkId, body);
+	}
+
+	@Get(':homeworkId/submissions')
+	@RequirePermissions(PermissionCodes.HOMEWORK_READ)
+	@ApiOperation({ summary: 'List submissions for a homework assignment' })
+	listSubmissions(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Param('homeworkId', new ParseUUIDPipe({ version: '4' })) homeworkId: string,
+	) {
+		return this.submissions.getSubmissions(user.sub, tenantId, homeworkId);
+	}
+
+	@Put(':homeworkId/submissions')
+	@RequirePermissions(PermissionCodes.HOMEWORK_WRITE)
+	@ApiOperation({ summary: 'Bulk update submission statuses and grades' })
+	bulkUpdateSubmissions(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Param('homeworkId', new ParseUUIDPipe({ version: '4' })) homeworkId: string,
+		@Body(new ZodValidationPipe(BulkUpdateSubmissionsDto.schema)) body: BulkUpdateSubmissionsDto,
+	) {
+		return this.submissions.bulkUpdateSubmissions(user.sub, tenantId, homeworkId, body.submissions);
+	}
+
+	@Post(':homeworkId/submissions/:studentId/submit')
+	@RequirePermissions(PermissionCodes.HOMEWORK_WRITE)
+	@ApiOperation({ summary: 'Mark a student submission as submitted' })
+	markSubmitted(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Param('homeworkId', new ParseUUIDPipe({ version: '4' })) homeworkId: string,
+		@Param('studentId', new ParseUUIDPipe({ version: '4' })) studentId: string,
+		@Body(new ZodValidationPipe(SubmitHomeworkDto.schema)) body: SubmitHomeworkDto,
+	) {
+		return this.submissions.markSubmitted(user.sub, tenantId, homeworkId, studentId, body);
 	}
 }
