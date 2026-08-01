@@ -20,6 +20,7 @@ import { MembersModule } from '@/modules/members/members.module';
 import { NavigationModule } from '@/modules/navigation/navigation.module';
 import { NotificationsModule } from '@/modules/notifications/notifications.module';
 import { ProfilesModule } from '@/modules/profiles/profiles.module';
+import { ReportsModule } from '@/modules/reports/reports.module';
 import { StaffModule } from '@/modules/staff/staff.module';
 import { StudentsModule } from '@/modules/students/students.module';
 import { TenantsModule } from '@/modules/tenants/tenants.module';
@@ -45,6 +46,7 @@ import { UsersModule } from '@/modules/users/users.module';
 		HomeworkModule,
 		AssessmentsModule,
 		GradebookModule,
+		ReportsModule,
 		MembersModule,
 		NavigationModule,
 		StaffModule,
