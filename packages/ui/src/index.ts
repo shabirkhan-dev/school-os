@@ -67,6 +67,7 @@ export {
 	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from "./components/dropdown-menu";
+export { EmptyState, type EmptyStateProps } from "./components/empty-state";
 export {
 	Field,
 	FieldDescription,

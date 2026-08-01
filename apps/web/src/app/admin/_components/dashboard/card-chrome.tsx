@@ -3,12 +3,7 @@
 import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@school-os/ui/components/button";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@school-os/ui/components/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@school-os/ui/components/tooltip";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -43,25 +38,23 @@ export function DashboardCardHeader({
 						{title}
 					</h2>
 					{info ? (
-						<TooltipProvider delay={200}>
-							<Tooltip>
-								<TooltipTrigger
-									render={
-										<Button
-											variant="ghost"
-											size="icon"
-											aria-label={`About ${title}`}
-											className="size-auto rounded-md p-0 text-dashboard-text-faint hover:bg-transparent hover:text-dashboard-text-muted"
-										/>
-									}
-								>
-									<HugeiconsIcon icon={InformationCircleIcon} size={13} strokeWidth={1.8} />
-								</TooltipTrigger>
-								<TooltipContent side="top" className="max-w-[240px]">
-									{info}
-								</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
+						<Tooltip>
+							<TooltipTrigger
+								render={
+									<Button
+										variant="ghost"
+										size="icon"
+										aria-label={`About ${title}`}
+										className="size-auto rounded-md p-0 text-dashboard-text-faint hover:bg-transparent hover:text-dashboard-text-muted"
+									/>
+								}
+							>
+								<HugeiconsIcon icon={InformationCircleIcon} size={13} strokeWidth={1.8} />
+							</TooltipTrigger>
+							<TooltipContent side="top" className="max-w-[240px]">
+								{info}
+							</TooltipContent>
+						</Tooltip>
 					) : null}
 				</div>
 				{description ? (

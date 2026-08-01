@@ -11,4 +11,6 @@ export const homeworkQueryKeys = {
 		] as const,
 	detail: (tenantId: string, homeworkId: string) =>
 		["homework", tenantId, "detail", homeworkId] as const,
+	submissions: (tenantId: string, homeworkId: string) =>
+		["homework", tenantId, "submissions", homeworkId] as const,
 };

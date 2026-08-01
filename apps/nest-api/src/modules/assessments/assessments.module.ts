@@ -9,6 +9,7 @@ import { TenantsModule } from '@/modules/tenants/tenants.module';
 import { AssessmentsController } from './assessments.controller';
 import { AssessmentsRepository } from './assessments.repository';
 import { AssessmentsService } from './assessments.service';
+import { StudentGradesController } from './student-grades.controller';
 
 @Module({
 	imports: [
@@ -19,7 +20,7 @@ import { AssessmentsService } from './assessments.service';
 		StaffModule,
 		StudentsModule,
 	],
-	controllers: [AssessmentsController],
+	controllers: [AssessmentsController, StudentGradesController],
 	providers: [AssessmentsRepository, AssessmentsService],
 	exports: [AssessmentsService, AssessmentsRepository],
 })

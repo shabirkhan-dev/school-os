@@ -2,6 +2,7 @@
 
 import { MotionProvider } from "@school-os/ui/components/motion-provider";
 import { ToastProvider } from "@school-os/ui/components/toaster";
+import { TooltipProvider } from "@school-os/ui/components/tooltip";
 import type { ReactNode } from "react";
 import { ThemeProvider } from "@/components/theme";
 import { AuthProvider } from "@/modules/auth/context";
@@ -13,7 +14,10 @@ export function Providers({ children }: { children: ReactNode }) {
 			<MotionProvider>
 				<QueryProvider>
 					<AuthProvider>
-						<ToastProvider>{children}</ToastProvider>
+						<ToastProvider>
+							{/* Global tooltip defaults; no per-component providers needed. */}
+							<TooltipProvider delay={120}>{children}</TooltipProvider>
+						</ToastProvider>
 					</AuthProvider>
 				</QueryProvider>
 			</MotionProvider>

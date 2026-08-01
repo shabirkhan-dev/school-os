@@ -6,11 +6,15 @@ import { Alert, AlertDescription } from "@school-os/ui/components/alert";
 import { Badge } from "@school-os/ui/components/badge";
 import { Button } from "@school-os/ui/components/button";
 import { DatePicker } from "@school-os/ui/components/date-picker";
+import { EmptyState } from "@school-os/ui/components/empty-state";
 import { Field, FieldGroup, FieldLabel } from "@school-os/ui/components/field";
 import { SelectField } from "@school-os/ui/components/select-field";
+import { Skeleton } from "@school-os/ui/components/skeleton";
 import { Spinner } from "@school-os/ui/components/spinner";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { EASE_OUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
 import { useClassesQuery, useSectionsQuery } from "@/modules/academic";
 import { formatSectionLabel } from "@/modules/academic/utils/format-section-label";
@@ -43,28 +47,173 @@ import { AttendanceRosterGrid } from "./attendance-roster-grid";
 import { AttendanceSmartToolbar } from "./attendance-smart-toolbar";
 import { AttendanceSummaryStrip } from "./attendance-summary-strip";
 
-/** Lightweight skeleton that matches the roster card layout to prevent layout shift. */
-function RosterSkeleton() {
+/** Layout-matched skeleton for the session form card. */
+function SessionFormSkeleton() {
 	return (
-		<div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3" aria-hidden>
-			{["a", "b", "c", "d", "e", "f"].map((id) => (
-				<div
-					key={id}
-					className="flex animate-pulse items-center gap-3 rounded-[14px] border border-dashboard-border bg-dashboard-surface px-3 py-3"
-				>
-					<span className="size-10 shrink-0 rounded-xl bg-dashboard-surface-strong" />
-					<span className="min-w-0 flex-1 space-y-1.5">
-						<span className="block h-3 w-3/4 rounded bg-dashboard-surface-strong" />
-						<span className="block h-2.5 w-1/2 rounded bg-dashboard-surface-strong" />
-					</span>
-					<span className="h-5 w-12 shrink-0 rounded-full bg-dashboard-surface-strong" />
+		<div className="rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4 sm:p-5">
+			<div className="mb-4 flex items-center gap-2">
+				<Skeleton className="size-4 rounded" />
+				<Skeleton className="h-4 w-28 rounded-md" />
+				<Skeleton className="h-5 w-32 rounded-full" />
+			</div>
+			<div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto]">
+				<div className="space-y-1.5">
+					<Skeleton className="h-3 w-14 rounded" />
+					<Skeleton className="h-9 w-full rounded-lg" />
 				</div>
-			))}
+				<div className="space-y-1.5">
+					<Skeleton className="h-3 w-10 rounded" />
+					<Skeleton className="h-9 w-full rounded-lg" />
+				</div>
+				<div className="flex items-end">
+					<Skeleton className="h-9 w-32 rounded-lg" />
+				</div>
+			</div>
+			<Skeleton className="mt-4 h-12 w-full rounded-lg" />
 		</div>
 	);
 }
 
+/** Layout-matched skeleton for the live summary strip. */
+function SummaryStripSkeleton() {
+	return (
+		<div className="rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4 sm:p-5">
+			<div className="flex items-center justify-between gap-3">
+				<div className="space-y-1.5">
+					<Skeleton className="h-3.5 w-24 rounded" />
+					<Skeleton className="h-3 w-44 rounded" />
+				</div>
+				<Skeleton className="hidden h-8 w-[160px] rounded-md sm:block" />
+			</div>
+			<div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
+				{["sk-1", "sk-2", "sk-3", "sk-4", "sk-5", "sk-6"].map((skKey) => (
+					<div
+						key={skKey}
+						className="space-y-1.5 rounded-[12px] border border-dashboard-border bg-dashboard-surface px-3 py-2.5"
+					>
+						<Skeleton className="h-2.5 w-12 rounded" />
+						<Skeleton className="h-5 w-8 rounded" />
+					</div>
+				))}
+			</div>
+			<Skeleton className="mt-3 h-1.5 w-full rounded-full" />
+		</div>
+	);
+}
+
+/** Layout-matched skeleton for the toolbar + roster card. */
+function RosterSkeleton() {
+	return (
+		<div aria-hidden>
+			<div className="flex flex-wrap items-center gap-2">
+				<Skeleton className="h-9 min-w-[220px] flex-1 rounded-lg" />
+				<Skeleton className="h-8 w-44 rounded-lg" />
+				<Skeleton className="h-8 w-28 rounded-lg" />
+				<Skeleton className="h-8 w-36 rounded-lg" />
+				<Skeleton className="h-8 w-32 rounded-lg" />
+			</div>
+			<Skeleton className="mt-4 h-3 w-72 rounded" />
+			<div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+				{["sk-a", "sk-b", "sk-c", "sk-d", "sk-e", "sk-f"].map((skKey) => (
+					<div
+						key={skKey}
+						className="flex items-center gap-3 rounded-[14px] border border-dashboard-border bg-dashboard-surface px-3 py-3"
+					>
+						<Skeleton className="size-10 shrink-0 rounded-xl" />
+						<div className="min-w-0 flex-1 space-y-1.5">
+							<Skeleton className="h-3 w-3/4 rounded" />
+							<Skeleton className="h-2.5 w-1/2 rounded" />
+						</div>
+						<Skeleton className="h-5 w-12 shrink-0 rounded-full" />
+					</div>
+				))}
+			</div>
+		</div>
+	);
+}
+
+type SaveBarProps = {
+	markedCount: number;
+	totalCount: number;
+	unsavedCount: number;
+	savePending: boolean;
+	confirmPending: boolean;
+	onSave: () => void;
+	onConfirmAllPresent: () => void;
+};
+
+/** Sticky bottom action bar with entrance animation and a marked-progress meter. */
+function AttendanceSaveBar({
+	markedCount,
+	totalCount,
+	unsavedCount,
+	savePending,
+	confirmPending,
+	onSave,
+	onConfirmAllPresent,
+}: SaveBarProps) {
+	const reduce = useReducedMotion();
+	const progress = totalCount > 0 ? Math.round((markedCount / totalCount) * 100) : 0;
+
+	return (
+		<motion.div
+			initial={reduce ? false : { opacity: 0, y: 16 }}
+			animate={{ opacity: 1, y: 0 }}
+			transition={{ duration: 0.3, ease: EASE_OUT }}
+			className="sticky bottom-4 z-10 rounded-[14px] border border-dashboard-border bg-dashboard-surface/95 px-4 py-3 shadow-lg backdrop-blur-sm"
+		>
+			<div className="flex flex-wrap items-center justify-between gap-3">
+				<div className="min-w-0">
+					<div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-dashboard-text-secondary">
+						<span className="flex items-center gap-1.5">
+							<span
+								aria-hidden
+								className={cn(
+									"size-2 rounded-full transition-colors duration-200",
+									unsavedCount > 0 ? "bg-amber-500" : "bg-dashboard-text-faint",
+								)}
+							/>
+							<span
+								className={cn(
+									"font-semibold tabular-nums transition-colors duration-200",
+									unsavedCount > 0
+										? "text-amber-600 dark:text-amber-400"
+										: "text-dashboard-text-primary",
+								)}
+							>
+								{unsavedCount}
+							</span>
+							unsaved
+						</span>
+						<span className="font-medium tabular-nums text-dashboard-text-primary">
+							{markedCount}/{totalCount} marked
+						</span>
+						<span className="hidden text-dashboard-text-muted sm:inline">
+							{totalCount} enrolled
+						</span>
+					</div>
+					<div className="mt-1.5 h-1 w-44 overflow-hidden rounded-full bg-dashboard-surface-strong sm:w-56">
+						<div
+							className="h-full rounded-full bg-emerald-500 transition-[width] duration-300"
+							style={{ width: `${progress}%` }}
+						/>
+					</div>
+				</div>
+				<div className="flex items-center gap-2">
+					<Button type="button" variant="outline" onClick={onSave} disabled={savePending}>
+						{savePending ? <Spinner className="size-4" /> : "Save changes"}
+					</Button>
+					<Button type="button" onClick={onConfirmAllPresent} disabled={confirmPending}>
+						{confirmPending ? <Spinner className="size-4" /> : "Confirm all present"}
+					</Button>
+				</div>
+			</div>
+		</motion.div>
+	);
+}
+
 export function AttendancePage() {
+	const reduce = useReducedMotion();
 	const searchParams = useSearchParams();
 	const initialSectionId = searchParams.get("sectionId") ?? "";
 	const initialSessionDate = searchParams.get("sessionDate") ?? "";
@@ -333,10 +482,12 @@ export function AttendancePage() {
 		);
 	}
 
-	if (permissionsLoading) {
+	if (permissionsLoading || (isTeacherScoped && myProfileQuery.isLoading)) {
 		return (
-			<div className="flex min-h-[240px] items-center justify-center">
-				<Spinner className="size-6" />
+			<div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-6 sm:px-6">
+				<SessionFormSkeleton />
+				<SummaryStripSkeleton />
+				<SessionFormSkeleton />
 			</div>
 		);
 	}
@@ -346,14 +497,6 @@ export function AttendancePage() {
 			<Alert>
 				<AlertDescription>You do not have permission to view attendance.</AlertDescription>
 			</Alert>
-		);
-	}
-
-	if (isTeacherScoped && myProfileQuery.isLoading) {
-		return (
-			<div className="flex min-h-[240px] items-center justify-center">
-				<Spinner className="size-6" />
-			</div>
 		);
 	}
 
@@ -538,15 +681,25 @@ export function AttendancePage() {
 
 			{sessionLoaded ? (
 				<div className="space-y-4">
-					<div className="rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4 sm:p-5">
+					<motion.div
+						initial={reduce ? false : { opacity: 0, y: 10 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.35, ease: EASE_OUT }}
+						className="rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4 sm:p-5"
+					>
 						<AttendanceSummaryStrip
 							summary={liveSummary}
 							activeFilter={statusFilter}
 							onFilterChange={setStatusFilter}
 						/>
-					</div>
+					</motion.div>
 
-					<div className="rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4 sm:p-5">
+					<motion.div
+						initial={reduce ? false : { opacity: 0, y: 10 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.35, ease: EASE_OUT, delay: 0.06 }}
+						className="rounded-[14px] border border-dashboard-border bg-dashboard-surface p-4 sm:p-5"
+					>
 						<AttendanceSmartToolbar
 							search={search}
 							onSearchChange={setSearch}
@@ -559,16 +712,30 @@ export function AttendancePage() {
 							canMark={canMarkThisSection}
 						/>
 
-						{scanMode && canMarkThisSection ? (
-							<div className="mt-4">
-								<AttendanceScannerPanel
-									onDecode={handleScanDecode}
-									lastResult={lastScanResult}
-									markedCount={liveSummary.present + liveSummary.late}
-									totalCount={rosterIds.length}
-								/>
-							</div>
-						) : null}
+						<AnimatePresence initial={false}>
+							{scanMode && canMarkThisSection ? (
+								<motion.div
+									key="scanner-panel"
+									initial={false}
+									animate={reduce ? undefined : { opacity: 1, height: "auto" }}
+									exit={
+										reduce
+											? undefined
+											: { opacity: 0, height: 0, transition: { duration: 0.2, ease: EASE_OUT } }
+									}
+									className="overflow-hidden"
+								>
+									<div className="mt-4">
+										<AttendanceScannerPanel
+											onDecode={handleScanDecode}
+											lastResult={lastScanResult}
+											markedCount={liveSummary.present + liveSummary.late}
+											totalCount={rosterIds.length}
+										/>
+									</div>
+								</motion.div>
+							) : null}
+						</AnimatePresence>
 
 						<div className="relative mt-4">
 							{isSwitchingSession ? (
@@ -613,47 +780,45 @@ export function AttendancePage() {
 								)}
 							</div>
 						</div>
-					</div>
+					</motion.div>
 
 					{canMarkThisSection && rosterStudents.length > 0 ? (
-						<div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-dashboard-border bg-dashboard-surface/95 px-4 py-3 shadow-lg backdrop-blur-sm">
-							<p className="text-[12px] text-dashboard-text-secondary">
-								<span className="font-medium tabular-nums text-dashboard-text-primary">
-									{unsavedCount}
-								</span>{" "}
-								unsaved ·{" "}
-								<span className="font-medium tabular-nums text-dashboard-text-primary">
-									{rosterIds.length}
-								</span>{" "}
-								enrolled ·{" "}
-								<span className="font-medium text-emerald-600 dark:text-emerald-400">
-									{liveSummary.present + liveSummary.late}
-								</span>{" "}
-								accounted
-							</p>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => void handleSaveMarks()}
-								disabled={markAttendance.isPending}
-							>
-								{markAttendance.isPending ? <Spinner className="size-4" /> : "Save changes"}
-							</Button>
-							<Button
-								type="button"
-								onClick={() => void handleConfirmAllPresentSave()}
-								disabled={confirmAllPresent.isPending}
-							>
-								{confirmAllPresent.isPending ? (
-									<Spinner className="size-4" />
-								) : (
-									"Confirm all present"
-								)}
-							</Button>
-						</div>
+						<AttendanceSaveBar
+							markedCount={liveSummary.present + liveSummary.late}
+							totalCount={rosterIds.length}
+							unsavedCount={unsavedCount}
+							savePending={markAttendance.isPending}
+							confirmPending={confirmAllPresent.isPending}
+							onSave={() => void handleSaveMarks()}
+							onConfirmAllPresent={() => void handleConfirmAllPresentSave()}
+						/>
 					) : null}
 				</div>
-			) : null}
+			) : (
+				<motion.div
+					initial={reduce ? false : { opacity: 0, y: 10 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ duration: 0.35, ease: EASE_OUT }}
+				>
+					{selectableSections.length === 0 ? (
+						<EmptyState
+							icon={<HugeiconsIcon icon={Calendar03Icon} size={26} strokeWidth={1.8} />}
+							iconClassName="bg-dashboard-accent-soft text-dashboard-accent"
+							title="No sections available"
+							description="No sections are available in this organization yet. Once an administrator creates classes and sections, you can mark attendance here."
+							className="rounded-[14px] border-dashboard-border-strong bg-dashboard-surface"
+						/>
+					) : (
+						<EmptyState
+							icon={<HugeiconsIcon icon={ClipboardIcon} size={26} strokeWidth={1.8} />}
+							iconClassName="bg-dashboard-accent-soft text-dashboard-accent"
+							title="Pick a section to start"
+							description="Choose a section and date above — the roster loads automatically with smart defaults, so you can mark everyone in under two minutes."
+							className="rounded-[14px] border-dashboard-border-strong bg-dashboard-surface"
+						/>
+					)}
+				</motion.div>
+			)}
 		</div>
 	);
 }

@@ -5,6 +5,10 @@ import type {
 	HomeworkDetail,
 	UpdateHomeworkInput,
 } from "../types/homework.types";
+import type {
+	BulkUpdateSubmissionsInput,
+	HomeworkSubmissionsResponse,
+} from "../types/homework-submissions.types";
 
 export const homeworkService = {
 	list: (
@@ -33,6 +37,22 @@ export const homeworkService = {
 	update: (accessToken: string, tenantId: string, homeworkId: string, input: UpdateHomeworkInput) =>
 		apiClient.patch<{ assignment: HomeworkDetail }>(
 			`/tenants/${tenantId}/homework/${homeworkId}`,
+			input,
+			{ accessToken },
+		),
+	listSubmissions: (accessToken: string, tenantId: string, homeworkId: string) =>
+		apiClient.get<HomeworkSubmissionsResponse>(
+			`/tenants/${tenantId}/homework/${homeworkId}/submissions`,
+			{ accessToken },
+		),
+	bulkUpdateSubmissions: (
+		accessToken: string,
+		tenantId: string,
+		homeworkId: string,
+		input: BulkUpdateSubmissionsInput,
+	) =>
+		apiClient.put<HomeworkSubmissionsResponse>(
+			`/tenants/${tenantId}/homework/${homeworkId}/submissions`,
 			input,
 			{ accessToken },
 		),

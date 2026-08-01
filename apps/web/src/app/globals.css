@@ -284,6 +284,22 @@ html[data-beui-vt="polygon"]::view-transition-new(root) {
 }
 
 /*
+ * One-shot pulse ring for roster cards when a student is marked via scan.
+ * Rendered as an absolutely-positioned sibling ring that expands and fades;
+ * the [data-animations="off"] kill-switch below zeroes its duration.
+ */
+@keyframes attendance-scan-pulse {
+	0% {
+		opacity: 0.9;
+		transform: scale(0.98);
+	}
+	100% {
+		opacity: 0;
+		transform: scale(1.03);
+	}
+}
+
+/*
  * Global animation kill-switch, driven by <MotionProvider data-animations="off">.
  * When animations are disabled we suppress every CSS animation and transition
  * inside the provider tree (tw-animate-css keyframes, marquee, pulses, etc.).

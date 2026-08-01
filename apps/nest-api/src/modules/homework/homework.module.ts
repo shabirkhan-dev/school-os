@@ -10,6 +10,8 @@ import { TenantsModule } from '@/modules/tenants/tenants.module';
 import { HomeworkController } from './homework.controller';
 import { HomeworkRepository } from './homework.repository';
 import { HomeworkService } from './homework.service';
+import { HomeworkSubmissionsRepository } from './homework-submissions.repository';
+import { HomeworkSubmissionsService } from './homework-submissions.service';
 
 @Module({
 	imports: [
@@ -22,7 +24,12 @@ import { HomeworkService } from './homework.service';
 		StudentsModule,
 	],
 	controllers: [HomeworkController],
-	providers: [HomeworkRepository, HomeworkService],
-	exports: [HomeworkService, HomeworkRepository],
+	providers: [
+		HomeworkRepository,
+		HomeworkService,
+		HomeworkSubmissionsRepository,
+		HomeworkSubmissionsService,
+	],
+	exports: [HomeworkService, HomeworkRepository, HomeworkSubmissionsService],
 })
 export class HomeworkModule {}
