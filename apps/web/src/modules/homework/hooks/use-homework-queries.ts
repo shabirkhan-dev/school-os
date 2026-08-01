@@ -1,11 +1,15 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { requireToken } from "@/lib/api/require-token";
 import { useAuth } from "@/modules/auth/context/auth-context";
 import { homeworkQueryKeys } from "../queries/homework-query-keys";
 import { homeworkService } from "../services/homework.service";
 import type { CreateHomeworkInput, UpdateHomeworkInput } from "../types/homework.types";
+import type {
+	BulkUpdateSubmissionsInput,
+	HomeworkSubmissionsResponse,
+} from "../types/homework-submissions.types";
 
 export function useHomeworkListQuery(
 	tenantId: string | null,
@@ -70,6 +74,38 @@ export function useUpdateHomeworkMutation(tenantId: string) {
 			await queryClient.invalidateQueries({ queryKey: homeworkQueryKeys.all(tenantId) });
 			await queryClient.invalidateQueries({
 				queryKey: homeworkQueryKeys.detail(tenantId, variables.homeworkId),
+			});
+		},
+	});
+}
+
+export function useHomeworkSubmissionsQuery(
+	tenantId: string | null,
+	homeworkId: string,
+	enabled = true,
+) {
+	const { token } = useAuth();
+	return useQuery({
+		queryKey: homeworkQueryKeys.submissions(tenantId ?? "", homeworkId),
+		queryFn: () => {
+			if (!tenantId) throw new Error("Tenant required");
+			return homeworkService.listSubmissions(requireToken(token), tenantId, homeworkId);
+		},
+		placeholderData: keepPreviousData,
+		enabled: enabled && Boolean(token && tenantId && homeworkId),
+	});
+}
+
+export function useBulkUpdateSubmissionsMutation(tenantId: string, homeworkId: string) {
+	const { token } = useAuth();
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (input: BulkUpdateSubmissionsInput) =>
+			homeworkService.bulkUpdateSubmissions(requireToken(token), tenantId, homeworkId, input),
+		onSuccess: async (data: HomeworkSubmissionsResponse) => {
+			queryClient.setQueryData(homeworkQueryKeys.submissions(tenantId, homeworkId), data);
+			await queryClient.invalidateQueries({
+				queryKey: homeworkQueryKeys.submissions(tenantId, homeworkId),
 			});
 		},
 	});
