@@ -241,4 +241,28 @@ export class AssessmentsRepository {
 			);
 		});
 	}
+
+	async listResultsForStudent(tenantId: string, studentId: string) {
+		return this.database.db
+			.select({
+				result: assessmentResults,
+				assessment: assessments,
+				section: sections,
+				subject: subjects,
+			})
+			.from(assessmentResults)
+			.innerJoin(assessments, eq(assessmentResults.assessmentId, assessments.id))
+			.innerJoin(sectionSubjects, eq(assessments.sectionSubjectId, sectionSubjects.id))
+			.innerJoin(sections, eq(sectionSubjects.sectionId, sections.id))
+			.innerJoin(subjects, eq(sectionSubjects.subjectId, subjects.id))
+			.where(
+				and(
+					eq(assessmentResults.tenantId, tenantId),
+					eq(assessmentResults.studentId, studentId),
+					isNull(sections.deletedAt),
+					isNull(subjects.deletedAt),
+				),
+			)
+			.orderBy(desc(assessments.assessedOn));
+	}
 }

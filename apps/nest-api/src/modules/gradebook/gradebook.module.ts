@@ -6,10 +6,9 @@ import { MembershipsModule } from '@/modules/memberships/memberships.module';
 import { StaffModule } from '@/modules/staff/staff.module';
 import { StudentsModule } from '@/modules/students/students.module';
 import { TenantsModule } from '@/modules/tenants/tenants.module';
-import { AssessmentsController } from './assessments.controller';
-import { AssessmentsRepository } from './assessments.repository';
-import { AssessmentsService } from './assessments.service';
-import { StudentGradesController } from './student-grades.controller';
+import { GradebookController } from './gradebook.controller';
+import { GradebookRepository } from './gradebook.repository';
+import { GradebookService } from './gradebook.service';
 
 @Module({
 	imports: [
@@ -20,8 +19,8 @@ import { StudentGradesController } from './student-grades.controller';
 		StaffModule,
 		StudentsModule,
 	],
-	controllers: [AssessmentsController, StudentGradesController],
-	providers: [AssessmentsRepository, AssessmentsService],
-	exports: [AssessmentsService, AssessmentsRepository],
+	controllers: [GradebookController],
+	providers: [GradebookRepository, GradebookService],
+	exports: [GradebookService],
 })
-export class AssessmentsModule {}
+export class GradebookModule {}

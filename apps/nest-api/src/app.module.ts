@@ -12,6 +12,7 @@ import { AuthModule } from '@/modules/auth/auth.module';
 import { AuthorizationModule } from '@/modules/authorization/authorization.module';
 import { BillingModule } from '@/modules/billing/billing.module';
 import { CampusesModule } from '@/modules/campuses/campuses.module';
+import { GradebookModule } from '@/modules/gradebook/gradebook.module';
 import { GuardiansModule } from '@/modules/guardians/guardians.module';
 import { HealthModule } from '@/modules/health/health.module';
 import { HomeworkModule } from '@/modules/homework/homework.module';
@@ -43,6 +44,7 @@ import { UsersModule } from '@/modules/users/users.module';
 		NotificationsModule,
 		HomeworkModule,
 		AssessmentsModule,
+		GradebookModule,
 		MembersModule,
 		NavigationModule,
 		StaffModule,

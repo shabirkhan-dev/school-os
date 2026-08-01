@@ -293,6 +293,26 @@ export class AssessmentsService {
 		return this.buildDetailResponse(tenantId, row);
 	}
 
+	async getStudentGrades(userId: string, tenantId: string, studentId: string) {
+		await this.requireRead(userId, tenantId);
+		const rows = await this.assessments.listResultsForStudent(tenantId, studentId);
+
+		return {
+			grades: rows.map((row) => ({
+				assessmentId: row.assessment.id,
+				assessmentTitle: row.assessment.title,
+				assessmentType: row.assessment.type,
+				assessedOn: row.assessment.assessedOn,
+				maxScore: Number(row.assessment.maxScore),
+				sectionName: row.section.name,
+				subjectName: row.subject.name,
+				subjectCode: row.subject.code,
+				score: row.result.score != null ? Number(row.result.score) : null,
+				status: row.result.status,
+			})),
+		};
+	}
+
 	private async buildDetailResponse(
 		tenantId: string,
 		row: {
