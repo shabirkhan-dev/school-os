@@ -32,8 +32,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 	const setAuthLoading = useSessionStore((state) => state.setAuthLoading);
 	const setTenants = useSessionStore((state) => state.setTenants);
 	const setTenantsLoading = useSessionStore((state) => state.setTenantsLoading);
+	const setTenantsLoaded = useSessionStore((state) => state.setTenantsLoaded);
 	const setCampuses = useSessionStore((state) => state.setCampuses);
 	const setCampusesLoading = useSessionStore((state) => state.setCampusesLoading);
+	const setCampusesLoaded = useSessionStore((state) => state.setCampusesLoaded);
 	const setMembership = useSessionStore((state) => state.setMembership);
 	const setMembershipLoading = useSessionStore((state) => state.setMembershipLoading);
 	const setTenantSwitching = useSessionStore((state) => state.setTenantSwitching);
@@ -93,6 +95,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 		if (!token || !user) {
 			setTenants([]);
 			setTenantsLoading(false);
+			setTenantsLoaded(true);
 			return;
 		}
 
@@ -109,16 +112,29 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 				if (!cancelled) setTenants([]);
 			})
 			.finally(() => {
-				if (!cancelled) setTenantsLoading(false);
+				if (!cancelled) {
+					setTenantsLoading(false);
+					setTenantsLoaded(true);
+				}
 			});
 
 		return () => {
 			cancelled = true;
 		};
-	}, [setTenants, setTenantsLoading, syncActiveTenantFromList, token, user]);
+	}, [setTenants, setTenantsLoaded, setTenantsLoading, syncActiveTenantFromList, token, user]);
 
 	useEffect(() => {
-		if (!token || !activeTenantId) {
+		if (!token) {
+			setCampuses([]);
+			setCampusesLoading(false);
+			setCampusesLoaded(true);
+			return;
+		}
+
+		// No active tenant yet (e.g. transient window while the tenants fetch is
+		// syncing activeTenantId). Do NOT mark loaded here — wait for the tenant to
+		// resolve so the gate doesn't redirect on a premature empty-campus state.
+		if (!activeTenantId) {
 			setCampuses([]);
 			setCampusesLoading(false);
 			return;
@@ -137,13 +153,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 				if (!cancelled) setCampuses([]);
 			})
 			.finally(() => {
-				if (!cancelled) setCampusesLoading(false);
+				if (!cancelled) {
+					setCampusesLoading(false);
+					setCampusesLoaded(true);
+				}
 			});
 
 		return () => {
 			cancelled = true;
 		};
-	}, [activeTenantId, setCampuses, setCampusesLoading, syncActiveCampusFromList, token]);
+	}, [
+		activeTenantId,
+		setCampuses,
+		setCampusesLoaded,
+		setCampusesLoading,
+		syncActiveCampusFromList,
+		token,
+	]);
 
 	useEffect(() => {
 		if (!token || !activeTenantId) {

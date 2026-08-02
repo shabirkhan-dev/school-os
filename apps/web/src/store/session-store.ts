@@ -25,10 +25,14 @@ type SessionState = {
 
 	tenants: Tenant[];
 	tenantsLoading: boolean;
+	/** True once the tenants list has been fetched at least once for this session. */
+	tenantsLoaded: boolean;
 	activeTenantId: string | null;
 	activeCampusId: string | null;
 	campuses: Campus[];
 	campusesLoading: boolean;
+	/** True once the campuses list has been fetched at least once for the active tenant. */
+	campusesLoaded: boolean;
 	tenantSwitching: boolean;
 	membershipLoading: boolean;
 
@@ -41,8 +45,10 @@ type SessionState = {
 	setMembershipLoading: (loading: boolean) => void;
 	setTenants: (tenants: Tenant[]) => void;
 	setTenantsLoading: (loading: boolean) => void;
+	setTenantsLoaded: (loaded: boolean) => void;
 	setCampuses: (campuses: Campus[]) => void;
 	setCampusesLoading: (loading: boolean) => void;
+	setCampusesLoaded: (loaded: boolean) => void;
 	setTenantSwitching: (switching: boolean) => void;
 	setActiveTenantId: (tenantId: string) => void;
 	setActiveCampusId: (campusId: string) => void;
@@ -75,10 +81,12 @@ export const useSessionStore = create<SessionState>()(
 
 			tenants: [],
 			tenantsLoading: true,
+			tenantsLoaded: false,
 			activeTenantId: null,
 			activeCampusId: null,
 			campuses: [],
 			campusesLoading: true,
+			campusesLoaded: false,
 			tenantSwitching: false,
 			membershipLoading: false,
 
@@ -114,10 +122,12 @@ export const useSessionStore = create<SessionState>()(
 					authError: null,
 					tenants: [],
 					tenantsLoading: false,
+					tenantsLoaded: false,
 					activeTenantId: null,
 					activeCampusId: null,
 					campuses: [],
 					campusesLoading: false,
+					campusesLoaded: false,
 					tenantSwitching: false,
 					membershipLoading: false,
 				});
@@ -138,8 +148,10 @@ export const useSessionStore = create<SessionState>()(
 			setMembershipLoading: (membershipLoading) => set({ membershipLoading }),
 			setTenants: (tenants) => set({ tenants }),
 			setTenantsLoading: (tenantsLoading) => set({ tenantsLoading }),
+			setTenantsLoaded: (tenantsLoaded) => set({ tenantsLoaded }),
 			setCampuses: (campuses) => set({ campuses }),
 			setCampusesLoading: (campusesLoading) => set({ campusesLoading }),
+			setCampusesLoaded: (campusesLoaded) => set({ campusesLoaded }),
 			setTenantSwitching: (tenantSwitching) => set({ tenantSwitching }),
 
 			setActiveTenantId: (tenantId) => {
@@ -149,6 +161,7 @@ export const useSessionStore = create<SessionState>()(
 					activeTenantId: tenantId,
 					activeCampusId: null,
 					campuses: [],
+					campusesLoaded: false,
 					tenantSwitching: true,
 				});
 				writeStoredId(TENANT_STORAGE_KEY, tenantId);
@@ -177,7 +190,12 @@ export const useSessionStore = create<SessionState>()(
 					null;
 
 				if (nextTenantId !== activeTenantId) {
-					set({ activeTenantId: nextTenantId, activeCampusId: null, campuses: [] });
+					set({
+						activeTenantId: nextTenantId,
+						activeCampusId: null,
+						campuses: [],
+						campusesLoaded: false,
+					});
 					writeStoredId(TENANT_STORAGE_KEY, nextTenantId);
 					writeStoredId(CAMPUS_STORAGE_KEY, null);
 				}
@@ -232,6 +250,11 @@ export const useSessionStore = create<SessionState>()(
 					// between rehydration and SessionProvider's effects settling.
 					tenantsLoading: hasSession || merged.tenantsLoading,
 					campusesLoading: hasSession || merged.campusesLoading,
+					// `loaded` is never persisted: after a restore the lists are empty until the
+					// fetches complete, so guards must treat them as not-yet-loaded. This is the
+					// definitive signal the gate uses to avoid a premature redirect.
+					tenantsLoaded: false,
+					campusesLoaded: false,
 				};
 			},
 		},

@@ -10,15 +10,28 @@ const ONBOARDING_PREFIX = "/admin/onboarding";
 export function TenantOnboardingGate({ children }: { children: ReactNode }) {
 	const router = useRouter();
 	const pathname = usePathname();
-	const { tenants, tenantsLoading, campuses, campusesLoading, activeTenant } = useTenantContext();
+	const {
+		tenants,
+		tenantsLoading,
+		tenantsLoaded,
+		campuses,
+		campusesLoading,
+		campusesLoaded,
+		activeTenant,
+	} = useTenantContext();
 	const { can } = usePermissions();
 	const canCreateCampus = can(PermissionCodes.TENANT_CAMPUS_CREATE);
 
 	const onOnboarding = pathname.startsWith(ONBOARDING_PREFIX);
 	const onCampuses = pathname.includes("/campuses") || pathname.startsWith("/admin/tenants/");
 
+	// The lists are only trustworthy once their fetch has completed. Until then we
+	// must NOT redirect, otherwise a full-page load bounces to the campus page during
+	// the window where the arrays are still empty pre-fetch.
+	const listsReady = tenantsLoaded && (!activeTenant || campusesLoaded);
+
 	useEffect(() => {
-		if (tenantsLoading || campusesLoading) return;
+		if (tenantsLoading || campusesLoading || !listsReady) return;
 
 		if (tenants.length === 0 && !onOnboarding && !onCampuses) {
 			router.replace("/admin/onboarding/tenant");
@@ -50,6 +63,7 @@ export function TenantOnboardingGate({ children }: { children: ReactNode }) {
 		campuses.length,
 		campusesLoading,
 		canCreateCampus,
+		listsReady,
 		onCampuses,
 		onOnboarding,
 		router,
@@ -57,7 +71,7 @@ export function TenantOnboardingGate({ children }: { children: ReactNode }) {
 		tenantsLoading,
 	]);
 
-	if (tenantsLoading) {
+	if (tenantsLoading || !listsReady) {
 		return (
 			<div className="flex min-h-[40vh] items-center justify-center">
 				<Spinner className="size-6 text-dashboard-accent" />
