@@ -91,7 +91,7 @@ export function PixelGridChart({ months, highlightMonth, className }: Props) {
 	}, [months]);
 
 	const maxTotal = Math.max(...months.map((month) => month.total), 1);
-	const yTicks = [0, 0.2, 0.4, 0.6, 0.8, 1].map((level) => Math.round(maxTotal * level));
+	const yTickLevels = [0, 0.2, 0.4, 0.6, 0.8, 1];
 
 	const tip = monthTotals.get(activeMonth);
 	const COLS = cols.length;
@@ -109,10 +109,10 @@ export function PixelGridChart({ months, highlightMonth, className }: Props) {
 		<div className={cn("flex flex-col", className)}>
 			<div className="flex">
 				<div className="flex w-[68px] shrink-0 flex-col-reverse justify-between py-1">
-					{yTicks.map((tick) => (
-						<div key={tick} className="flex items-center gap-1.5 leading-none">
+					{yTickLevels.map((level) => (
+						<div key={level} className="flex items-center gap-1.5 leading-none">
 							<span className="w-7 text-end font-medium text-[10.5px] text-dashboard-text-muted">
-								{tick}
+								{Math.round(maxTotal * level)}
 							</span>
 							<span
 								aria-hidden
