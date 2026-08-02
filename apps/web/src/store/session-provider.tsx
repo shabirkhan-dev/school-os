@@ -26,6 +26,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 	const user = useSessionStore((state) => state.user);
 	const activeTenantId = useSessionStore((state) => state.activeTenantId);
 	const tenantContext = useSessionStore((state) => state.tenantContext);
+	const hydrated = useSessionStore((state) => state.hydrated);
 
 	const establishSession = useSessionStore((state) => state.establishSession);
 	const clearSession = useSessionStore((state) => state.clearSession);
@@ -92,6 +93,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 	}, [clearSession, refreshSession, tokenExpiresAt]);
 
 	useEffect(() => {
+		// Wait for persist rehydration before trusting the token, otherwise we read
+		// the pre-hydration null token and wrongly mark tenants as loaded-empty.
+		if (!hydrated) return;
+
 		if (!token || !user) {
 			setTenants([]);
 			setTenantsLoading(false);
@@ -121,9 +126,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 		return () => {
 			cancelled = true;
 		};
-	}, [setTenants, setTenantsLoaded, setTenantsLoading, syncActiveTenantFromList, token, user]);
+	}, [
+		hydrated,
+		setTenants,
+		setTenantsLoaded,
+		setTenantsLoading,
+		syncActiveTenantFromList,
+		token,
+		user,
+	]);
 
 	useEffect(() => {
+		if (!hydrated) return;
+
 		if (!token) {
 			setCampuses([]);
 			setCampusesLoading(false);
@@ -164,6 +179,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 		};
 	}, [
 		activeTenantId,
+		hydrated,
 		setCampuses,
 		setCampusesLoaded,
 		setCampusesLoading,

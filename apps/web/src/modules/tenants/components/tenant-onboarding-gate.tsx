@@ -4,6 +4,7 @@ import { Spinner } from "@school-os/ui/components/spinner";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
 import { PermissionCodes, usePermissions, useTenantContext } from "@/modules/tenants";
+import { useSessionStore } from "@/store";
 
 const ONBOARDING_PREFIX = "/admin/onboarding";
 
@@ -19,16 +20,16 @@ export function TenantOnboardingGate({ children }: { children: ReactNode }) {
 		campusesLoaded,
 		activeTenant,
 	} = useTenantContext();
+	const hydrated = useSessionStore((state) => state.hydrated);
 	const { can } = usePermissions();
 	const canCreateCampus = can(PermissionCodes.TENANT_CAMPUS_CREATE);
 
 	const onOnboarding = pathname.startsWith(ONBOARDING_PREFIX);
 	const onCampuses = pathname.includes("/campuses") || pathname.startsWith("/admin/tenants/");
 
-	// The lists are only trustworthy once their fetch has completed. Until then we
-	// must NOT redirect, otherwise a full-page load bounces to the campus page during
-	// the window where the arrays are still empty pre-fetch.
-	const listsReady = tenantsLoaded && (!activeTenant || campusesLoaded);
+	// Nothing is trustworthy until the persist middleware has rehydrated from
+	// sessionStorage. After that, the loaded flags tell us the fetches completed.
+	const listsReady = hydrated && tenantsLoaded && (!activeTenant || campusesLoaded);
 
 	useEffect(() => {
 		if (tenantsLoading || campusesLoading || !listsReady) return;
@@ -71,7 +72,7 @@ export function TenantOnboardingGate({ children }: { children: ReactNode }) {
 		tenantsLoading,
 	]);
 
-	if (tenantsLoading || !listsReady) {
+	if (!hydrated || tenantsLoading || !listsReady) {
 		return (
 			<div className="flex min-h-[40vh] items-center justify-center">
 				<Spinner className="size-6 text-dashboard-accent" />
