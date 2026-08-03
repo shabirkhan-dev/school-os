@@ -334,3 +334,5 @@ Also see [PROJECT.md](PROJECT.md), [DESIGN.md](DESIGN.md), [AGENTS.md](AGENTS.md
 
 Dual-licensed under **MIT** or **Apache-2.0**:
 [LICENSE-MIT](LICENSE-MIT), [LICENSE-Apache-2.0](LICENSE-Apache-2.0).
+
+Thanks ❤️ 
