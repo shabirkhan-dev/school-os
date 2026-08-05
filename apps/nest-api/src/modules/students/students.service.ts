@@ -39,21 +39,46 @@ export class StudentsService {
 	async listStudents(
 		userId: string,
 		tenantId: string,
-		filters?: { campusId?: string; status?: StudentRecord['status'] },
+		filters?: {
+			campusId?: string;
+			status?: StudentRecord['status'];
+			page?: number;
+			limit?: number;
+		},
 	) {
 		const membership = await this.requireRead(userId, tenantId);
 		if (filters?.campusId) {
 			await this.requireCampus(tenantId, filters.campusId);
 		}
 
+		const page = filters?.page ?? 1;
+		const limit = Math.min(Math.max(filters?.limit ?? 50, 1), 100);
+		const offset = (page - 1) * limit;
+
 		if (await this.isTeacherScopedMember(membership)) {
 			const sectionIds = await this.staff.listTeacherAssignedSectionIds(tenantId, membership.id);
-			const rows = await this.students.listStudentsInSections(tenantId, sectionIds, filters);
-			return { students: rows.map(toPublicStudent) };
+			const [rows, total] = await Promise.all([
+				this.students.listStudentsInSections(tenantId, sectionIds, {
+					...filters,
+					limit,
+					offset,
+				}),
+				this.students.countStudentsInSections(tenantId, sectionIds, filters),
+			]);
+			return {
+				students: rows.map(toPublicStudent),
+				pagination: { page, limit, total },
+			};
 		}
 
-		const rows = await this.students.listStudents(tenantId, filters);
-		return { students: rows.map(toPublicStudent) };
+		const [rows, total] = await Promise.all([
+			this.students.listStudents(tenantId, { ...filters, limit, offset }),
+			this.students.countStudents(tenantId, filters),
+		]);
+		return {
+			students: rows.map(toPublicStudent),
+			pagination: { page, limit, total },
+		};
 	}
 
 	async getStudent(userId: string, tenantId: string, studentId: string) {

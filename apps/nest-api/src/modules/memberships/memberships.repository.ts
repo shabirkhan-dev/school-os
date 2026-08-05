@@ -69,7 +69,11 @@ export class MembershipsRepository {
 		return rows.map((row) => row.tenantId);
 	}
 
-	async listMembersForTenant(tenantId: string) {
+	async listMembersForTenant(tenantId: string, includeSuspended = false) {
+		const conditions = [eq(memberships.tenantId, tenantId)];
+		if (!includeSuspended) {
+			conditions.push(eq(memberships.status, 'active'));
+		}
 		return this.database.db
 			.select({
 				membership: memberships,
@@ -82,7 +86,7 @@ export class MembershipsRepository {
 			})
 			.from(memberships)
 			.innerJoin(users, eq(memberships.userId, users.id))
-			.where(eq(memberships.tenantId, tenantId))
+			.where(and(...conditions))
 			.orderBy(asc(users.email));
 	}
 

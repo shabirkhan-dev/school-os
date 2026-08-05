@@ -19,6 +19,7 @@ describe('TenantsService', () => {
 	let membershipsRepository: {
 		listActiveTenantIdsForUser: ReturnType<typeof vi.fn>;
 		findActiveByTenantAndUser: ReturnType<typeof vi.fn>;
+		listRolesForMembership: ReturnType<typeof vi.fn>;
 	};
 
 	beforeEach(() => {
@@ -30,8 +31,9 @@ describe('TenantsService', () => {
 			update: vi.fn(),
 		};
 		membershipsRepository = {
-			listActiveTenantIdsForUser: vi.fn(),
+			listActiveTenantIdsForUser: vi.fn().mockResolvedValue([]),
 			findActiveByTenantAndUser: vi.fn(),
+			listRolesForMembership: vi.fn().mockResolvedValue([]),
 		};
 
 		service = new TenantsService(
@@ -42,6 +44,21 @@ describe('TenantsService', () => {
 				createMockPermissionsService(),
 			),
 		);
+	});
+
+	it('rejects tenant creation when the user already belongs to the max number of active organizations', async () => {
+		membershipsRepository.listActiveTenantIdsForUser.mockResolvedValue([
+			'tenant-1',
+			'tenant-2',
+			'tenant-3',
+			'tenant-4',
+			'tenant-5',
+		]);
+
+		await expect(service.create('user-1', { name: 'Sixth Org' })).rejects.toMatchObject({
+			response: { code: 'TENANT_LIMIT_REACHED' },
+		});
+		expect(tenantsRepository.createWithOwnerMembership).not.toHaveBeenCalled();
 	});
 
 	it('creates a tenant with a generated slug and owner membership', async () => {

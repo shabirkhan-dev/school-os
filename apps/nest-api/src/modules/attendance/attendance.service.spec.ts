@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AcademicRepository } from '@/modules/academic/academic.repository';
 import { createMockPermissionsService } from '@/modules/authorization/testing/mock-permissions.service';
+import { GuardiansRepository } from '@/modules/guardians/guardians.repository';
 import { MembershipsRepository } from '@/modules/memberships/memberships.repository';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { StaffRepository } from '@/modules/staff/staff.repository';
@@ -58,6 +59,9 @@ describe('AttendanceService', () => {
 		teacherHasSectionAccess: ReturnType<typeof vi.fn>;
 		teacherCanAccessStudent: ReturnType<typeof vi.fn>;
 	};
+	let guardiansRepository: {
+		listLinkedStudentsForMembership: ReturnType<typeof vi.fn>;
+	};
 	let membershipsRepository: {
 		findActiveByTenantAndUser: ReturnType<typeof vi.fn>;
 		listRolesForMembership: ReturnType<typeof vi.fn>;
@@ -83,6 +87,9 @@ describe('AttendanceService', () => {
 			teacherHasSectionAccess: vi.fn(),
 			teacherCanAccessStudent: vi.fn(),
 		};
+		guardiansRepository = {
+			listLinkedStudentsForMembership: vi.fn().mockResolvedValue([]),
+		};
 		membershipsRepository = {
 			findActiveByTenantAndUser: vi.fn(),
 			listRolesForMembership: vi.fn().mockResolvedValue([]),
@@ -92,6 +99,7 @@ describe('AttendanceService', () => {
 			attendanceRepository as unknown as AttendanceRepository,
 			academicRepository as unknown as AcademicRepository,
 			studentsRepository as unknown as StudentsRepository,
+			guardiansRepository as unknown as GuardiansRepository,
 			new MembershipsService(
 				membershipsRepository as unknown as MembershipsRepository,
 				createMockPermissionsService(),

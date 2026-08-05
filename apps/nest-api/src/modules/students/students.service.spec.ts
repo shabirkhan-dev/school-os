@@ -4,8 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AcademicRepository } from '@/modules/academic/academic.repository';
 import { createMockPermissionsService } from '@/modules/authorization/testing/mock-permissions.service';
 import { CampusesRepository } from '@/modules/campuses/campuses.repository';
+import { GuardiansRepository } from '@/modules/guardians/guardians.repository';
 import { MembershipsRepository } from '@/modules/memberships/memberships.repository';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
+import { StaffRepository } from '@/modules/staff/staff.repository';
 import { StudentsRepository } from './students.repository';
 import { StudentsService } from './students.service';
 
@@ -42,6 +44,9 @@ describe('StudentsService', () => {
 	let service: StudentsService;
 	let studentsRepository: {
 		listStudents: ReturnType<typeof vi.fn>;
+		countStudents: ReturnType<typeof vi.fn>;
+		listStudentsInSections: ReturnType<typeof vi.fn>;
+		countStudentsInSections: ReturnType<typeof vi.fn>;
 		findStudentById: ReturnType<typeof vi.fn>;
 		findStudentByCode: ReturnType<typeof vi.fn>;
 		createStudent: ReturnType<typeof vi.fn>;
@@ -59,11 +64,21 @@ describe('StudentsService', () => {
 	};
 	let membershipsRepository: {
 		findActiveByTenantAndUser: ReturnType<typeof vi.fn>;
+		listRolesForMembership: ReturnType<typeof vi.fn>;
+	};
+	let staffRepository: {
+		listTeacherAssignedSectionIds: ReturnType<typeof vi.fn>;
+	};
+	let guardiansRepository: {
+		listLinkedStudentsForMembership: ReturnType<typeof vi.fn>;
 	};
 
 	beforeEach(() => {
 		studentsRepository = {
 			listStudents: vi.fn(),
+			countStudents: vi.fn(),
+			listStudentsInSections: vi.fn(),
+			countStudentsInSections: vi.fn(),
 			findStudentById: vi.fn(),
 			findStudentByCode: vi.fn(),
 			createStudent: vi.fn(),
@@ -81,16 +96,26 @@ describe('StudentsService', () => {
 		};
 		membershipsRepository = {
 			findActiveByTenantAndUser: vi.fn(),
+			listRolesForMembership: vi.fn().mockResolvedValue([]),
+		};
+		staffRepository = {
+			listTeacherAssignedSectionIds: vi.fn().mockResolvedValue([]),
+		};
+		guardiansRepository = {
+			listLinkedStudentsForMembership: vi.fn().mockResolvedValue([]),
 		};
 
 		service = new StudentsService(
 			studentsRepository as unknown as StudentsRepository,
 			campusesRepository as unknown as CampusesRepository,
 			academicRepository as unknown as AcademicRepository,
+			guardiansRepository as unknown as GuardiansRepository,
 			new MembershipsService(
 				membershipsRepository as unknown as MembershipsRepository,
 				createMockPermissionsService(),
 			),
+			staffRepository as unknown as StaffRepository,
+			{} as never,
 		);
 	});
 
@@ -104,11 +129,16 @@ describe('StudentsService', () => {
 		});
 		campusesRepository.findByIdForTenant.mockResolvedValue({ id: 'campus-1' });
 		studentsRepository.listStudents.mockResolvedValue([studentRecord]);
+		// teacher-scoped path uses the section-based listing
+		studentsRepository.listStudentsInSections = vi.fn().mockResolvedValue([studentRecord]);
+		studentsRepository.countStudentsInSections = vi.fn().mockResolvedValue(1);
+		studentsRepository.countStudents = vi.fn().mockResolvedValue(1);
 
 		const result = await service.listStudents('user-1', 'tenant-1', { campusId: 'campus-1' });
 
 		expect(result.students).toHaveLength(1);
 		expect(result.students[0]?.studentCode).toBe('AKES-2026-001');
+		expect(result.pagination.total).toBe(1);
 	});
 
 	it('rejects student creation without write permission', async () => {

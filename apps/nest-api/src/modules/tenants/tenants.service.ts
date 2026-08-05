@@ -1,10 +1,18 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+	ConflictException,
+	ForbiddenException,
+	Injectable,
+	NotFoundException,
+} from '@nestjs/common';
 
 import { MembershipsRepository } from '@/modules/memberships/memberships.repository';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import type { CreateTenantInput, UpdateTenantInput } from './tenants.dto';
 import { TenantsRepository } from './tenants.repository';
 import { toPublicTenant } from './tenants.types';
+
+/** Maximum number of active tenants a single user can own/create. */
+const MAX_ACTIVE_TENANTS_PER_USER = 5;
 
 @Injectable()
 export class TenantsService {
@@ -15,6 +23,14 @@ export class TenantsService {
 	) {}
 
 	async create(userId: string, input: CreateTenantInput) {
+		const activeTenantIds = await this.memberships.listActiveTenantIdsForUser(userId);
+		if (activeTenantIds.length >= MAX_ACTIVE_TENANTS_PER_USER) {
+			throw new ForbiddenException({
+				code: 'TENANT_LIMIT_REACHED',
+				message: `You can belong to at most ${MAX_ACTIVE_TENANTS_PER_USER} active organizations`,
+			});
+		}
+
 		const slug = await this.resolveUniqueSlug(input.name, input.slug);
 		const tenant = await this.tenants.createWithOwnerMembership({
 			tenant: {

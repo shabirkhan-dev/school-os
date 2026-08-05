@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { AcademicModule } from '@/modules/academic/academic.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { PermissionsModule } from '@/modules/authorization/permissions.module';
+import { GuardiansModule } from '@/modules/guardians/guardians.module';
 import { MembershipsModule } from '@/modules/memberships/memberships.module';
 import { StaffModule } from '@/modules/staff/staff.module';
 import { StudentsModule } from '@/modules/students/students.module';
@@ -20,6 +21,7 @@ import { AttendanceService } from './attendance.service';
 		AcademicModule,
 		StudentsModule,
 		StaffModule,
+		GuardiansModule,
 	],
 	controllers: [AttendanceController],
 	providers: [AttendanceRepository, AttendanceService],

@@ -305,7 +305,7 @@ export class MembersService {
 			});
 		}
 
-		const rows = await this.memberships.listMembersForTenant(tenantId);
+		const rows = await this.memberships.listMembersForTenant(tenantId, true);
 		const row = rows.find((entry) => entry.membership.id === membershipId);
 		if (!row) {
 			throw new NotFoundException({

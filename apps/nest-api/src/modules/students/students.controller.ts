@@ -48,8 +48,15 @@ export class StudentsController {
 		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
 		@Query('campusId') campusId?: string,
 		@Query('status') status?: StudentRecord['status'],
+		@Query('page') page?: string,
+		@Query('limit') limit?: string,
 	) {
-		return this.students.listStudents(user.sub, tenantId, { campusId, status });
+		return this.students.listStudents(user.sub, tenantId, {
+			campusId,
+			status,
+			page: page ? Number(page) : undefined,
+			limit: limit ? Number(limit) : undefined,
+		});
 	}
 
 	@Post('students')

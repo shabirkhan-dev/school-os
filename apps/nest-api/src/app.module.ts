@@ -31,7 +31,7 @@ import { UsersModule } from '@/modules/users/users.module';
 	imports: [
 		ConfigModule,
 		DatabaseModule,
-		ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
+		ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
 		HealthModule,
 		UsersModule,
 		AuthModule,

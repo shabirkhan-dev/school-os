@@ -1,5 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 
 import { DatabaseService } from '@/database/database.service';
 import { enrollments, type StudentRecord, studentGuardians, students } from '@/database/schema';
@@ -14,7 +14,12 @@ export class StudentsRepository {
 
 	async listStudents(
 		tenantId: string,
-		filters?: { campusId?: string; status?: StudentRecord['status'] },
+		filters?: {
+			campusId?: string;
+			status?: StudentRecord['status'];
+			limit?: number;
+			offset?: number;
+		},
 	) {
 		const conditions = [eq(students.tenantId, tenantId), isNull(students.deletedAt)];
 		if (filters?.campusId) conditions.push(eq(students.campusId, filters.campusId));
@@ -24,13 +29,35 @@ export class StudentsRepository {
 			.select()
 			.from(students)
 			.where(and(...conditions))
-			.orderBy(asc(students.lastName), asc(students.firstName));
+			.orderBy(asc(students.lastName), asc(students.firstName))
+			.limit(filters?.limit ?? 50)
+			.offset(filters?.offset ?? 0);
+	}
+
+	async countStudents(
+		tenantId: string,
+		filters?: { campusId?: string; status?: StudentRecord['status'] },
+	): Promise<number> {
+		const conditions = [eq(students.tenantId, tenantId), isNull(students.deletedAt)];
+		if (filters?.campusId) conditions.push(eq(students.campusId, filters.campusId));
+		if (filters?.status) conditions.push(eq(students.status, filters.status));
+
+		const [row] = await this.database.db
+			.select({ count: sql<number>`count(*)::int` })
+			.from(students)
+			.where(and(...conditions));
+		return row?.count ?? 0;
 	}
 
 	async listStudentsInSections(
 		tenantId: string,
 		sectionIds: string[],
-		filters?: { campusId?: string; status?: StudentRecord['status'] },
+		filters?: {
+			campusId?: string;
+			status?: StudentRecord['status'];
+			limit?: number;
+			offset?: number;
+		},
 	) {
 		if (sectionIds.length === 0) return [];
 
@@ -49,9 +76,36 @@ export class StudentsRepository {
 			.from(students)
 			.innerJoin(enrollments, eq(enrollments.studentId, students.id))
 			.where(and(...conditions))
-			.orderBy(asc(students.lastName), asc(students.firstName));
+			.orderBy(asc(students.lastName), asc(students.firstName))
+			.limit(filters?.limit ?? 50)
+			.offset(filters?.offset ?? 0);
 
 		return rows.map((row) => row.student);
+	}
+
+	async countStudentsInSections(
+		tenantId: string,
+		sectionIds: string[],
+		filters?: { campusId?: string; status?: StudentRecord['status'] },
+	): Promise<number> {
+		if (sectionIds.length === 0) return 0;
+
+		const conditions = [
+			eq(students.tenantId, tenantId),
+			isNull(students.deletedAt),
+			eq(enrollments.status, 'active'),
+			isNull(enrollments.deletedAt),
+			inArray(enrollments.sectionId, sectionIds),
+		];
+		if (filters?.campusId) conditions.push(eq(students.campusId, filters.campusId));
+		if (filters?.status) conditions.push(eq(students.status, filters.status));
+
+		const [row] = await this.database.db
+			.select({ count: sql<number>`count(distinct ${students.id})::int` })
+			.from(students)
+			.innerJoin(enrollments, eq(enrollments.studentId, students.id))
+			.where(and(...conditions));
+		return row?.count ?? 0;
 	}
 
 	async findStudentById(tenantId: string, studentId: string) {

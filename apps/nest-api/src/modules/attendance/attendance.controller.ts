@@ -107,6 +107,19 @@ export class AttendanceController {
 		return this.attendance.getSchoolDayPulse(user.sub, tenantId, date);
 	}
 
+	@Get('me/history')
+	@ApiOperation({
+		summary:
+			"Get the current user's attendance history (self-service for students, linked children for guardians)",
+	})
+	getMyStudentHistory(
+		@CurrentUser() user: AccessTokenPayload,
+		@Param('tenantId', new ParseUUIDPipe({ version: '4' })) tenantId: string,
+		@Query(new ZodValidationPipe(studentHistoryQuerySchema)) query: StudentHistoryQuery,
+	) {
+		return this.attendance.getMyStudentHistory(user.sub, tenantId, query.limit ?? 50);
+	}
+
 	@Get('students/:studentId/history')
 	@RequirePermissions(PermissionCodes.ATTENDANCE_READ)
 	@ApiOperation({ summary: 'Get attendance history for a student' })

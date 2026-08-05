@@ -8,6 +8,7 @@ import {
 import type { MembershipRecord } from '@/database/schema';
 import { AcademicRepository } from '@/modules/academic/academic.repository';
 import { PermissionCodes } from '@/modules/authorization/permission-codes';
+import { GuardiansRepository } from '@/modules/guardians/guardians.repository';
 import { hasManagementRole, managementRoles } from '@/modules/memberships/membership-roles';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { StaffRepository } from '@/modules/staff/staff.repository';
@@ -31,6 +32,7 @@ export class AttendanceService {
 		private readonly attendance: AttendanceRepository,
 		private readonly academic: AcademicRepository,
 		private readonly students: StudentsRepository,
+		private readonly guardians: GuardiansRepository,
 		private readonly membershipAccess: MembershipsService,
 		private readonly staff: StaffRepository,
 	) {}
@@ -95,10 +97,19 @@ export class AttendanceService {
 			filters.sessionDate,
 		);
 		if (!session) {
-			throw new NotFoundException({
-				code: 'ATTENDANCE_SESSION_NOT_FOUND',
-				message: 'Attendance session not found for this section and date',
-			});
+			return {
+				session: null,
+				marks: [],
+				summary: {
+					present: 0,
+					absent: 0,
+					late: 0,
+					excused: 0,
+					leftEarly: 0,
+					unknown: 0,
+					total: 0,
+				},
+			};
 		}
 
 		return this.buildSessionResponse(tenantId, session);
@@ -264,20 +275,32 @@ export class AttendanceService {
 				message: 'Student not found',
 			});
 		}
-		if (membership.role === 'teacher') {
-			const roles = await this.membershipAccess.listRoleCodes(membership.id, membership.role);
-			if (!hasManagementRole(roles)) {
+		const roles = await this.membershipAccess.listRoleCodes(membership.id, membership.role);
+		if (!hasManagementRole(roles)) {
+			const isSelf = student.membershipId === membership.id;
+			const linkedGuardians = await this.guardians.listLinkedStudentsForMembership(
+				tenantId,
+				membership.id,
+			);
+			const guardianHasAccess = linkedGuardians.some((link) => link.student.id === studentId);
+
+			if (membership.role === 'teacher') {
 				const hasAccess = await this.staff.teacherCanAccessStudent(
 					tenantId,
 					membership.id,
 					studentId,
 				);
-				if (!hasAccess) {
+				if (!hasAccess && !isSelf && !guardianHasAccess) {
 					throw new ForbiddenException({
 						code: 'STUDENT_ACCESS_FORBIDDEN',
 						message: 'This student is not in one of your assigned classes',
 					});
 				}
+			} else if (!isSelf && !guardianHasAccess) {
+				throw new ForbiddenException({
+					code: 'STUDENT_ACCESS_FORBIDDEN',
+					message: "You do not have access to this student's attendance",
+				});
 			}
 		}
 
@@ -288,6 +311,51 @@ export class AttendanceService {
 				session: toPublicSession(row.session),
 			})),
 		};
+	}
+
+	async getMyStudentHistory(userId: string, tenantId: string, limit?: number) {
+		const membership = await this.membershipAccess.requireActiveMembership(userId, tenantId);
+
+		if (membership.role === 'student') {
+			const student = await this.students.findStudentByMembershipId(tenantId, membership.id);
+			if (!student) {
+				throw new NotFoundException({
+					code: 'STUDENT_RECORD_NOT_LINKED',
+					message: 'No student record is linked to this account yet',
+				});
+			}
+			const rows = await this.attendance.listMarksForStudent(tenantId, student.id, limit ?? 50);
+			return {
+				studentId: student.id,
+				history: rows.map((row) => ({
+					mark: toPublicMark(row.mark),
+					session: toPublicSession(row.session),
+				})),
+			};
+		}
+
+		if (membership.role === 'parent') {
+			const links = await this.guardians.listLinkedStudentsForMembership(tenantId, membership.id);
+			const studentIds = [...new Set(links.map((link) => link.student.id))];
+			const allHistory = await Promise.all(
+				studentIds.map(async (studentId) => {
+					const rows = await this.attendance.listMarksForStudent(tenantId, studentId, limit ?? 50);
+					return {
+						studentId,
+						history: rows.map((row) => ({
+							mark: toPublicMark(row.mark),
+							session: toPublicSession(row.session),
+						})),
+					};
+				}),
+			);
+			return { children: allHistory };
+		}
+
+		throw new ForbiddenException({
+			code: 'ATTENDANCE_SELF_SERVICE_FORBIDDEN',
+			message: 'Attendance self-service is available for student and guardian accounts only',
+		});
 	}
 
 	private async buildSessionResponse(

@@ -8,14 +8,20 @@ import type {
 } from "../types/student.types";
 
 export const studentsService = {
-	list: (accessToken: string, tenantId: string, params?: { campusId?: string }) => {
+	list: (
+		accessToken: string,
+		tenantId: string,
+		params?: { campusId?: string; page?: number; limit?: number },
+	) => {
 		const search = new URLSearchParams();
 		if (params?.campusId) search.set("campusId", params.campusId);
+		if (params?.page) search.set("page", String(params.page));
+		if (params?.limit) search.set("limit", String(params.limit));
 		const query = search.toString();
-		return apiClient.get<{ students: Student[] }>(
-			`/tenants/${tenantId}/students${query ? `?${query}` : ""}`,
-			{ accessToken },
-		);
+		return apiClient.get<{
+			students: Student[];
+			pagination?: { page: number; limit: number; total: number };
+		}>(`/tenants/${tenantId}/students${query ? `?${query}` : ""}`, { accessToken });
 	},
 	get: (accessToken: string, tenantId: string, studentId: string) =>
 		apiClient.get<StudentDetail>(`/tenants/${tenantId}/students/${studentId}`, { accessToken }),

@@ -7,6 +7,7 @@ import {
 
 import type { MembershipRecord } from '@/database/schema';
 import { PermissionCodes } from '@/modules/authorization/permission-codes';
+import { GuardiansRepository } from '@/modules/guardians/guardians.repository';
 import { hasManagementRole } from '@/modules/memberships/membership-roles';
 import { MembershipsService } from '@/modules/memberships/memberships.service';
 import { StaffRepository } from '@/modules/staff/staff.repository';
@@ -32,6 +33,7 @@ export class AssessmentsService {
 		private readonly assessments: AssessmentsRepository,
 		private readonly staff: StaffRepository,
 		private readonly students: StudentsRepository,
+		private readonly guardians: GuardiansRepository,
 		private readonly membershipAccess: MembershipsService,
 	) {}
 
@@ -294,7 +296,35 @@ export class AssessmentsService {
 	}
 
 	async getStudentGrades(userId: string, tenantId: string, studentId: string) {
-		await this.requireRead(userId, tenantId);
+		const membership = await this.requireRead(userId, tenantId);
+		const roles = await this.membershipAccess.listRoleCodes(membership.id, membership.role);
+
+		// Only allow access for:
+		//  - management roles (owner/principal/vice_principal/admin)
+		//  - teachers with access to the student's enrolled sections
+		//  - the student themselves (linked student record)
+		//  - guardians linked to the student
+		if (!hasManagementRole(roles)) {
+			const isTeacher = membership.role === 'teacher';
+			const linkedStudent = await this.students.findStudentByMembershipId(tenantId, membership.id);
+			const isSelf = linkedStudent?.id === studentId;
+			const teacherHasAccess = isTeacher
+				? await this.staff.teacherCanAccessStudent(tenantId, membership.id, studentId)
+				: false;
+			const linkedGuardians = await this.guardians.listLinkedStudentsForMembership(
+				tenantId,
+				membership.id,
+			);
+			const guardianHasAccess = linkedGuardians.some((link) => link.student.id === studentId);
+
+			if (!isSelf && !teacherHasAccess && !guardianHasAccess) {
+				throw new ForbiddenException({
+					code: 'STUDENT_GRADES_FORBIDDEN',
+					message: "You do not have access to this student's grades",
+				});
+			}
+		}
+
 		const rows = await this.assessments.listResultsForStudent(tenantId, studentId);
 
 		return {
