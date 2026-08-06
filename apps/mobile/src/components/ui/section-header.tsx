@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { AppColors } from "@/constants/design-system";
+import { StyleSheet, Text, View } from "react-native";
+import { Colors, Tokens, Type } from "@/constants/design-system";
+import { PressableScale } from "./pressable-scale";
 
 interface SectionHeaderProps {
 	title: string;
@@ -8,21 +9,25 @@ interface SectionHeaderProps {
 	onAction?: () => void;
 }
 
+/** Group label with an optional trailing action. Sets the vertical rhythm between sections. */
 export function SectionHeader({ title, subtitle, actionLabel, onAction }: SectionHeaderProps) {
 	return (
 		<View style={styles.container}>
-			<View style={styles.textWrapper}>
+			<View style={styles.copy}>
 				<Text style={styles.title}>{title}</Text>
 				{subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
 			</View>
 
 			{actionLabel && onAction ? (
-				<Pressable
+				<PressableScale
 					onPress={onAction}
-					style={({ pressed }) => [styles.actionBtn, pressed && styles.pressed]}
+					style={styles.action}
+					scaleTo={0.94}
+					accessibilityRole="button"
+					accessibilityLabel={actionLabel}
 				>
-					<Text style={styles.actionText}>{actionLabel}</Text>
-				</Pressable>
+					<Text style={styles.actionLabel}>{actionLabel}</Text>
+				</PressableScale>
 			) : null}
 		</View>
 	);
@@ -31,36 +36,29 @@ export function SectionHeader({ title, subtitle, actionLabel, onAction }: Sectio
 const styles = StyleSheet.create({
 	container: {
 		flexDirection: "row",
+		alignItems: "center",
 		justifyContent: "space-between",
-		alignItems: "flex-end",
-		marginBottom: 12,
-		marginTop: 16,
-		paddingHorizontal: 16,
+		gap: Tokens.space["3"],
+		paddingHorizontal: Tokens.space["5"],
+		marginTop: Tokens.space["7"],
+		marginBottom: Tokens.space["3"],
 	},
-	textWrapper: {
-		flex: 1,
-	},
-	title: {
-		fontSize: 16,
-		fontWeight: "700",
-		color: AppColors.text.primary,
-		letterSpacing: -0.2,
-	},
+	copy: { flex: 1 },
+	title: Type.heading,
 	subtitle: {
-		fontSize: 12,
-		color: AppColors.text.muted,
-		marginTop: 2,
+		...Type.caption,
+		marginTop: Tokens.space["0.5"],
 	},
-	actionBtn: {
-		paddingVertical: 4,
-		paddingHorizontal: 8,
+	action: {
+		paddingVertical: Tokens.space["1.5"],
+		paddingHorizontal: Tokens.space["3"],
+		borderRadius: Tokens.radius.full,
+		backgroundColor: Colors.sunken,
 	},
-	actionText: {
-		fontSize: 13,
-		fontWeight: "600",
-		color: AppColors.primary.brand,
-	},
-	pressed: {
-		opacity: 0.7,
+	actionLabel: {
+		fontSize: Tokens.fontSize.sm,
+		fontWeight: Tokens.fontWeight.semibold,
+		color: Colors.text.secondary,
+		letterSpacing: Tokens.tracking.snug,
 	},
 });

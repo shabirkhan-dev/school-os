@@ -1,51 +1,58 @@
 import type * as React from "react";
-import { Pressable, StyleSheet, Text, View, type ViewProps } from "react-native";
-import { AppColors, AppShadows } from "@/constants/design-system";
+import { StyleSheet, Text, View, type ViewProps } from "react-native";
+import { Colors, Shadows, Tokens, Type } from "@/constants/design-system";
+import { PressableScale } from "./pressable-scale";
 
 interface CardProps extends ViewProps {
 	title?: string;
 	description?: string;
 	children?: React.ReactNode;
 	onPress?: () => void;
+	/** Raise above neighbouring cards. Use for the one card that matters most. */
+	elevated?: boolean;
+	/** Opt back into an outline where two same-elevation surfaces meet. */
 	bordered?: boolean;
 }
 
+/**
+ * Default content surface. Separation comes from shadow rather than an outline,
+ * so a column of these reads as stacked paper instead of a wireframe.
+ */
 export function Card({
 	title,
 	description,
 	children,
 	onPress,
-	bordered = true,
+	elevated = false,
+	bordered = false,
 	style,
 	...props
 }: CardProps) {
 	const content = (
 		<>
-			{title && <Text style={styles.title}>{title}</Text>}
-			{description && <Text style={styles.description}>{description}</Text>}
+			{title ? <Text style={styles.title}>{title}</Text> : null}
+			{description ? <Text style={styles.description}>{description}</Text> : null}
 			{children}
 		</>
 	);
 
+	const composed = [
+		styles.card,
+		elevated ? styles.elevated : styles.resting,
+		bordered && styles.bordered,
+		style,
+	];
+
 	if (onPress) {
 		return (
-			<Pressable
-				onPress={onPress}
-				style={({ pressed }) => [
-					styles.card,
-					bordered && styles.border,
-					pressed && styles.pressed,
-					style,
-				]}
-				{...props}
-			>
+			<PressableScale style={composed} onPress={onPress} scaleTo={0.985} {...props}>
 				{content}
-			</Pressable>
+			</PressableScale>
 		);
 	}
 
 	return (
-		<View style={[styles.card, bordered && styles.border, style]} {...props}>
+		<View style={composed} {...props}>
 			{content}
 		</View>
 	);
@@ -53,29 +60,22 @@ export function Card({
 
 const styles = StyleSheet.create({
 	card: {
-		backgroundColor: AppColors.surface,
-		borderRadius: 16,
-		padding: 16,
-		...AppShadows.sm,
+		backgroundColor: Colors.surface,
+		borderRadius: Tokens.radius.xl,
+		padding: Tokens.space["5"],
 	},
-	border: {
-		borderWidth: 1,
-		borderColor: AppColors.card.border,
+	resting: Shadows.xs,
+	elevated: Shadows.sm,
+	bordered: {
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.border.base,
 	},
 	title: {
-		fontSize: 16,
-		fontWeight: "700",
-		color: AppColors.text.primary,
-		marginBottom: 4,
+		...Type.subheading,
+		marginBottom: Tokens.space["1"],
 	},
 	description: {
-		fontSize: 13,
-		color: AppColors.text.secondary,
-		marginBottom: 12,
-		lineHeight: 18,
-	},
-	pressed: {
-		opacity: 0.9,
-		transform: [{ scale: 0.995 }],
+		...Type.caption,
+		marginBottom: Tokens.space["3"],
 	},
 });

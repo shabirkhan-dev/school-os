@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { AppColors } from "@/constants/design-system";
+import { Colors, Tokens } from "@/constants/design-system";
 
 export type StatusVariant =
 	| "present"
@@ -17,104 +17,73 @@ interface StatusBadgeProps {
 	size?: "sm" | "md";
 }
 
+/**
+ * Status pill: tinted background, matching dot, matching text.
+ *
+ * The dot carries the signal for anyone who cannot separate the tint from the
+ * surface, so the badge never relies on background colour alone.
+ */
 export function StatusBadge({ label, status = "pending", size = "md" }: StatusBadgeProps) {
-	const stylesForStatus = getStatusStyles(status);
+	const variant = VARIANTS[status];
+	const small = size === "sm";
 
 	return (
 		<View
-			style={[
-				styles.container,
-				size === "sm" ? styles.smContainer : styles.mdContainer,
-				{ backgroundColor: stylesForStatus.bg, borderColor: stylesForStatus.border },
-			]}
+			style={[styles.container, small ? styles.sm : styles.md, { backgroundColor: variant.bg }]}
 		>
-			<View style={[styles.dot, { backgroundColor: stylesForStatus.color }]} />
-			<Text
-				style={[
-					styles.text,
-					size === "sm" ? styles.smText : styles.mdText,
-					{ color: stylesForStatus.color },
-				]}
-			>
-				{label}
-			</Text>
+			<View style={[styles.dot, { backgroundColor: variant.fg }]} />
+			<Text style={[small ? styles.textSm : styles.textMd, { color: variant.fg }]}>{label}</Text>
 		</View>
 	);
 }
 
-function getStatusStyles(status: StatusVariant) {
-	switch (status) {
-		case "present":
-			return {
-				bg: AppColors.status.presentBg,
-				border: "#BBF7D0",
-				color: AppColors.status.present,
-			};
-		case "absent":
-			return {
-				bg: AppColors.status.absentBg,
-				border: "#FECACA",
-				color: AppColors.status.absent,
-			};
-		case "late":
-			return {
-				bg: AppColors.status.lateBg,
-				border: "#FDE68A",
-				color: AppColors.status.late,
-			};
-		case "excused":
-			return {
-				bg: AppColors.status.excusedBg,
-				border: "#BFDBFE",
-				color: AppColors.status.excused,
-			};
-		case "published":
-		case "brand":
-			return {
-				bg: AppColors.primary.subtle,
-				border: "#BFDBFE",
-				color: AppColors.primary.brand,
-			};
-		default:
-			return {
-				bg: AppColors.status.pendingBg,
-				border: AppColors.card.border,
-				color: AppColors.status.pending,
-			};
-	}
-}
+const brandPill = {
+	fg: Colors.brand.strong,
+	bg: Colors.brand.tint,
+	border: Colors.brand.border,
+};
+
+const VARIANTS: Record<StatusVariant, { fg: string; bg: string; border: string }> = {
+	present: Colors.status.present,
+	absent: Colors.status.absent,
+	late: Colors.status.late,
+	excused: Colors.status.excused,
+	pending: Colors.status.pending,
+	draft: Colors.status.pending,
+	published: brandPill,
+	brand: brandPill,
+};
 
 const styles = StyleSheet.create({
 	container: {
 		flexDirection: "row",
 		alignItems: "center",
-		borderRadius: 999,
-		borderWidth: 1,
+		borderRadius: Tokens.radius.full,
 		alignSelf: "flex-start",
 	},
-	smContainer: {
-		paddingHorizontal: 8,
-		paddingVertical: 3,
-		gap: 4,
+	sm: {
+		paddingHorizontal: Tokens.space["2"],
+		paddingVertical: Tokens.space["1"],
+		gap: Tokens.space["1.5"],
 	},
-	mdContainer: {
-		paddingHorizontal: 10,
-		paddingVertical: 4,
-		gap: 6,
+	md: {
+		paddingHorizontal: Tokens.space["2.5"],
+		paddingVertical: Tokens.space["1.5"],
+		gap: Tokens.space["1.5"],
 	},
 	dot: {
-		width: 6,
-		height: 6,
-		borderRadius: 3,
+		width: 5,
+		height: 5,
+		borderRadius: Tokens.radius.full,
 	},
-	text: {
-		fontWeight: "600",
-		textTransform: "capitalize",
+	textSm: {
+		fontSize: Tokens.fontSize.xs,
+		fontWeight: Tokens.fontWeight.semibold,
+		letterSpacing: Tokens.tracking.snug,
 	},
-	smText: {
-		fontSize: 11,
-	},
-	mdText: {
-		fontSize: 12,
+	textMd: {
+		fontSize: Tokens.fontSize.sm,
+		fontWeight: Tokens.fontWeight.semibold,
+		letterSpacing: Tokens.tracking.snug,
 	},
 });

@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react-native";
 import type * as React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { AppColors } from "@/constants/design-system";
+import { Colors, Shadows, Tokens, Type } from "@/constants/design-system";
 
 interface EmptyStateProps {
 	icon: LucideIcon;
@@ -10,11 +10,12 @@ interface EmptyStateProps {
 	children?: React.ReactNode;
 }
 
+/** Centred placeholder explaining why a region is empty and what fills it. */
 export function EmptyState({ icon: Icon, title, description, children }: EmptyStateProps) {
 	return (
 		<View style={styles.container}>
-			<View style={styles.iconCircle}>
-				<Icon size={28} color={AppColors.primary.brand} strokeWidth={1.8} />
+			<View style={styles.iconWell}>
+				<Icon size={24} color={Colors.text.tertiary} strokeWidth={1.7} />
 			</View>
 			<Text style={styles.title}>{title}</Text>
 			<Text style={styles.description}>{description}</Text>
@@ -27,38 +28,33 @@ const styles = StyleSheet.create({
 	container: {
 		alignItems: "center",
 		justifyContent: "center",
-		paddingVertical: 36,
-		paddingHorizontal: 24,
-		backgroundColor: AppColors.surface,
-		borderRadius: 16,
-		borderWidth: 1,
-		borderColor: AppColors.card.border,
-		marginHorizontal: 16,
-		marginVertical: 12,
+		paddingVertical: Tokens.space["10"],
+		paddingHorizontal: Tokens.space["6"],
+		marginHorizontal: Tokens.space["5"],
+		borderRadius: Tokens.radius["2xl"],
+		backgroundColor: Colors.surface,
+		...Shadows.xs,
 	},
-	iconCircle: {
-		width: 56,
-		height: 56,
-		borderRadius: 28,
-		backgroundColor: AppColors.primary.subtle,
+	iconWell: {
+		width: 52,
+		height: 52,
+		borderRadius: Tokens.radius.lg,
+		backgroundColor: Colors.sunken,
 		alignItems: "center",
 		justifyContent: "center",
-		marginBottom: 12,
+		marginBottom: Tokens.space["4"],
 	},
 	title: {
-		fontSize: 16,
-		fontWeight: "700",
-		color: AppColors.text.primary,
+		...Type.subheading,
 		textAlign: "center",
-		marginBottom: 4,
 	},
 	description: {
-		fontSize: 13,
-		color: AppColors.text.secondary,
+		...Type.caption,
 		textAlign: "center",
-		lineHeight: 18,
+		marginTop: Tokens.space["1.5"],
+		maxWidth: 280,
 	},
 	actions: {
-		marginTop: 16,
+		marginTop: Tokens.space["5"],
 	},
 });

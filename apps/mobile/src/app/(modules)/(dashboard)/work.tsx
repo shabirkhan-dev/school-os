@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { EmptyState } from "@/components/ui/empty-state";
 import { OSHeader } from "@/components/ui/os-header";
+import { TAB_BAR_CLEARANCE } from "@/components/ui/tab-bar";
 import { AppColors } from "@/constants/design-system";
 import { useAuth } from "@/modules/auth";
 import type { Assessment, HomeworkAssignment, HomeworkStatus } from "@/modules/teacher";
@@ -225,7 +226,7 @@ function AssessmentRow({ item, last }: { item: Assessment; last: boolean }) {
 const styles = StyleSheet.create({
 	container: { flex: 1, backgroundColor: AppColors.background },
 	safeArea: { flex: 1 },
-	content: { padding: 20, paddingBottom: 48 },
+	content: { padding: 20, paddingBottom: TAB_BAR_CLEARANCE + 24 },
 	eyebrow: { color: AppColors.primary.brand, fontSize: 11, fontWeight: "800", letterSpacing: 1.2 },
 	title: {
 		color: AppColors.text.primary,

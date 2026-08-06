@@ -1,30 +1,19 @@
 import { Tabs } from "expo-router";
 import { BarChart3, BookOpen, LayoutDashboard, NotebookPen } from "lucide-react-native";
-import { AppColors } from "@/constants/design-system";
+import { TabBar } from "@/components/ui/tab-bar";
+
+/** Focused tabs use a heavier stroke so the active icon reads without relying on colour alone. */
+const stroke = (focused: boolean) => (focused ? 2.4 : 1.8);
 
 export default function DashboardLayout() {
 	return (
-		<Tabs
-			screenOptions={{
-				headerShown: false,
-				tabBarStyle: {
-					backgroundColor: AppColors.surface,
-					borderTopColor: AppColors.card.border,
-					height: 78,
-					paddingBottom: 12,
-					paddingTop: 8,
-				},
-				tabBarActiveTintColor: AppColors.primary.brand,
-				tabBarInactiveTintColor: AppColors.text.muted,
-				tabBarLabelStyle: { fontSize: 11, fontWeight: "700" },
-			}}
-		>
+		<Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <TabBar {...props} />}>
 			<Tabs.Screen
 				name="index"
 				options={{
 					title: "Home",
 					tabBarIcon: ({ color, focused }) => (
-						<LayoutDashboard color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+						<LayoutDashboard color={color} size={21} strokeWidth={stroke(focused)} />
 					),
 				}}
 			/>
@@ -33,7 +22,7 @@ export default function DashboardLayout() {
 				options={{
 					title: "Classes",
 					tabBarIcon: ({ color, focused }) => (
-						<BookOpen color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+						<BookOpen color={color} size={21} strokeWidth={stroke(focused)} />
 					),
 				}}
 			/>
@@ -42,7 +31,7 @@ export default function DashboardLayout() {
 				options={{
 					title: "Work",
 					tabBarIcon: ({ color, focused }) => (
-						<NotebookPen color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+						<NotebookPen color={color} size={21} strokeWidth={stroke(focused)} />
 					),
 				}}
 			/>
@@ -51,7 +40,7 @@ export default function DashboardLayout() {
 				options={{
 					title: "Reports",
 					tabBarIcon: ({ color, focused }) => (
-						<BarChart3 color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+						<BarChart3 color={color} size={21} strokeWidth={stroke(focused)} />
 					),
 				}}
 			/>

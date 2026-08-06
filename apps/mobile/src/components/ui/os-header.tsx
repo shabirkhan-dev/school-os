@@ -1,10 +1,16 @@
 import { router } from "expo-router";
-import { Bell, ShieldCheck } from "lucide-react-native";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { AppColors, AppShadows } from "@/constants/design-system";
+import { Bell } from "lucide-react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
+import { Colors, Tokens, Type } from "@/constants/design-system";
+import { formatRoleLabel } from "@/lib/format-role";
 import { resolveMediaUrl } from "@/lib/media-url";
 import { useAuth } from "@/modules/auth";
+import { PressableScale } from "./pressable-scale";
 
+/**
+ * Identity bar. Deliberately slim — the screen owns the greeting and page title,
+ * so this carries only identity and the notification tap target.
+ */
 export function OSHeader() {
 	const { user, tenantContext } = useAuth();
 
@@ -14,38 +20,42 @@ export function OSHeader() {
 			? `https://avatar.vercel.sh/${encodeURIComponent(user.username)}`
 			: "https://avatar.vercel.sh/teacher");
 
-	const displayName = user?.profile?.displayName || user?.username || "School OS";
+	const displayName = user?.profile?.displayName || user?.username || "Teacher";
 	const roleLabel = formatRoleLabel(tenantContext?.role);
 
 	return (
 		<View style={styles.container}>
-			<View style={styles.left}>
-				<Pressable
-					style={styles.avatarContainer}
-					onPress={() => router.replace("/(modules)/(profile)")}
-				>
+			<PressableScale
+				style={styles.identity}
+				scaleTo={0.97}
+				onPress={() => router.replace("/(modules)/(profile)")}
+				accessibilityRole="button"
+				accessibilityLabel={`${displayName}, ${roleLabel}. Open profile`}
+			>
+				<View style={styles.avatarWrap}>
 					<Image source={{ uri: avatarUri }} style={styles.avatar} />
-					<View style={styles.onlineDot} />
-				</Pressable>
+					<View style={styles.presence} />
+				</View>
 
-				<View style={styles.textContainer}>
-					<Text style={styles.greeting}>Welcome back,</Text>
+				<View style={styles.copy}>
 					<Text style={styles.name} numberOfLines={1}>
 						{displayName}
 					</Text>
+					<Text style={styles.role} numberOfLines={1}>
+						{roleLabel}
+					</Text>
 				</View>
-			</View>
+			</PressableScale>
 
-			<View style={styles.right}>
-				<View style={styles.roleBadge}>
-					<ShieldCheck size={12} color={AppColors.primary.brand} />
-					<Text style={styles.roleText}>{roleLabel}</Text>
-				</View>
-
-				<Pressable style={styles.iconButton} onPress={() => router.replace("/(modules)/(profile)")}>
-					<Bell size={20} color={AppColors.text.primary} strokeWidth={1.8} />
-				</Pressable>
-			</View>
+			<PressableScale
+				style={styles.iconButton}
+				scaleTo={0.92}
+				onPress={() => router.replace("/(modules)/(profile)")}
+				accessibilityRole="button"
+				accessibilityLabel="Notifications"
+			>
+				<Bell size={18} color={Colors.text.secondary} strokeWidth={1.9} />
+			</PressableScale>
 		</View>
 	);
 }
@@ -53,92 +63,55 @@ export function OSHeader() {
 const styles = StyleSheet.create({
 	container: {
 		flexDirection: "row",
+		alignItems: "center",
 		justifyContent: "space-between",
-		alignItems: "center",
-		paddingHorizontal: 16,
-		paddingVertical: 12,
-		backgroundColor: AppColors.surface,
-		borderBottomWidth: 1,
-		borderBottomColor: AppColors.card.border,
-		...AppShadows.sm,
+		paddingHorizontal: Tokens.space["5"],
+		paddingVertical: Tokens.space["3"],
+		backgroundColor: Colors.canvas,
+		borderBottomWidth: StyleSheet.hairlineWidth,
+		borderBottomColor: Colors.border.subtle,
 	},
-	left: {
+	identity: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 10,
+		gap: Tokens.space["2.5"],
 		flex: 1,
 	},
-	avatarContainer: {
-		position: "relative",
-	},
+	avatarWrap: { position: "relative" },
 	avatar: {
-		width: 40,
-		height: 40,
-		borderRadius: 20,
-		backgroundColor: AppColors.card.subtle,
+		width: 36,
+		height: 36,
+		borderRadius: Tokens.radius.full,
+		backgroundColor: Colors.sunken,
 	},
-	onlineDot: {
+	presence: {
 		position: "absolute",
-		bottom: 1,
-		right: 1,
-		width: 10,
-		height: 10,
-		borderRadius: 5,
-		backgroundColor: AppColors.status.present,
-		borderWidth: 2,
-		borderColor: AppColors.surface,
+		bottom: -1,
+		right: -1,
+		width: 11,
+		height: 11,
+		borderRadius: Tokens.radius.full,
+		backgroundColor: Colors.status.present.solid,
+		borderWidth: 2.5,
+		borderColor: Colors.canvas,
 	},
-	textContainer: {
-		flex: 1,
-	},
-	greeting: {
-		fontSize: 11,
-		fontWeight: "500",
-		color: AppColors.text.muted,
-		textTransform: "uppercase",
-		letterSpacing: 0.5,
-	},
+	copy: { flex: 1 },
 	name: {
-		fontSize: 16,
-		fontWeight: "700",
-		color: AppColors.text.primary,
+		...Type.subheading,
+		fontSize: Tokens.fontSize.md,
 	},
-	right: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 10,
-	},
-	roleBadge: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 4,
-		backgroundColor: AppColors.primary.subtle,
-		paddingHorizontal: 10,
-		paddingVertical: 5,
-		borderRadius: 12,
-		borderWidth: 1,
-		borderColor: "#DBEAFE",
-	},
-	roleText: {
-		fontSize: 12,
-		fontWeight: "600",
-		color: AppColors.primary.brand,
+	role: {
+		...Type.caption,
+		marginTop: 1,
 	},
 	iconButton: {
-		width: 38,
-		height: 38,
-		borderRadius: 19,
-		backgroundColor: AppColors.card.subtle,
+		width: 36,
+		height: 36,
+		borderRadius: Tokens.radius.full,
+		backgroundColor: Colors.surface,
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.border.base,
 		alignItems: "center",
 		justifyContent: "center",
-		position: "relative",
 	},
 });
-
-function formatRoleLabel(role?: string): string {
-	if (!role) return "School OS";
-	return role
-		.split("_")
-		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-		.join(" ");
-}
