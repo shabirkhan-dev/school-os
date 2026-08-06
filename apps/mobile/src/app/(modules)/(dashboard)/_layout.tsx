@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
-import { LayoutDashboard, Zap } from "lucide-react-native";
-import { NeonColors } from "@/constants/design-system";
+import { BarChart3, BookOpen, LayoutDashboard, NotebookPen } from "lucide-react-native";
+import { AppColors } from "@/constants/design-system";
 
 export default function DashboardLayout() {
 	return (
@@ -8,14 +8,15 @@ export default function DashboardLayout() {
 			screenOptions={{
 				headerShown: false,
 				tabBarStyle: {
-					backgroundColor: NeonColors.background,
-					borderTopColor: "rgba(255, 255, 255, 0.05)",
-					height: 84,
-					paddingBottom: 24,
+					backgroundColor: AppColors.surface,
+					borderTopColor: AppColors.card.border,
+					height: 78,
+					paddingBottom: 12,
+					paddingTop: 8,
 				},
-				tabBarActiveTintColor: NeonColors.accent.green,
-				tabBarInactiveTintColor: NeonColors.text.muted,
-				tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
+				tabBarActiveTintColor: AppColors.primary.brand,
+				tabBarInactiveTintColor: AppColors.text.muted,
+				tabBarLabelStyle: { fontSize: 11, fontWeight: "700" },
 			}}
 		>
 			<Tabs.Screen
@@ -23,19 +24,38 @@ export default function DashboardLayout() {
 				options={{
 					title: "Home",
 					tabBarIcon: ({ color, focused }) => (
-						<LayoutDashboard color={color} size={22} strokeWidth={focused ? 2.5 : 1.5} />
+						<LayoutDashboard color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
 					),
 				}}
 			/>
 			<Tabs.Screen
-				name="insights"
+				name="classes"
 				options={{
-					title: "Insights",
+					title: "Classes",
 					tabBarIcon: ({ color, focused }) => (
-						<Zap color={color} size={22} strokeWidth={focused ? 2.5 : 1.5} />
+						<BookOpen color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
 					),
 				}}
 			/>
+			<Tabs.Screen
+				name="work"
+				options={{
+					title: "Work",
+					tabBarIcon: ({ color, focused }) => (
+						<NotebookPen color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+					),
+				}}
+			/>
+			<Tabs.Screen
+				name="reports"
+				options={{
+					title: "Reports",
+					tabBarIcon: ({ color, focused }) => (
+						<BarChart3 color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+					),
+				}}
+			/>
+			<Tabs.Screen name="insights" options={{ href: null }} />
 		</Tabs>
 	);
 }
