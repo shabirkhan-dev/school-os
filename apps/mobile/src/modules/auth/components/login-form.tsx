@@ -2,7 +2,6 @@ import { Link, router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { NeonColors } from "@/constants/design-system";
-import { getApiOrigin } from "@/lib/api/client";
 import { useAuth } from "@/modules/auth/context/auth-context";
 import {
 	useLoginMutation,
@@ -12,6 +11,7 @@ import {
 } from "@/modules/auth/hooks/use-auth-mutations";
 import { loginSchema } from "@/modules/auth/schemas/auth.schemas";
 import type { TwoFactorChallenge } from "@/modules/auth/types/auth.types";
+import { ApiStatusCard } from "./api-status-card";
 import { AuthAlert } from "./auth-alert";
 import { AuthButton } from "./auth-button";
 import { AuthScreen } from "./auth-screen";
@@ -51,7 +51,7 @@ export function LoginForm() {
 				challenge ? "Complete the second step to continue" : "Choose a secure sign-in method"
 			}
 		>
-			{__DEV__ ? <AuthAlert title="API" message={getApiOrigin()} /> : null}
+			<ApiStatusCard />
 			{currentError ? (
 				<AuthAlert variant="destructive" title="Could not sign in" message={currentError} />
 			) : null}

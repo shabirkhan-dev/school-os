@@ -16,6 +16,7 @@ import type {
 interface AuthContextValue {
 	token: string | null;
 	user: User | null;
+	tenantContext: AuthSession["tenantContext"];
 	loading: boolean;
 	error: string | null;
 	login: (input: LoginInput) => Promise<LoginResult>;
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [token, setToken] = useState<string | null>(null);
 	const [tokenExpiresAt, setTokenExpiresAt] = useState<string | null>(null);
 	const [user, setUser] = useState<User | null>(null);
+	const [tenantContext, setTenantContext] = useState<AuthSession["tenantContext"]>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setToken(null);
 		setTokenExpiresAt(null);
 		setUser(null);
+		setTenantContext(null);
 		await tokenStorage.setRefreshToken(null);
 	}, []);
 
@@ -49,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setToken(session.accessToken);
 		setTokenExpiresAt(session.accessTokenExpiresAt);
 		setUser(session.user);
+		setTenantContext(session.tenantContext ?? null);
 		if (session.refreshToken) {
 			await tokenStorage.setRefreshToken(session.refreshToken);
 		}
@@ -156,6 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			value={{
 				token,
 				user,
+				tenantContext,
 				loading,
 				error,
 				login,

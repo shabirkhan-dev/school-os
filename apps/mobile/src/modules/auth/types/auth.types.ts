@@ -1,11 +1,20 @@
 import type { User } from "@/modules/users/types/user.types";
 
+export interface TenantContext {
+	id: string;
+	tenantId: string;
+	membershipId: string;
+	role: string;
+	permissions: string[];
+}
+
 export interface AuthSession {
 	accessToken: string;
 	accessTokenExpiresAt: string;
 	/** Present for native clients (SecureStore); omitted for cookie-based web clients. */
 	refreshToken?: string;
 	user: User;
+	tenantContext?: TenantContext | null;
 }
 
 export interface TwoFactorChallenge {
