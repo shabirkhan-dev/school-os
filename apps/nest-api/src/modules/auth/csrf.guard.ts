@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@
 import type { Request } from 'express';
 
 import { AppConfigService } from '@/config/app-config.service';
+import { isNativeClient } from './native-client';
 
 const safeMethods = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -12,6 +13,13 @@ export class CsrfGuard implements CanActivate {
 	canActivate(context: ExecutionContext): boolean {
 		const request = context.switchToHttp().getRequest<Request>();
 		if (safeMethods.has(request.method)) {
+			return true;
+		}
+
+		// Native apps (Expo / React Native) have no browser origin and no ambient
+		// cookies, so they cannot be CSRF'd. They identify themselves explicitly
+		// via `X-Client-Platform: native` (see native-client.ts).
+		if (isNativeClient(request)) {
 			return true;
 		}
 
