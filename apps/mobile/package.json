@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "dev": "expo start ",
+    "dev": "expo start --clear ",
     "start": "expo start --port 8081",
     "start:dev-client": "expo start --dev-client --port 8081",
     "reset-project": "node ./scripts/reset-project.js",

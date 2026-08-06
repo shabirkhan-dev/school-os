@@ -1,22 +1,81 @@
 import type * as React from "react";
-import { Text, View, type ViewProps } from "react-native";
+import { Pressable, StyleSheet, Text, View, type ViewProps } from "react-native";
+import { AppColors, AppShadows } from "@/constants/design-system";
 
 interface CardProps extends ViewProps {
 	title?: string;
 	description?: string;
 	children?: React.ReactNode;
-	className?: string;
+	onPress?: () => void;
+	bordered?: boolean;
 }
 
-export function Card({ title, description, children, className, ...props }: CardProps) {
+export function Card({
+	title,
+	description,
+	children,
+	onPress,
+	bordered = true,
+	style,
+	...props
+}: CardProps) {
+	const content = (
+		<>
+			{title && <Text style={styles.title}>{title}</Text>}
+			{description && <Text style={styles.description}>{description}</Text>}
+			{children}
+		</>
+	);
+
+	if (onPress) {
+		return (
+			<Pressable
+				onPress={onPress}
+				style={({ pressed }) => [
+					styles.card,
+					bordered && styles.border,
+					pressed && styles.pressed,
+					style,
+				]}
+				{...props}
+			>
+				{content}
+			</Pressable>
+		);
+	}
+
 	return (
-		<View
-			className={`bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 p-6 rounded-2xl shadow-sm ${className || ""}`}
-			{...props}
-		>
-			{title && <Text className="text-xl font-bold text-black dark:text-white mb-1">{title}</Text>}
-			{description && <Text className="text-gray-500 dark:text-gray-400 mb-4">{description}</Text>}
-			<View>{children}</View>
+		<View style={[styles.card, bordered && styles.border, style]} {...props}>
+			{content}
 		</View>
 	);
 }
+
+const styles = StyleSheet.create({
+	card: {
+		backgroundColor: AppColors.surface,
+		borderRadius: 16,
+		padding: 16,
+		...AppShadows.sm,
+	},
+	border: {
+		borderWidth: 1,
+		borderColor: AppColors.card.border,
+	},
+	title: {
+		fontSize: 16,
+		fontWeight: "700",
+		color: AppColors.text.primary,
+		marginBottom: 4,
+	},
+	description: {
+		fontSize: 13,
+		color: AppColors.text.secondary,
+		marginBottom: 12,
+		lineHeight: 18,
+	},
+	pressed: {
+		opacity: 0.9,
+		transform: [{ scale: 0.995 }],
+	},
+});

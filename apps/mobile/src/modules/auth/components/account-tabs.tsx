@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { NeonColors } from "@/constants/design-system";
 
-type AccountTab = "profile" | "security" | "billing";
+type AccountTab = "profile" | "security";
 
 export function AccountTabs({ active }: { active: AccountTab }) {
 	return (
@@ -16,11 +16,6 @@ export function AccountTabs({ active }: { active: AccountTab }) {
 				label="Security"
 				active={active === "security"}
 				onPress={() => router.replace("/(modules)/(profile)/security")}
-			/>
-			<Tab
-				label="Billing"
-				active={active === "billing"}
-				onPress={() => router.replace("/(modules)/(profile)/billing")}
 			/>
 		</View>
 	);
