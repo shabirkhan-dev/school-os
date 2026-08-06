@@ -79,6 +79,8 @@
 	--dashboard-accent-soft: color-mix(in oklab, #0f766e 12%, transparent);
 	--dashboard-shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.8),
 		0 1px 2px rgba(23, 23, 23, 0.04), 0 12px 32px -20px rgba(23, 23, 23, 0.12);
+	--dashboard-shadow-card-hover: inset 0 1px 0 rgba(255, 255, 255, 0.8),
+		0 2px 6px rgba(23, 23, 23, 0.06), 0 18px 44px -18px rgba(23, 23, 23, 0.18);
 }
 
 .dark {
@@ -146,6 +148,8 @@
 	--dashboard-accent-soft: color-mix(in oklab, #2dd4bf 16%, transparent);
 	--dashboard-shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.04),
 		0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -16px rgba(0, 0, 0, 0.55);
+	--dashboard-shadow-card-hover: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+		0 2px 6px rgba(0, 0, 0, 0.5), 0 18px 44px -16px rgba(0, 0, 0, 0.65);
 }
 
 @theme inline {
@@ -312,4 +316,148 @@ html[data-beui-vt="polygon"]::view-transition-new(root) {
 	animation-iteration-count: 1 !important;
 	transition-duration: 0.001ms !important;
 	scroll-behavior: auto !important;
+}
+
+/*
+ * Dashboard motion + depth system.
+ * Transform/opacity only; all keyframes are zeroed by the kill-switch above
+ * and under prefers-reduced-motion below.
+ */
+
+/* Hover lift — bounded 2px rise + deeper shadow; for cards and tiles only. */
+.dashboard-lift {
+	transition:
+		transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+		box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1),
+		border-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+		background-color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dashboard-lift:hover {
+	transform: translateY(-2px);
+	border-color: var(--dashboard-border-strong);
+	box-shadow: var(--dashboard-shadow-card-hover);
+}
+.dashboard-lift:active {
+	transform: translateY(0);
+	transition-duration: 100ms;
+}
+
+/* Live status dot — soft ring ping around a solid core. */
+.dashboard-live-dot {
+	position: relative;
+	display: inline-flex;
+}
+.dashboard-live-dot::after {
+	content: "";
+	position: absolute;
+	inset: -2px;
+	border-radius: 9999px;
+	background: currentcolor;
+	opacity: 0.55;
+	animation: dashboard-pulse-ring 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+@keyframes dashboard-pulse-ring {
+	0% {
+		transform: scale(0.8);
+		opacity: 0.55;
+	}
+	70%,
+	100% {
+		transform: scale(2.4);
+		opacity: 0;
+	}
+}
+
+/* Skeleton sheen — gradient sweep over loading placeholders. */
+.dashboard-shimmer {
+	position: relative;
+	overflow: hidden;
+	isolation: isolate;
+}
+.dashboard-shimmer::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	background: linear-gradient(
+		100deg,
+		transparent 20%,
+		color-mix(in oklab, var(--dashboard-text-primary) 6%, transparent) 50%,
+		transparent 80%
+	);
+	animation: dashboard-shimmer 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes dashboard-shimmer {
+	from {
+		transform: translateX(-100%);
+	}
+	to {
+		transform: translateX(100%);
+	}
+}
+
+/* Row/list entrance — short rise + fade for table rows and list items. */
+@keyframes dashboard-row-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+.dashboard-row-in {
+	animation: dashboard-row-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Chart cell entrance (SVG) — pop from the column base. */
+@keyframes dashboard-cell-in {
+	from {
+		opacity: 0;
+		transform: scale(0.4);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+.dashboard-pixel-cell {
+	transform-box: fill-box;
+	transform-origin: center bottom;
+	animation: dashboard-cell-in 480ms cubic-bezier(0.34, 1.3, 0.64, 1) both;
+}
+
+/* Chart bar entrance (HTML) — grow from the baseline. */
+@keyframes dashboard-bar-in {
+	from {
+		opacity: 0.25;
+		transform: scaleY(0.08);
+	}
+	to {
+		opacity: 1;
+		transform: scaleY(1);
+	}
+}
+.dashboard-bar-in {
+	transform-origin: center bottom;
+	animation: dashboard-bar-in 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dashboard-live-dot::after {
+		animation: none;
+	}
+	.dashboard-shimmer::after {
+		animation: none;
+	}
+	.dashboard-row-in,
+	.dashboard-pixel-cell,
+	.dashboard-bar-in {
+		animation-duration: 0.001ms;
+	}
+	.dashboard-lift,
+	.dashboard-lift:hover {
+		transform: none;
+	}
 }
