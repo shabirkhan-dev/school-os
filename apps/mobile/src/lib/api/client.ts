@@ -47,6 +47,13 @@ export const apiClient = {
 	postForm<T>(path: string, body: FormData, options?: ApiRequestOptions): Promise<T> {
 		return request<T>(path, { ...options, method: "POST", body }, { multipart: true });
 	},
+	put<T>(path: string, body?: unknown, options?: ApiRequestOptions): Promise<T> {
+		return request<T>(path, {
+			...options,
+			method: "PUT",
+			...(body === undefined ? {} : { body: JSON.stringify(body) }),
+		});
+	},
 	patch<T>(path: string, body: unknown, options?: ApiRequestOptions): Promise<T> {
 		return request<T>(path, { ...options, method: "PATCH", body: JSON.stringify(body) });
 	},
