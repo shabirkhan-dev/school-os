@@ -1,20 +1,15 @@
 import { router } from "expo-router";
 import { BookOpen, CalendarPlus, CalendarRange, NotebookPen, RefreshCw } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import {
-	ActivityIndicator,
-	Pressable,
-	RefreshControl,
-	ScrollView,
-	StyleSheet,
-	Text,
-	View,
-} from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { EmptyState } from "@/components/ui/empty-state";
+import { IconTile } from "@/components/ui/icon-tile";
 import { OSHeader } from "@/components/ui/os-header";
+import { PressableScale } from "@/components/ui/pressable-scale";
+import { SkeletonRow } from "@/components/ui/skeleton";
 import { TAB_BAR_CLEARANCE } from "@/components/ui/tab-bar";
-import { AppColors } from "@/constants/design-system";
+import { Colors, Shadows, Tokens, Type } from "@/constants/design-system";
 import { useAuth } from "@/modules/auth";
 import type { Assessment, HomeworkAssignment, HomeworkStatus } from "@/modules/teacher";
 import { useAssessmentListQuery, useHomeworkListQuery } from "@/modules/teacher";
@@ -72,27 +67,26 @@ export default function WorkScreen() {
 								void homework.refetch();
 								void assessments.refetch();
 							}}
-							tintColor={AppColors.primary.brand}
+							tintColor={Colors.text.muted}
 						/>
 					}
 				>
-					<Text style={styles.eyebrow}>TEACHER WORKSPACE</Text>
-					<Text style={styles.title}>Work</Text>
-					<Text style={styles.subtitle}>
-						Homework and tests across every class you teach, in one place.
-					</Text>
+					<View style={styles.hero}>
+						<Text style={styles.title}>Work</Text>
+						<Text style={styles.subtitle}>Homework and tests across every class you teach.</Text>
+					</View>
 
-					<View style={styles.segmentWrap}>
+					<View style={styles.controls}>
 						<Segmented
 							value={segment}
 							onChange={setSegment}
 							options={[
 								{
-									label: `Homework (${homework.data?.assignments.length ?? "…"})`,
+									label: `Homework${homework.data ? ` (${homework.data.assignments.length})` : ""}`,
 									value: "homework",
 								},
 								{
-									label: `Tests (${assessments.data?.assessments.length ?? "…"})`,
+									label: `Tests${assessments.data ? ` (${assessments.data.assessments.length})` : ""}`,
 									value: "assessments",
 								},
 							]}
@@ -118,35 +112,44 @@ export default function WorkScreen() {
 									/>
 								))}
 						{segment === "assessments" ? (
-							<Pressable style={styles.plannerButton} onPress={() => router.push("/planner")}>
-								<CalendarRange size={15} color={AppColors.accent.purple} />
+							<PressableScale
+								style={styles.plannerButton}
+								scaleTo={0.95}
+								onPress={() => router.push("/planner")}
+								accessibilityRole="button"
+								accessibilityLabel="Open test planner"
+							>
+								<CalendarRange size={14} color={Colors.accent.purple.fg} strokeWidth={2.2} />
 								<Text style={styles.plannerText}>Planner</Text>
-							</Pressable>
+							</PressableScale>
 						) : null}
 					</View>
 
 					{active.isLoading ? (
-						<View style={styles.loading}>
-							<ActivityIndicator color={AppColors.primary.brand} size="large" />
+						<View style={styles.stack}>
+							<SkeletonRow />
+							<SkeletonRow />
+							<SkeletonRow />
 						</View>
 					) : active.isError ? (
 						<View style={styles.errorCard}>
-							<View style={styles.errorIcon}>
-								<RefreshCw size={17} color={AppColors.status.absent} />
-							</View>
+							<IconTile icon={RefreshCw} tone="rose" size="md" />
 							<View style={styles.errorCopy}>
 								<Text style={styles.errorTitle}>Could not load work</Text>
 								<Text style={styles.errorMeta}>Pull down or tap retry.</Text>
 							</View>
-							<Pressable
+							<PressableScale
+								style={styles.retryButton}
+								scaleTo={0.92}
 								onPress={() => {
 									void homework.refetch();
 									void assessments.refetch();
 								}}
-								style={styles.retryButton}
+								accessibilityRole="button"
+								accessibilityLabel="Retry"
 							>
-								<RefreshCw size={15} color={AppColors.primary.brand} />
-							</Pressable>
+								<RefreshCw size={15} color={Colors.text.secondary} strokeWidth={2.2} />
+							</PressableScale>
 						</View>
 					) : segment === "homework" && filteredHomework.length > 0 ? (
 						<View style={styles.groupCard}>
@@ -197,8 +200,8 @@ function HomeworkRow({ item, last }: { item: HomeworkAssignment; last: boolean }
 	return (
 		<ListRow
 			icon={BookOpen}
-			iconColor={AppColors.primary.brand}
-			iconBackground={AppColors.primary.subtle}
+			iconColor={Colors.brand.base}
+			iconBackground={Colors.brand.tint}
 			title={item.title}
 			subtitle={`${item.sectionName} · ${item.subjectName}${item.dueAt ? ` · due ${formatFullDate(item.dueAt)}` : ""}`}
 			badge={{ label: item.status, status: homeworkStatusVariant[item.status] }}
@@ -212,8 +215,8 @@ function AssessmentRow({ item, last }: { item: Assessment; last: boolean }) {
 	return (
 		<ListRow
 			icon={CalendarPlus}
-			iconColor={AppColors.accent.purple}
-			iconBackground="#F3E8FF"
+			iconColor={Colors.accent.purple.fg}
+			iconBackground={Colors.accent.purple.bg}
 			title={item.title}
 			subtitle={`${item.sectionName} · ${formatFullDate(item.assessedOn)} · max ${item.maxScore}`}
 			badge={{ label: item.status, status: assessmentStatusVariant[item.status] }}
@@ -224,76 +227,90 @@ function AssessmentRow({ item, last }: { item: Assessment; last: boolean }) {
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: AppColors.background },
+	container: { flex: 1, backgroundColor: Colors.canvas },
 	safeArea: { flex: 1 },
-	content: { padding: 20, paddingBottom: TAB_BAR_CLEARANCE + 24 },
-	eyebrow: { color: AppColors.primary.brand, fontSize: 11, fontWeight: "800", letterSpacing: 1.2 },
-	title: {
-		color: AppColors.text.primary,
-		fontSize: 30,
-		fontWeight: "800",
-		marginTop: 4,
-		letterSpacing: -0.8,
+	content: { paddingBottom: TAB_BAR_CLEARANCE + Tokens.space["6"] },
+
+	hero: {
+		paddingHorizontal: Tokens.space["5"],
+		paddingTop: Tokens.space["6"],
+		paddingBottom: Tokens.space["3"],
 	},
-	subtitle: { color: AppColors.text.secondary, fontSize: 13, lineHeight: 19, marginTop: 6 },
-	segmentWrap: { marginTop: 20 },
+	title: Type.display,
+	subtitle: {
+		...Type.meta,
+		color: Colors.text.tertiary,
+		marginTop: Tokens.space["1"],
+	},
+
+	controls: {
+		paddingHorizontal: Tokens.space["5"],
+		marginTop: Tokens.space["4"],
+	},
+
 	filterRow: {
 		flexDirection: "row",
 		flexWrap: "wrap",
 		alignItems: "center",
-		gap: 8,
-		marginTop: 14,
+		gap: Tokens.space["2"],
+		paddingHorizontal: Tokens.space["5"],
+		marginTop: Tokens.space["3"],
 	},
 	plannerButton: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 6,
+		gap: Tokens.space["1.5"],
 		marginLeft: "auto",
-		paddingHorizontal: 12,
-		paddingVertical: 8,
-		borderRadius: 999,
-		borderWidth: 1,
-		borderColor: "#E9D5FF",
-		backgroundColor: "#FAF5FF",
+		paddingHorizontal: Tokens.space["3"],
+		paddingVertical: Tokens.space["2"],
+		borderRadius: Tokens.radius.full,
+		backgroundColor: Colors.accent.purple.bg,
 	},
-	plannerText: { color: AppColors.accent.purple, fontSize: 13, fontWeight: "700" },
-	loading: { alignItems: "center", justifyContent: "center", paddingVertical: 60 },
+	plannerText: {
+		fontSize: Tokens.fontSize.base,
+		fontWeight: Tokens.fontWeight.semibold,
+		color: Colors.accent.purple.fg,
+		letterSpacing: Tokens.tracking.snug,
+	},
+
+	stack: {
+		paddingHorizontal: Tokens.space["5"],
+		marginTop: Tokens.space["4"],
+		gap: Tokens.space["2.5"],
+	},
+
 	errorCard: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 10,
-		marginTop: 20,
-		padding: 14,
-		borderRadius: 16,
-		backgroundColor: AppColors.surface,
-		borderWidth: 1,
-		borderColor: AppColors.status.absentBg,
+		gap: Tokens.space["3"],
+		marginHorizontal: Tokens.space["5"],
+		marginTop: Tokens.space["4"],
+		padding: Tokens.space["4"],
+		borderRadius: Tokens.radius.xl,
+		backgroundColor: Colors.surface,
+		...Shadows.xs,
 	},
-	errorIcon: {
-		width: 36,
-		height: 36,
-		borderRadius: 10,
-		alignItems: "center",
-		justifyContent: "center",
-		backgroundColor: AppColors.status.absentBg,
+	errorCopy: { flex: 1, gap: Tokens.space["1"] },
+	errorTitle: {
+		...Type.subheading,
+		fontSize: Tokens.fontSize.lg,
 	},
-	errorCopy: { flex: 1, gap: 2 },
-	errorTitle: { color: AppColors.text.primary, fontWeight: "700", fontSize: 14 },
-	errorMeta: { color: AppColors.text.secondary, fontSize: 12 },
+	errorMeta: Type.caption,
 	retryButton: {
-		width: 34,
-		height: 34,
-		borderRadius: 17,
+		width: 38,
+		height: 38,
+		borderRadius: Tokens.radius.full,
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: AppColors.primary.subtle,
+		backgroundColor: Colors.sunken,
 	},
+
 	groupCard: {
-		marginTop: 14,
-		backgroundColor: AppColors.surface,
-		borderRadius: 16,
-		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		marginHorizontal: Tokens.space["5"],
+		marginTop: Tokens.space["4"],
+		backgroundColor: Colors.surface,
+		borderRadius: Tokens.radius.xl,
 		overflow: "hidden",
+		...Shadows.xs,
 	},
 });

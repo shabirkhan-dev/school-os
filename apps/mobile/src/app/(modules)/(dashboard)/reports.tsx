@@ -2,7 +2,6 @@ import { router } from "expo-router";
 import { BarChart3, BookOpen, CalendarCheck, GraduationCap, Users } from "lucide-react-native";
 import {
 	ActivityIndicator,
-	Pressable,
 	RefreshControl,
 	ScrollView,
 	StyleSheet,
@@ -11,9 +10,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { EmptyState } from "@/components/ui/empty-state";
+import { IconTile } from "@/components/ui/icon-tile";
 import { OSHeader } from "@/components/ui/os-header";
+import { PressableScale } from "@/components/ui/pressable-scale";
+import { SkeletonStatCard } from "@/components/ui/skeleton";
 import { TAB_BAR_CLEARANCE } from "@/components/ui/tab-bar";
-import { AppColors, AppShadows } from "@/constants/design-system";
+import { Colors, Shadows, Tokens, Type } from "@/constants/design-system";
 import { useAuth } from "@/modules/auth";
 import {
 	useAttendanceReportQuery,
@@ -47,19 +49,23 @@ export default function ReportsScreen() {
 								void overview.refetch();
 								void profile.refetch();
 							}}
-							tintColor={AppColors.primary.brand}
+							tintColor={Colors.text.muted}
 						/>
 					}
 				>
-					<Text style={styles.eyebrow}>SCHOOL PULSE</Text>
-					<Text style={styles.title}>Reports</Text>
-					<Text style={styles.subtitle}>
-						A live snapshot of your classes — grades, attendance, and homework completion.
-					</Text>
+					<View style={styles.hero}>
+						<Text style={styles.title}>Reports</Text>
+						<Text style={styles.subtitle}>
+							A live snapshot of your classes — grades, attendance, and homework.
+						</Text>
+					</View>
 
 					{overview.isLoading ? (
-						<View style={styles.loading}>
-							<ActivityIndicator color={AppColors.primary.brand} size="large" />
+						<View style={styles.metrics}>
+							<SkeletonStatCard />
+							<SkeletonStatCard />
+							<SkeletonStatCard />
+							<SkeletonStatCard />
 						</View>
 					) : overview.data ? (
 						<View style={styles.metrics}>
@@ -74,16 +80,16 @@ export default function ReportsScreen() {
 								value={overview.data.sections}
 								hint={`${overview.data.subjects} subjects`}
 								icon={BookOpen}
-								color={AppColors.status.late}
-								background={AppColors.status.lateBg}
+								color={Colors.status.late.fg}
+								background={Colors.status.late.bg}
 							/>
 							<MetricCard
 								label="Assessments"
 								value={overview.data.assessments}
 								hint="Tests & quizzes"
 								icon={GraduationCap}
-								color={AppColors.accent.purple}
-								background="#F3E8FF"
+								color={Colors.accent.purple.fg}
+								background={Colors.accent.purple.bg}
 							/>
 							<MetricCard
 								label="Attendance"
@@ -94,8 +100,8 @@ export default function ReportsScreen() {
 								}
 								hint={`${overview.data.attendance.present} of ${overview.data.attendance.marked} marked present`}
 								icon={CalendarCheck}
-								color={AppColors.status.present}
-								background={AppColors.status.presentBg}
+								color={Colors.status.present.fg}
+								background={Colors.status.present.bg}
 							/>
 						</View>
 					) : (
@@ -150,24 +156,24 @@ function SectionReportCard({
 	const loading = grades.isLoading || attendance.isLoading || homework.isLoading;
 
 	return (
-		<Pressable
-			style={({ pressed }) => [styles.sectionCard, pressed && styles.pressed]}
+		<PressableScale
+			style={styles.sectionCard}
+			scaleTo={0.985}
 			onPress={() => router.push(`/gradebook/${sectionId}`)}
+			accessibilityRole="button"
+			accessibilityLabel={`${sectionName} report`}
 		>
 			<View style={styles.sectionHeader}>
-				<View style={styles.sectionIcon}>
-					<BookOpen size={18} color={AppColors.primary.brand} />
-				</View>
+				<IconTile icon={BookOpen} tone="blue" size="md" />
 				<View style={styles.sectionCopy}>
 					<Text style={styles.sectionName}>{sectionName}</Text>
 					<Text style={styles.sectionMeta}>{subjectName ?? "Homeroom"}</Text>
 				</View>
-				<Text style={styles.sectionArrow}>→</Text>
 			</View>
 
 			{loading ? (
 				<View style={styles.cardLoading}>
-					<ActivityIndicator color={AppColors.primary.brand} size="small" />
+					<ActivityIndicator color={Colors.text.muted} size="small" />
 				</View>
 			) : (
 				<View style={styles.reportRows}>
@@ -179,7 +185,7 @@ function SectionReportCard({
 								: "—"
 						}
 						progress={grades.data?.overallAveragePercentage ?? null}
-						color={AppColors.primary.brand}
+						color={Colors.brand.base}
 					/>
 					<ReportRow
 						label="Attendance rate"
@@ -189,7 +195,7 @@ function SectionReportCard({
 								: "—"
 						}
 						progress={attendance.data?.attendanceRate ?? null}
-						color={AppColors.status.present}
+						color={Colors.status.present.solid}
 					/>
 					<ReportRow
 						label="Homework submitted"
@@ -199,11 +205,11 @@ function SectionReportCard({
 								: "—"
 						}
 						progress={homework.data?.submissionRate ?? null}
-						color={AppColors.status.late}
+						color={Colors.status.late.solid}
 					/>
 				</View>
 			)}
-		</Pressable>
+		</PressableScale>
 	);
 }
 
@@ -229,68 +235,84 @@ function ReportRow({
 	);
 }
 
+const GUTTER = Tokens.space["5"];
+
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: AppColors.background },
+	container: { flex: 1, backgroundColor: Colors.canvas },
 	safeArea: { flex: 1 },
-	content: { padding: 20, paddingBottom: TAB_BAR_CLEARANCE + 24 },
-	eyebrow: { color: AppColors.primary.brand, fontSize: 11, fontWeight: "800", letterSpacing: 1.2 },
-	title: {
-		color: AppColors.text.primary,
-		fontSize: 30,
-		fontWeight: "800",
-		marginTop: 4,
-		letterSpacing: -0.8,
+	content: { paddingBottom: TAB_BAR_CLEARANCE + Tokens.space["6"] },
+
+	hero: {
+		paddingHorizontal: GUTTER,
+		paddingTop: Tokens.space["6"],
+		paddingBottom: Tokens.space["4"],
 	},
-	subtitle: { color: AppColors.text.secondary, fontSize: 13, lineHeight: 19, marginTop: 6 },
-	loading: { alignItems: "center", justifyContent: "center", paddingVertical: 60 },
-	metrics: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 20 },
+	title: Type.display,
+	subtitle: {
+		...Type.meta,
+		color: Colors.text.tertiary,
+		marginTop: Tokens.space["1"],
+	},
+
+	metrics: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: Tokens.space["2.5"],
+		paddingHorizontal: GUTTER,
+	},
+
 	sectionLabel: {
-		color: AppColors.text.muted,
-		fontSize: 11,
-		fontWeight: "800",
-		letterSpacing: 1,
-		marginTop: 26,
-		marginBottom: 12,
+		...Type.overline,
+		paddingHorizontal: GUTTER,
+		marginTop: Tokens.space["7"],
+		marginBottom: Tokens.space["3"],
 	},
-	sectionList: { gap: 12 },
+	sectionList: { paddingHorizontal: GUTTER, gap: Tokens.space["2.5"] },
 	sectionCard: {
-		backgroundColor: AppColors.surface,
-		borderRadius: 16,
-		borderWidth: 1,
-		borderColor: AppColors.card.border,
-		padding: 14,
-		...AppShadows.sm,
+		backgroundColor: Colors.surface,
+		borderRadius: Tokens.radius.xl,
+		padding: Tokens.space["4"],
+		...Shadows.xs,
 	},
-	pressed: { opacity: 0.85, transform: [{ scale: 0.995 }] },
-	sectionHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
-	sectionIcon: {
-		width: 38,
-		height: 38,
-		borderRadius: 12,
+	sectionHeader: {
+		flexDirection: "row",
 		alignItems: "center",
-		justifyContent: "center",
-		backgroundColor: AppColors.primary.subtle,
+		gap: Tokens.space["3"],
 	},
-	sectionCopy: { flex: 1, gap: 2 },
-	sectionName: { color: AppColors.text.primary, fontSize: 15, fontWeight: "700" },
-	sectionMeta: { color: AppColors.text.secondary, fontSize: 12 },
-	sectionArrow: { color: AppColors.text.muted, fontSize: 16 },
-	cardLoading: { alignItems: "center", paddingVertical: 24 },
+	sectionCopy: { flex: 1, gap: Tokens.space["1"] },
+	sectionName: {
+		...Type.subheading,
+		fontSize: Tokens.fontSize.lg,
+	},
+	sectionMeta: Type.caption,
+
+	cardLoading: { alignItems: "center", paddingVertical: Tokens.space["6"] },
+
 	reportRows: {
-		gap: 10,
-		marginTop: 12,
-		paddingTop: 12,
+		gap: Tokens.space["2.5"],
+		marginTop: Tokens.space["4"],
+		paddingTop: Tokens.space["3"],
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.subtle,
 	},
-	reportRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-	reportLabel: { color: AppColors.text.secondary, fontSize: 12, width: 116 },
+	reportRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: Tokens.space["3"],
+	},
+	reportLabel: {
+		fontSize: Tokens.fontSize.sm,
+		fontWeight: Tokens.fontWeight.medium,
+		color: Colors.text.secondary,
+		width: 112,
+	},
 	reportBar: { flex: 1 },
 	reportValue: {
-		color: AppColors.text.primary,
-		fontSize: 13,
-		fontWeight: "800",
-		width: 42,
+		fontSize: Tokens.fontSize.md,
+		fontWeight: Tokens.fontWeight.bold,
+		color: Colors.text.primary,
+		width: 44,
 		textAlign: "right",
+		fontVariant: ["tabular-nums"],
 	},
 });

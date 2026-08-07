@@ -1,16 +1,19 @@
 import { router } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
 import type * as React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { AppColors } from "@/constants/design-system";
+import { StyleSheet, Text, View } from "react-native";
+import { PressableScale } from "@/components/ui/pressable-scale";
+import { Colors, Tokens } from "@/constants/design-system";
 
 interface ScreenHeaderProps {
 	title: string;
 	subtitle?: string;
 	right?: React.ReactNode;
+	/** Explicit destination, for screens reachable from more than one place. */
 	backHref?: string;
 }
 
+/** Back affordance, title block, optional trailing slot. Used by every detail screen. */
 export function ScreenHeader({ title, subtitle, right, backHref }: ScreenHeaderProps) {
 	const goBack = () => {
 		if (backHref) {
@@ -24,13 +27,17 @@ export function ScreenHeader({ title, subtitle, right, backHref }: ScreenHeaderP
 
 	return (
 		<View style={styles.container}>
-			<Pressable
-				style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+			<PressableScale
+				style={styles.backButton}
+				scaleTo={0.9}
 				onPress={goBack}
 				hitSlop={8}
+				accessibilityRole="button"
+				accessibilityLabel="Go back"
 			>
-				<ChevronLeft size={22} color={AppColors.text.primary} strokeWidth={2.2} />
-			</Pressable>
+				<ChevronLeft size={20} color={Colors.text.primary} strokeWidth={2.3} />
+			</PressableScale>
+
 			<View style={styles.copy}>
 				<Text style={styles.title} numberOfLines={1}>
 					{title}
@@ -41,7 +48,8 @@ export function ScreenHeader({ title, subtitle, right, backHref }: ScreenHeaderP
 					</Text>
 				) : null}
 			</View>
-			{right ? <View style={styles.right}>{right}</View> : <View style={styles.rightSpacer} />}
+
+			{right ? <View style={styles.right}>{right}</View> : <View style={styles.spacer} />}
 		</View>
 	);
 }
@@ -50,43 +58,41 @@ const styles = StyleSheet.create({
 	container: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 10,
-		paddingHorizontal: 12,
-		paddingVertical: 10,
+		gap: Tokens.space["3"],
+		paddingHorizontal: Tokens.space["4"],
+		paddingVertical: Tokens.space["3"],
 	},
 	backButton: {
 		width: 38,
 		height: 38,
-		borderRadius: 12,
+		borderRadius: Tokens.radius.full,
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: AppColors.card.subtle,
-		borderWidth: 1,
-		borderColor: AppColors.card.border,
-	},
-	pressed: {
-		opacity: 0.7,
-		transform: [{ scale: 0.96 }],
+		backgroundColor: Colors.surface,
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.border.base,
 	},
 	copy: {
 		flex: 1,
-		gap: 1,
 	},
 	title: {
-		color: AppColors.text.primary,
-		fontSize: 19,
-		fontWeight: "800",
-		letterSpacing: -0.3,
+		fontSize: Tokens.fontSize["2xl"],
+		fontWeight: Tokens.fontWeight.bold,
+		color: Colors.text.primary,
+		letterSpacing: Tokens.tracking.tight,
 	},
 	subtitle: {
-		color: AppColors.text.muted,
-		fontSize: 12,
+		fontSize: Tokens.fontSize.sm,
+		fontWeight: Tokens.fontWeight.medium,
+		color: Colors.text.tertiary,
+		marginTop: 1,
 	},
 	right: {
 		flexDirection: "row",
 		alignItems: "center",
+		gap: Tokens.space["2"],
 	},
-	rightSpacer: {
+	spacer: {
 		width: 38,
 	},
 });

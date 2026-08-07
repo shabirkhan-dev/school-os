@@ -11,6 +11,10 @@ interface IconTileProps {
 	tone?: TileTone;
 	size?: TileSize;
 	style?: ViewStyle;
+	/** Explicit override, wins over `tone`. For callers with a computed colour. */
+	color?: string;
+	/** Explicit override, wins over `tone`. */
+	background?: string;
 }
 
 /**
@@ -20,7 +24,14 @@ interface IconTileProps {
  * category before reading its label. Radius scales with the box so the corner
  * curve looks constant across sizes.
  */
-export function IconTile({ icon: Icon, tone = "blue", size = "md", style }: IconTileProps) {
+export function IconTile({
+	icon: Icon,
+	tone = "blue",
+	size = "md",
+	style,
+	color,
+	background,
+}: IconTileProps) {
 	const { box, radius, glyph, stroke } = SIZES[size];
 	const palette = TONES[tone];
 
@@ -32,12 +43,12 @@ export function IconTile({ icon: Icon, tone = "blue", size = "md", style }: Icon
 					width: box,
 					height: box,
 					borderRadius: radius,
-					backgroundColor: palette.bg,
+					backgroundColor: background ?? palette.bg,
 				},
 				style,
 			]}
 		>
-			<Icon size={glyph} color={palette.fg} strokeWidth={stroke} />
+			<Icon size={glyph} color={color ?? palette.fg} strokeWidth={stroke} />
 		</View>
 	);
 }

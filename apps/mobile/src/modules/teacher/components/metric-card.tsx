@@ -1,32 +1,40 @@
 import type { LucideIcon } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
-import { AppColors, AppShadows } from "@/constants/design-system";
-import { IconTile } from "./icon-tile";
+import { IconTile } from "@/components/ui/icon-tile";
+import { Colors, Shadows, Tokens, Type } from "@/constants/design-system";
 
 interface MetricCardProps {
 	label: string;
 	value: string | number;
 	hint?: string;
 	icon: LucideIcon;
+	/** Explicit overrides for callers with dynamic colours. */
 	color?: string;
 	background?: string;
+	/** Amber tint for values that need attention. */
 	alert?: boolean;
 }
 
+/**
+ * Headline figure tile. Icon top-right, large metric, supporting hint below.
+ *
+ * These pack into a flex-wrap row and auto-collapse into two columns on phone,
+ * so callers pass 4–6 items and the viewport decides the grid.
+ */
 export function MetricCard({
 	label,
 	value,
 	hint,
 	icon,
-	color = AppColors.primary.brand,
-	background = AppColors.primary.subtle,
+	color,
+	background,
 	alert,
 }: MetricCardProps) {
 	return (
 		<View style={[styles.card, alert && styles.cardAlert]}>
 			<View style={styles.topRow}>
 				<Text style={styles.label}>{label}</Text>
-				<IconTile icon={icon} color={color} background={background} size={32} iconSize={16} />
+				<IconTile icon={icon} color={color} background={background} size="sm" />
 			</View>
 			<Text style={styles.value}>{value}</Text>
 			{hint ? <Text style={styles.hint}>{hint}</Text> : null}
@@ -38,14 +46,14 @@ const styles = StyleSheet.create({
 	card: {
 		flex: 1,
 		minWidth: "47%",
-		backgroundColor: AppColors.surface,
-		borderRadius: 16,
-		borderWidth: 1,
-		borderColor: AppColors.card.border,
-		padding: 14,
-		...AppShadows.sm,
+		backgroundColor: Colors.surface,
+		borderRadius: Tokens.radius.xl,
+		padding: Tokens.space["4"],
+		gap: Tokens.space["2"],
+		...Shadows.xs,
 	},
 	cardAlert: {
+		borderWidth: StyleSheet.hairlineWidth,
 		borderColor: "#FCD34D",
 		backgroundColor: "#FFFBEB",
 	},
@@ -53,28 +61,17 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "space-between",
-		marginBottom: 8,
 	},
 	label: {
-		color: AppColors.text.muted,
-		fontSize: 11,
-		fontWeight: "700",
-		textTransform: "uppercase",
-		letterSpacing: 0.4,
+		...Type.overline,
 		flexShrink: 1,
-		marginRight: 6,
+		marginRight: Tokens.space["2"],
 	},
 	value: {
-		color: AppColors.text.primary,
-		fontSize: 26,
-		fontWeight: "800",
-		letterSpacing: -0.5,
-		fontVariant: ["tabular-nums"],
+		...Type.metricSm,
+		marginTop: Tokens.space["1"],
 	},
 	hint: {
-		color: AppColors.text.secondary,
-		fontSize: 11,
-		marginTop: 3,
-		lineHeight: 15,
+		...Type.caption,
 	},
 });
