@@ -1,20 +1,23 @@
 import type { LucideIcon } from "lucide-react-native";
 import {
 	ActivityIndicator,
-	Pressable,
 	type PressableProps,
+	type StyleProp,
 	StyleSheet,
 	Text,
 	View,
+	type ViewStyle,
 } from "react-native";
-import { AppColors } from "@/constants/design-system";
+import { Colors, Elevation, Tokens } from "@/constants/design-system";
+import { PressableScale } from "./pressable-scale";
 
-interface ButtonProps extends Omit<PressableProps, "children"> {
+interface ButtonProps extends Omit<PressableProps, "children" | "style"> {
 	label: string;
 	variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive";
 	size?: "sm" | "md" | "lg";
 	icon?: LucideIcon;
 	loading?: boolean;
+	style?: StyleProp<ViewStyle>;
 }
 
 export function Button({
@@ -30,22 +33,25 @@ export function Button({
 	const isInteractive = !disabled && !loading;
 
 	return (
-		<Pressable
+		<PressableScale
 			disabled={!isInteractive}
-			style={({ pressed }) => [
+			scaleTo={size === "lg" ? 0.98 : 0.965}
+			dim={false}
+			accessibilityRole="button"
+			accessibilityState={{ disabled: !isInteractive, busy: loading }}
+			style={[
 				styles.base,
 				styles[variant],
 				styles[`size_${size}`],
-				disabled && styles.disabled,
-				pressed && isInteractive && styles.pressed,
-				typeof style === "function" ? style({ pressed, hovered: false }) : style,
+				!isInteractive && styles.disabled,
+				style,
 			]}
 			{...props}
 		>
 			{loading ? (
 				<ActivityIndicator
 					size="small"
-					color={variant === "primary" ? AppColors.text.inverse : AppColors.primary.brand}
+					color={variant === "primary" ? Colors.ink.foreground : Colors.brand.base}
 				/>
 			) : (
 				<View style={styles.content}>
@@ -61,28 +67,28 @@ export function Button({
 					</Text>
 				</View>
 			)}
-		</Pressable>
+		</PressableScale>
 	);
 }
 
 function getTextColor(variant: ButtonProps["variant"], disabled?: boolean) {
-	if (disabled) return AppColors.text.muted;
+	if (disabled) return Colors.text.muted;
 	switch (variant) {
 		case "primary":
 		case "destructive":
-			return AppColors.text.inverse;
+			return Colors.text.inverse;
 		case "outline":
 		case "ghost":
 		case "secondary":
-			return AppColors.text.primary;
+			return Colors.text.primary;
 		default:
-			return AppColors.text.inverse;
+			return Colors.text.inverse;
 	}
 }
 
 const styles = StyleSheet.create({
 	base: {
-		borderRadius: 12,
+		borderRadius: Tokens.radius.sm,
 		alignItems: "center",
 		justifyContent: "center",
 		flexDirection: "row",
@@ -90,7 +96,7 @@ const styles = StyleSheet.create({
 	content: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 6,
+		gap: Tokens.space["1.5"],
 	},
 	size_sm: {
 		paddingHorizontal: 12,
@@ -108,28 +114,27 @@ const styles = StyleSheet.create({
 		height: 52,
 	},
 	primary: {
-		backgroundColor: AppColors.primary.main,
+		backgroundColor: Colors.ink.base,
+		...Elevation.raisedDark,
 	},
 	secondary: {
-		backgroundColor: AppColors.card.subtle,
+		backgroundColor: Colors.surface,
+		...Elevation.raised,
 	},
 	outline: {
-		backgroundColor: "transparent",
-		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		backgroundColor: Colors.surfaceBright,
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.border.base,
 	},
 	ghost: {
 		backgroundColor: "transparent",
 	},
 	destructive: {
-		backgroundColor: AppColors.status.absent,
+		backgroundColor: Colors.status.absent.solid,
+		...Elevation.lifted,
 	},
 	disabled: {
 		opacity: 0.5,
-	},
-	pressed: {
-		opacity: 0.85,
-		transform: [{ scale: 0.98 }],
 	},
 	text: {
 		fontWeight: "600",
@@ -144,18 +149,18 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 	},
 	text_primary: {
-		color: AppColors.text.inverse,
+		color: Colors.text.inverse,
 	},
 	text_secondary: {
-		color: AppColors.text.primary,
+		color: Colors.text.primary,
 	},
 	text_outline: {
-		color: AppColors.text.primary,
+		color: Colors.text.primary,
 	},
 	text_ghost: {
-		color: AppColors.primary.brand,
+		color: Colors.brand.base,
 	},
 	text_destructive: {
-		color: AppColors.text.inverse,
+		color: Colors.text.inverse,
 	},
 });

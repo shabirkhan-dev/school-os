@@ -1,6 +1,8 @@
 import { router } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { NeonColors } from "@/constants/design-system";
+import { ShieldCheck, UserRound } from "lucide-react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { PressableScale } from "@/components/ui/pressable-scale";
+import { Colors, Elevation, Tokens } from "@/constants/design-system";
 
 type AccountTab = "profile" | "security";
 
@@ -9,11 +11,13 @@ export function AccountTabs({ active }: { active: AccountTab }) {
 		<View style={styles.row}>
 			<Tab
 				label="Profile"
+				icon={UserRound}
 				active={active === "profile"}
 				onPress={() => router.replace("/(modules)/(profile)")}
 			/>
 			<Tab
 				label="Security"
+				icon={ShieldCheck}
 				active={active === "security"}
 				onPress={() => router.replace("/(modules)/(profile)/security")}
 			/>
@@ -21,49 +25,66 @@ export function AccountTabs({ active }: { active: AccountTab }) {
 	);
 }
 
-function Tab({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function Tab({
+	label,
+	icon: Icon,
+	active,
+	onPress,
+}: {
+	label: string;
+	icon: typeof UserRound;
+	active: boolean;
+	onPress: () => void;
+}) {
 	return (
-		<Pressable
+		<PressableScale
 			onPress={onPress}
-			style={({ pressed }) => [styles.tab, active && styles.tabActive, pressed && styles.pressed]}
+			style={[styles.tab, active && styles.tabActive]}
+			scaleTo={0.96}
+			dim={false}
+			accessibilityRole="tab"
+			accessibilityState={{ selected: active }}
 		>
+			<Icon
+				size={16}
+				color={active ? Colors.text.primary : Colors.text.tertiary}
+				strokeWidth={active ? 2.2 : 1.8}
+			/>
 			<Text style={[styles.label, active && styles.labelActive]}>{label}</Text>
-		</Pressable>
+		</PressableScale>
 	);
 }
 
 const styles = StyleSheet.create({
 	row: {
 		flexDirection: "row",
-		gap: 6,
-		padding: 4,
-		borderRadius: 14,
-		borderWidth: 1,
-		borderColor: NeonColors.card.border,
-		backgroundColor: "rgba(255,255,255,0.03)",
+		gap: Tokens.space["1"],
+		padding: Tokens.space["1"],
+		borderRadius: Tokens.radius.md,
+		backgroundColor: Colors.sunken,
+		...Elevation.well,
 	},
 	tab: {
 		flex: 1,
-		minHeight: 40,
-		borderRadius: 10,
+		minHeight: Tokens.touchTarget,
+		borderRadius: Tokens.radius.sm,
+		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "center",
-		paddingHorizontal: 4,
+		gap: Tokens.space["1.5"],
+		paddingHorizontal: Tokens.space["2"],
 	},
 	tabActive: {
-		backgroundColor: "rgba(0, 230, 118, 0.12)",
-		borderWidth: 1,
-		borderColor: "rgba(0, 230, 118, 0.35)",
+		backgroundColor: Colors.surfaceBright,
+		...Elevation.raised,
 	},
 	label: {
-		color: NeonColors.text.secondary,
-		fontSize: 13,
-		fontWeight: "600",
+		color: Colors.text.secondary,
+		fontSize: Tokens.fontSize.base,
+		fontWeight: Tokens.fontWeight.semibold,
 	},
 	labelActive: {
-		color: NeonColors.accent.green,
-	},
-	pressed: {
-		opacity: 0.85,
+		color: Colors.text.primary,
+		fontWeight: Tokens.fontWeight.bold,
 	},
 });

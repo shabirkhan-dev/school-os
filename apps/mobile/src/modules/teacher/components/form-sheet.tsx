@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
 		color: AppColors.text.primary,
 		fontSize: 19,
 		fontWeight: "800",
-		letterSpacing: -0.3,
+		letterSpacing: 0,
 	},
 	subtitle: {
 		color: AppColors.text.muted,

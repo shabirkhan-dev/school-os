@@ -1,7 +1,8 @@
 import { Check, ImagePlus } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { NeonColors } from "@/constants/design-system";
+import { ActivityIndicator, Alert, Image, StyleSheet, Text, View } from "react-native";
+import { PressableScale } from "@/components/ui/pressable-scale";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 import { resolveMediaUrl } from "@/lib/media-url";
 import { buildAvatarTemplates } from "../lib/avatar-templates";
 
@@ -30,7 +31,11 @@ export function AvatarPicker({
 
 	return (
 		<View style={styles.wrap}>
-			<Text style={styles.label}>Avatar</Text>
+			<View style={styles.heading}>
+				<Text style={styles.label}>Profile photo</Text>
+				<Text style={styles.caption}>JPEG, PNG, or WebP up to 2 MB</Text>
+			</View>
+
 			<View style={styles.previewRow}>
 				<View style={styles.preview}>
 					{previewUri && !previewFailed ? (
@@ -41,58 +46,80 @@ export function AvatarPicker({
 							onError={() => setFailedUri(previewUri)}
 						/>
 					) : (
-						<Text style={styles.previewFallback}>None</Text>
+						<UserFallback seed={seed} />
 					)}
 				</View>
-				<Pressable
-					style={({ pressed }) => [
-						styles.uploadButton,
-						pressed && !busy && styles.pressed,
-						busy && styles.disabled,
-					]}
-					disabled={busy}
-					onPress={onPickFromDevice}
-				>
-					{uploading ? (
-						<ActivityIndicator color={NeonColors.accent.green} />
-					) : (
-						<>
-							<ImagePlus size={16} color={NeonColors.text.primary} strokeWidth={1.8} />
-							<Text style={styles.uploadLabel}>Upload photo</Text>
-						</>
-					)}
-				</Pressable>
+				<View style={styles.uploadCopy}>
+					<Text style={styles.uploadTitle}>Use your own photo</Text>
+					<Text style={styles.uploadDescription}>Square images work best.</Text>
+					<PressableScale
+						style={[styles.uploadButton, busy && styles.disabled]}
+						disabled={busy}
+						onPress={onPickFromDevice}
+						scaleTo={0.97}
+						dim={false}
+						accessibilityRole="button"
+						accessibilityState={{ disabled: busy, busy: uploading }}
+						accessibilityLabel="Upload profile photo"
+					>
+						{uploading ? (
+							<ActivityIndicator color={Colors.brand.base} size="small" />
+						) : (
+							<>
+								<ImagePlus size={16} color={Colors.text.primary} strokeWidth={2} />
+								<Text style={styles.uploadLabel}>Choose photo</Text>
+							</>
+						)}
+					</PressableScale>
+				</View>
 			</View>
 
-			<Text style={styles.hint}>Or pick a template</Text>
+			<View style={styles.templateHeading}>
+				<Text style={styles.templateTitle}>Or choose an illustrated avatar</Text>
+				<Text style={styles.templateHint}>Tap one to preview it.</Text>
+			</View>
 			<View style={styles.grid}>
 				{templates.map((template) => {
 					const selected = value === template.url;
 					return (
-						<Pressable
+						<PressableScale
 							key={template.id}
 							disabled={busy}
 							onPress={() => onSelectTemplate(template.url)}
-							style={({ pressed }) => [
+							style={[
 								styles.template,
 								selected && styles.templateSelected,
-								pressed && !busy && styles.pressed,
 								busy && styles.disabled,
 							]}
+							scaleTo={0.93}
+							dim={false}
+							accessibilityRole="button"
+							accessibilityState={{ selected, disabled: busy }}
+							accessibilityLabel={`Choose avatar ${template.id}`}
 						>
 							<Image source={{ uri: template.url }} style={styles.templateImage} />
 							{selected ? (
 								<View style={styles.check}>
-									<Check size={12} color={NeonColors.background} strokeWidth={3} />
+									<Check size={12} color={Colors.text.inverse} strokeWidth={3} />
 								</View>
 							) : null}
-						</Pressable>
+						</PressableScale>
 					);
 				})}
 			</View>
-			<Text style={styles.caption}>JPEG, PNG, or WebP · max 2 MB</Text>
 		</View>
 	);
+}
+
+function UserFallback({ seed }: { seed: string }) {
+	const initials = seed
+		.trim()
+		.split(/[\s._-]+/)
+		.slice(0, 2)
+		.map((part) => part[0]?.toUpperCase())
+		.join("");
+
+	return <Text style={styles.previewFallback}>{initials || "SO"}</Text>;
 }
 
 export function alertAvatarPermissionDenied() {
@@ -103,99 +130,81 @@ export function alertAvatarPermissionDenied() {
 }
 
 const styles = StyleSheet.create({
-	wrap: {
-		gap: 12,
-	},
-	label: {
-		color: NeonColors.text.primary,
-		fontSize: 14,
-		fontWeight: "600",
-	},
-	previewRow: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 14,
-	},
+	wrap: { gap: Tokens.space["4"] },
+	heading: { gap: Tokens.space["0.5"] },
+	label: { ...Type.meta, color: Colors.text.primary, fontWeight: Tokens.fontWeight.semibold },
+	caption: Type.caption,
+	previewRow: { flexDirection: "row", alignItems: "center", gap: Tokens.space["4"] },
 	preview: {
 		width: 72,
 		height: 72,
-		borderRadius: 36,
+		borderRadius: Tokens.radius.full,
 		overflow: "hidden",
-		borderWidth: 1,
-		borderColor: NeonColors.card.border,
-		backgroundColor: NeonColors.surface,
+		backgroundColor: Colors.brand.tint,
 		alignItems: "center",
 		justifyContent: "center",
+		...Elevation.raised,
 	},
-	previewImage: {
-		width: "100%",
-		height: "100%",
-	},
+	previewImage: { width: "100%", height: "100%" },
 	previewFallback: {
-		color: NeonColors.text.muted,
-		fontSize: 12,
+		fontSize: Tokens.fontSize["3xl"],
+		fontWeight: Tokens.fontWeight.bold,
+		color: Colors.brand.strong,
 	},
+	uploadCopy: { flex: 1, gap: Tokens.space["1"] },
+	uploadTitle: { ...Type.meta, color: Colors.text.primary, fontWeight: Tokens.fontWeight.semibold },
+	uploadDescription: Type.caption,
 	uploadButton: {
+		alignSelf: "flex-start",
+		minHeight: Tokens.touchTarget,
+		marginTop: Tokens.space["1"],
+		paddingHorizontal: Tokens.space["3"],
+		borderRadius: Tokens.radius.sm,
+		backgroundColor: Colors.surfaceBright,
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.border.base,
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 8,
-		minHeight: 44,
-		paddingHorizontal: 14,
-		borderRadius: 14,
-		borderWidth: 1,
-		borderColor: NeonColors.card.border,
-		backgroundColor: "rgba(255,255,255,0.03)",
+		justifyContent: "center",
+		gap: Tokens.space["2"],
+		...Elevation.raised,
 	},
 	uploadLabel: {
-		color: NeonColors.text.primary,
-		fontSize: 14,
-		fontWeight: "600",
+		fontSize: Tokens.fontSize.base,
+		fontWeight: Tokens.fontWeight.semibold,
+		color: Colors.text.primary,
 	},
-	hint: {
-		color: NeonColors.text.muted,
-		fontSize: 12,
-		marginTop: 4,
+	templateHeading: { gap: Tokens.space["0.5"], marginTop: Tokens.space["1"] },
+	templateTitle: {
+		...Type.meta,
+		color: Colors.text.primary,
+		fontWeight: Tokens.fontWeight.semibold,
 	},
-	grid: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		gap: 10,
-	},
+	templateHint: Type.caption,
+	grid: { flexDirection: "row", flexWrap: "wrap", gap: Tokens.space["2.5"] },
 	template: {
-		width: 64,
-		height: 64,
-		borderRadius: 16,
+		width: 60,
+		height: 60,
+		borderRadius: Tokens.radius.lg,
 		overflow: "hidden",
-		borderWidth: 1,
-		borderColor: NeonColors.card.border,
-	},
-	templateSelected: {
-		borderColor: NeonColors.accent.green,
 		borderWidth: 2,
+		borderColor: "transparent",
+		backgroundColor: Colors.sunken,
 	},
-	templateImage: {
-		width: "100%",
-		height: "100%",
-	},
+	templateSelected: { borderColor: Colors.brand.base, ...Elevation.lifted },
+	templateImage: { width: "100%", height: "100%" },
 	check: {
 		position: "absolute",
 		right: 4,
 		bottom: 4,
-		width: 18,
-		height: 18,
-		borderRadius: 9,
-		backgroundColor: NeonColors.accent.green,
+		width: 20,
+		height: 20,
+		borderRadius: Tokens.radius.full,
+		backgroundColor: Colors.brand.base,
 		alignItems: "center",
 		justifyContent: "center",
+		borderWidth: 2,
+		borderColor: Colors.surfaceBright,
 	},
-	caption: {
-		color: NeonColors.text.muted,
-		fontSize: 12,
-	},
-	pressed: {
-		opacity: 0.85,
-	},
-	disabled: {
-		opacity: 0.5,
-	},
+	disabled: { opacity: 0.5 },
 });

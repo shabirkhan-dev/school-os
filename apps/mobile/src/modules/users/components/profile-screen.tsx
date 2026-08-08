@@ -1,10 +1,20 @@
-import { Calendar, CheckCircle2, LogOut, Mail, ShieldOff, UserRound } from "lucide-react-native";
+import {
+	CalendarDays,
+	CheckCircle2,
+	LogOut,
+	Mail,
+	ShieldOff,
+	UserRound,
+} from "lucide-react-native";
 import { useEffect } from "react";
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { NeonCard } from "@/components/ui/neon-card";
+import { Card } from "@/components/ui/card";
+import { IconTile, type TileTone } from "@/components/ui/icon-tile";
 import { OSHeader } from "@/components/ui/os-header";
-import { NeonColors } from "@/constants/design-system";
+import { PressableScale } from "@/components/ui/pressable-scale";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
+import { formatRoleLabel } from "@/lib/format-role";
 import { resolveMediaUrl } from "@/lib/media-url";
 import { useAuth } from "@/modules/auth";
 import { AccountTabs } from "@/modules/auth/components/account-tabs";
@@ -12,7 +22,7 @@ import { AuthButton } from "@/modules/auth/components/auth-button";
 import { ProfileForm } from "./profile-form";
 
 export function ProfileScreen() {
-	const { user, logout, logoutAll, refreshUser } = useAuth();
+	const { user, tenantContext, logout, logoutAll, refreshUser } = useAuth();
 
 	useEffect(() => {
 		void refreshUser();
@@ -29,6 +39,7 @@ export function ProfileScreen() {
 		month: "long",
 		day: "numeric",
 	});
+	const roleLabel = formatRoleLabel(tenantContext?.role);
 
 	const confirmLogout = () => {
 		Alert.alert("Sign out", "End this session on this device?", [
@@ -57,7 +68,7 @@ export function ProfileScreen() {
 	};
 
 	return (
-		<View style={styles.container}>
+		<View style={styles.screen}>
 			<SafeAreaView edges={["top"]} style={styles.safeArea}>
 				<OSHeader />
 				<ScrollView
@@ -65,92 +76,105 @@ export function ProfileScreen() {
 					contentContainerStyle={styles.scrollContent}
 					keyboardShouldPersistTaps="handled"
 				>
-					<View style={styles.viewContainer}>
-						<View style={styles.viewHeader}>
-							<Text style={styles.eyebrow}>ACCOUNT</Text>
-							<Text style={styles.viewTitle}>Profile</Text>
-							<Text style={styles.viewSubtitle}>
-								Control how your identity appears across your personal OS.
+					<View style={styles.content}>
+						<View style={styles.pageHeader}>
+							<Text style={styles.pageTitle}>Profile</Text>
+							<Text style={styles.pageSubtitle}>
+								Your School OS identity, preferences, and account details.
 							</Text>
 						</View>
 
 						<AccountTabs active="profile" />
 
-						<NeonCard style={styles.heroCard}>
-							<View style={styles.hero}>
+						<View style={styles.heroCard}>
+							<View style={styles.heroTop}>
 								<View style={styles.avatarWrap}>
 									<Image source={{ uri: avatarUri }} style={styles.avatar} />
-									<View style={styles.onlineDot} />
+									<View style={styles.presence} />
 								</View>
-								<Text style={styles.displayName}>{displayName}</Text>
-								<Text style={styles.handle}>@{user.username}</Text>
-								{user.profile?.bio ? <Text style={styles.bio}>{user.profile.bio}</Text> : null}
-								<View style={styles.badgeRow}>
-									<View
-										style={[styles.badge, user.emailVerified ? styles.badgeOk : styles.badgeWarn]}
-									>
-										{user.emailVerified ? (
-											<CheckCircle2 size={12} color={NeonColors.accent.green} strokeWidth={2.5} />
-										) : (
-											<Mail size={12} color={NeonColors.accent.orange} strokeWidth={2} />
-										)}
-										<Text
-											style={[
-												styles.badgeText,
-												user.emailVerified ? styles.badgeOkText : styles.badgeWarnText,
-											]}
-										>
-											{user.emailVerified ? "Email verified" : "Verify email"}
-										</Text>
-									</View>
-									<View style={styles.badge}>
-										<UserRound size={12} color={NeonColors.text.secondary} strokeWidth={2} />
-										<Text style={styles.badgeText}>{user.isActive ? "Active" : "Inactive"}</Text>
-									</View>
+								<View style={styles.heroCopy}>
+									<Text style={styles.roleLabel}>{roleLabel} workspace</Text>
+									<Text style={styles.displayName} numberOfLines={2}>
+										{displayName}
+									</Text>
+									<Text style={styles.handle}>@{user.username}</Text>
 								</View>
 							</View>
-						</NeonCard>
+
+							{user.profile?.bio ? <Text style={styles.bio}>{user.profile.bio}</Text> : null}
+
+							<View style={styles.heroStatusRow}>
+								<HeroStatus
+									icon={CheckCircle2}
+									label="Email"
+									value={user.emailVerified ? "Verified" : "Action needed"}
+									active={user.emailVerified}
+								/>
+								<View style={styles.heroDivider} />
+								<HeroStatus
+									icon={UserRound}
+									label="Account"
+									value={user.isActive ? "Active" : "Inactive"}
+									active={user.isActive}
+								/>
+							</View>
+						</View>
 
 						<View style={styles.section}>
-							<Text style={styles.sectionLabel}>PUBLIC PROFILE</Text>
-							<NeonCard>
+							<SectionLabel title="Your details" description="Shown across School OS." />
+							<Card depth="lifted">
 								<ProfileForm user={user} />
-							</NeonCard>
+							</Card>
 						</View>
 
 						<View style={styles.section}>
-							<Text style={styles.sectionLabel}>ACCOUNT IDENTITY</Text>
-							<NeonCard>
-								<View style={styles.identityList}>
-									<IdentityRow icon={Mail} label="Email" value={user.email} />
-									<IdentityRow
-										icon={CheckCircle2}
-										label="Email status"
-										value={user.emailVerified ? "Verified" : "Verification required"}
-										accent={user.emailVerified ? NeonColors.accent.green : NeonColors.accent.orange}
-									/>
-									<IdentityRow icon={Calendar} label="Member since" value={memberSince} last />
-								</View>
-							</NeonCard>
+							<SectionLabel title="Account identity" description="Read-only sign-in details." />
+							<Card depth="raised" style={styles.identityCard}>
+								<IdentityRow icon={Mail} tone="blue" label="Email" value={user.email} />
+								<IdentityRow
+									icon={CheckCircle2}
+									tone={user.emailVerified ? "green" : "amber"}
+									label="Email status"
+									value={user.emailVerified ? "Verified" : "Verification required"}
+								/>
+								<IdentityRow
+									icon={CalendarDays}
+									tone="purple"
+									label="Member since"
+									value={memberSince}
+									last
+								/>
+							</Card>
 						</View>
 
 						<View style={styles.section}>
-							<Text style={styles.sectionLabel}>SESSION</Text>
-							<NeonCard>
+							<SectionLabel title="Session" description="Control access to your account." />
+							<Card depth="raised">
 								<View style={styles.sessionActions}>
-									<AuthButton label="Sign out" variant="outline" onPress={confirmLogout} />
-									<Pressable style={styles.logoutAll} onPress={confirmLogoutAll}>
-										<ShieldOff size={16} color={NeonColors.accent.red} strokeWidth={1.8} />
+									<AuthButton
+										label="Sign out on this device"
+										variant="outline"
+										onPress={confirmLogout}
+									/>
+									<PressableScale
+										style={styles.logoutAll}
+										onPress={confirmLogoutAll}
+										scaleTo={0.975}
+										dim={false}
+										accessibilityRole="button"
+										accessibilityLabel="Sign out everywhere"
+									>
+										<ShieldOff size={17} color={Colors.status.absent.fg} strokeWidth={2} />
 										<Text style={styles.logoutAllText}>Sign out everywhere</Text>
-									</Pressable>
+									</PressableScale>
 									<View style={styles.logoutHint}>
-										<LogOut size={14} color={NeonColors.text.muted} strokeWidth={1.8} />
+										<LogOut size={14} color={Colors.text.tertiary} strokeWidth={1.8} />
 										<Text style={styles.logoutHintText}>
-											Sign out ends only this device session
+											Signing out here keeps your other trusted devices connected.
 										</Text>
 									</View>
 								</View>
-							</NeonCard>
+							</Card>
 						</View>
 					</View>
 				</ScrollView>
@@ -159,233 +183,211 @@ export function ProfileScreen() {
 	);
 }
 
-function IdentityRow({
+function HeroStatus({
 	icon: Icon,
 	label,
 	value,
-	accent,
+	active,
+}: {
+	icon: typeof CheckCircle2;
+	label: string;
+	value: string;
+	active: boolean;
+}) {
+	return (
+		<View style={styles.heroStatus}>
+			<View style={[styles.heroStatusIcon, active && styles.heroStatusIconActive]}>
+				<Icon
+					size={15}
+					color={active ? Colors.status.present.bg : Colors.status.late.bg}
+					strokeWidth={2.2}
+				/>
+			</View>
+			<View style={styles.heroStatusCopy}>
+				<Text style={styles.heroStatusLabel}>{label}</Text>
+				<Text style={styles.heroStatusValue}>{value}</Text>
+			</View>
+		</View>
+	);
+}
+
+function SectionLabel({ title, description }: { title: string; description: string }) {
+	return (
+		<View style={styles.sectionHeading}>
+			<Text style={styles.sectionTitle}>{title}</Text>
+			<Text style={styles.sectionDescription}>{description}</Text>
+		</View>
+	);
+}
+
+function IdentityRow({
+	icon,
+	tone,
+	label,
+	value,
 	last = false,
 }: {
 	icon: typeof Mail;
+	tone: TileTone;
 	label: string;
 	value: string;
-	accent?: string;
 	last?: boolean;
 }) {
 	return (
 		<View style={[styles.identityRow, last && styles.identityRowLast]}>
-			<View style={styles.identityIcon}>
-				<Icon size={16} color={accent ?? NeonColors.text.secondary} strokeWidth={1.8} />
-			</View>
+			<IconTile icon={icon} tone={tone} size="sm" />
 			<View style={styles.identityCopy}>
 				<Text style={styles.identityLabel}>{label}</Text>
-				<Text style={[styles.identityValue, accent ? { color: accent } : null]}>{value}</Text>
+				<Text style={styles.identityValue} numberOfLines={2}>
+					{value}
+				</Text>
 			</View>
 		</View>
 	);
 }
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		backgroundColor: NeonColors.background,
+	screen: { flex: 1, backgroundColor: Colors.canvas },
+	safeArea: { flex: 1 },
+	scrollContent: { paddingBottom: Tokens.space["12"] },
+	content: {
+		paddingHorizontal: Tokens.space["5"],
+		paddingTop: Tokens.space["5"],
+		gap: Tokens.space["6"],
 	},
-	safeArea: {
-		flex: 1,
-	},
-	scrollContent: {
-		paddingBottom: 48,
-	},
-	viewContainer: {
-		paddingHorizontal: 16,
-		paddingTop: 8,
-		gap: 24,
-	},
-	viewHeader: {
-		gap: 4,
-	},
-	eyebrow: {
-		color: NeonColors.text.secondary,
-		fontSize: 12,
-		fontWeight: "700",
-		letterSpacing: 1.5,
-	},
-	viewTitle: {
-		color: NeonColors.text.primary,
-		fontSize: 32,
-		fontWeight: "300",
-	},
-	viewSubtitle: {
-		color: NeonColors.text.secondary,
-		fontSize: 14,
-		marginTop: 4,
-		lineHeight: 20,
-	},
+	pageHeader: { gap: Tokens.space["1"] },
+	pageTitle: Type.display,
+	pageSubtitle: { ...Type.meta, color: Colors.text.tertiary, maxWidth: 340 },
+
 	heroCard: {
-		marginTop: 0,
+		backgroundColor: Colors.ink.base,
+		borderRadius: Tokens.radius["2xl"],
+		padding: Tokens.space["5"],
+		...Elevation.floating,
 	},
-	hero: {
-		alignItems: "center",
-		gap: 8,
-	},
-	avatarWrap: {
-		position: "relative",
-		marginBottom: 8,
-	},
+	heroTop: { flexDirection: "row", alignItems: "center", gap: Tokens.space["4"] },
+	avatarWrap: { position: "relative" },
 	avatar: {
-		width: 88,
-		height: 88,
-		borderRadius: 44,
-		backgroundColor: NeonColors.surface,
-		borderWidth: 2,
-		borderColor: "rgba(255,255,255,0.08)",
-	},
-	onlineDot: {
-		position: "absolute",
-		right: 4,
-		bottom: 4,
-		width: 16,
-		height: 16,
-		borderRadius: 8,
-		backgroundColor: NeonColors.accent.green,
+		width: 80,
+		height: 80,
+		borderRadius: Tokens.radius.full,
+		backgroundColor: Colors.ink.hover,
 		borderWidth: 3,
-		borderColor: NeonColors.background,
+		borderColor: "rgba(255,255,255,0.16)",
+	},
+	presence: {
+		position: "absolute",
+		right: 2,
+		bottom: 2,
+		width: 18,
+		height: 18,
+		borderRadius: Tokens.radius.full,
+		backgroundColor: Colors.status.present.solid,
+		borderWidth: 3,
+		borderColor: Colors.ink.base,
+	},
+	heroCopy: { flex: 1, gap: Tokens.space["0.5"] },
+	roleLabel: {
+		fontSize: Tokens.fontSize.xs,
+		fontWeight: Tokens.fontWeight.bold,
+		color: "rgba(255,255,255,0.58)",
+		textTransform: "uppercase",
 	},
 	displayName: {
-		color: NeonColors.text.primary,
-		fontSize: 24,
-		fontWeight: "300",
+		fontSize: Tokens.fontSize["4xl"],
+		fontWeight: Tokens.fontWeight.bold,
+		lineHeight: Tokens.fontSize["4xl"] * Tokens.leading.tight,
+		color: Colors.text.inverse,
 	},
 	handle: {
-		color: NeonColors.accent.green,
-		fontSize: 14,
-		fontWeight: "600",
-		letterSpacing: 0.3,
+		fontSize: Tokens.fontSize.base,
+		fontWeight: Tokens.fontWeight.medium,
+		color: "rgba(255,255,255,0.62)",
 	},
 	bio: {
-		color: NeonColors.text.secondary,
-		fontSize: 14,
-		lineHeight: 20,
-		textAlign: "center",
-		marginTop: 4,
-		paddingHorizontal: 8,
+		fontSize: Tokens.fontSize.md,
+		lineHeight: Tokens.fontSize.md * Tokens.leading.normal,
+		color: "rgba(255,255,255,0.72)",
+		marginTop: Tokens.space["4"],
 	},
-	badgeRow: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		justifyContent: "center",
-		gap: 8,
-		marginTop: 12,
-	},
-	badge: {
+	heroStatusRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 6,
-		paddingHorizontal: 12,
-		paddingVertical: 6,
-		borderRadius: 20,
-		backgroundColor: "rgba(255,255,255,0.04)",
-		borderWidth: 1,
-		borderColor: NeonColors.card.border,
+		marginTop: Tokens.space["5"],
+		paddingTop: Tokens.space["4"],
+		borderTopWidth: StyleSheet.hairlineWidth,
+		borderTopColor: "rgba(255,255,255,0.14)",
 	},
-	badgeOk: {
-		borderColor: "rgba(0, 230, 118, 0.35)",
-		backgroundColor: "rgba(0, 230, 118, 0.08)",
+	heroStatus: { flex: 1, flexDirection: "row", alignItems: "center", gap: Tokens.space["2"] },
+	heroStatusIcon: {
+		width: 30,
+		height: 30,
+		borderRadius: Tokens.radius.sm,
+		alignItems: "center",
+		justifyContent: "center",
+		backgroundColor: "rgba(217,119,6,0.22)",
 	},
-	badgeWarn: {
-		borderColor: "rgba(255, 109, 0, 0.35)",
-		backgroundColor: "rgba(255, 109, 0, 0.08)",
+	heroStatusIconActive: { backgroundColor: "rgba(22,163,74,0.22)" },
+	heroStatusCopy: { flex: 1, gap: 1 },
+	heroStatusLabel: { fontSize: Tokens.fontSize.xs, color: "rgba(255,255,255,0.48)" },
+	heroStatusValue: {
+		fontSize: Tokens.fontSize.sm,
+		fontWeight: Tokens.fontWeight.semibold,
+		color: Colors.text.inverse,
 	},
-	badgeText: {
-		color: NeonColors.text.secondary,
-		fontSize: 12,
-		fontWeight: "600",
+	heroDivider: {
+		width: StyleSheet.hairlineWidth,
+		height: 32,
+		backgroundColor: "rgba(255,255,255,0.14)",
+		marginHorizontal: Tokens.space["3"],
 	},
-	badgeOkText: {
-		color: NeonColors.accent.green,
-	},
-	badgeWarnText: {
-		color: NeonColors.accent.orange,
-	},
-	section: {
-		gap: 12,
-	},
-	sectionLabel: {
-		color: NeonColors.text.secondary,
-		fontSize: 12,
-		fontWeight: "700",
-		letterSpacing: 1.5,
-		paddingHorizontal: 4,
-	},
-	identityList: {
-		gap: 4,
-	},
+
+	section: { gap: Tokens.space["3"] },
+	sectionHeading: { gap: Tokens.space["0.5"], paddingHorizontal: Tokens.space["1"] },
+	sectionTitle: Type.heading,
+	sectionDescription: Type.caption,
+
+	identityCard: { paddingVertical: Tokens.space["2"], paddingHorizontal: Tokens.space["4"] },
 	identityRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 12,
-		paddingVertical: 12,
+		gap: Tokens.space["3"],
+		paddingVertical: Tokens.space["3"],
 		borderBottomWidth: StyleSheet.hairlineWidth,
-		borderBottomColor: "rgba(255,255,255,0.06)",
+		borderBottomColor: Colors.border.subtle,
 	},
-	identityRowLast: {
-		borderBottomWidth: 0,
-		paddingBottom: 0,
-	},
-	identityIcon: {
-		width: 36,
-		height: 36,
-		borderRadius: 12,
-		alignItems: "center",
-		justifyContent: "center",
-		backgroundColor: "rgba(255,255,255,0.04)",
-		borderWidth: 1,
-		borderColor: NeonColors.card.border,
-	},
-	identityCopy: {
-		flex: 1,
-		gap: 2,
-	},
-	identityLabel: {
-		color: NeonColors.text.muted,
-		fontSize: 12,
-		fontWeight: "600",
-		letterSpacing: 0.4,
-		textTransform: "uppercase",
-	},
+	identityRowLast: { borderBottomWidth: 0 },
+	identityCopy: { flex: 1, gap: Tokens.space["0.5"] },
+	identityLabel: { ...Type.caption, color: Colors.text.tertiary },
 	identityValue: {
-		color: NeonColors.text.primary,
-		fontSize: 14,
-		fontWeight: "500",
+		...Type.meta,
+		color: Colors.text.primary,
+		fontWeight: Tokens.fontWeight.semibold,
 	},
-	sessionActions: {
-		gap: 12,
-	},
+
+	sessionActions: { gap: Tokens.space["3"] },
 	logoutAll: {
+		minHeight: 52,
+		borderRadius: Tokens.radius.md,
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.status.absent.border,
+		backgroundColor: Colors.status.absent.bg,
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "center",
-		gap: 8,
-		minHeight: 48,
-		borderRadius: 14,
-		borderWidth: 1,
-		borderColor: "rgba(255, 23, 68, 0.35)",
-		backgroundColor: "rgba(255, 23, 68, 0.08)",
+		gap: Tokens.space["2"],
 	},
 	logoutAllText: {
-		color: NeonColors.accent.red,
-		fontSize: 15,
-		fontWeight: "700",
+		fontSize: Tokens.fontSize.lg,
+		fontWeight: Tokens.fontWeight.bold,
+		color: Colors.status.absent.fg,
 	},
 	logoutHint: {
 		flexDirection: "row",
-		alignItems: "center",
+		alignItems: "flex-start",
 		justifyContent: "center",
-		gap: 6,
-		paddingTop: 4,
+		gap: Tokens.space["1.5"],
+		paddingHorizontal: Tokens.space["2"],
 	},
-	logoutHintText: {
-		color: NeonColors.text.muted,
-		fontSize: 12,
-	},
+	logoutHintText: { ...Type.caption, flex: 1, textAlign: "center" },
 });

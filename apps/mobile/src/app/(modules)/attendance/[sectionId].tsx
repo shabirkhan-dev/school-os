@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
 		color: AppColors.text.muted,
 		fontSize: 11,
 		fontWeight: "800",
-		letterSpacing: 1,
+		letterSpacing: 0,
 		marginHorizontal: 16,
 		marginTop: 20,
 		marginBottom: 8,

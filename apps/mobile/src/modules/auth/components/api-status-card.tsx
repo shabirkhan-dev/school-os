@@ -1,9 +1,10 @@
 import { RefreshCw, Server, ServerOff } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
-import { AppColors, AppShadows } from "@/constants/design-system";
-import { apiClient, getApiOrigin } from "@/lib/api/client";
+import { PressableScale } from "@/components/ui/pressable-scale";
+import { Colors, Tokens, Type } from "@/constants/design-system";
+import { apiClient } from "@/lib/api/client";
 
 type ApiStatus = "checking" | "online" | "offline";
 
@@ -23,7 +24,7 @@ export function ApiStatusCard() {
 			const health = await apiClient.get<HealthResponse>("/health");
 			if (health.status === "ok") {
 				setStatus("online");
-				setDetail(health.service ? `service: ${health.service}` : null);
+				setDetail(null);
 			} else {
 				setStatus("offline");
 				setDetail(`Unexpected health response: ${health.status}`);
@@ -43,6 +44,7 @@ export function ApiStatusCard() {
 
 	return (
 		<View
+			accessibilityLiveRegion="polite"
 			style={[
 				styles.card,
 				online ? styles.cardOnline : checking ? styles.cardChecking : styles.cardOffline,
@@ -56,28 +58,40 @@ export function ApiStatusCard() {
 					]}
 				>
 					{checking ? (
-						<ActivityIndicator size="small" color={AppColors.text.secondary} />
+						<ActivityIndicator size="small" color={Colors.text.secondary} />
 					) : online ? (
-						<Server size={18} color={AppColors.status.present} />
+						<Server size={17} color={Colors.status.present.fg} />
 					) : (
-						<ServerOff size={18} color={AppColors.status.absent} />
+						<ServerOff size={17} color={Colors.status.absent.fg} />
 					)}
 				</View>
 				<View style={styles.copy}>
 					<Text style={styles.title}>
-						{checking ? "Checking API…" : online ? "API is reachable" : "API is not reachable"}
+						{checking
+							? "Connecting securely…"
+							: online
+								? "System online"
+								: "Connection unavailable"}
 					</Text>
-					<Text style={styles.url} numberOfLines={1}>
-						{getApiOrigin()}
+					<Text style={styles.subtitle} numberOfLines={1}>
+						{checking
+							? "Checking school services"
+							: online
+								? "Ready for secure sign in"
+								: "Check the server, then retry"}
 					</Text>
 				</View>
-				<Pressable
-					onPress={() => void check()}
-					hitSlop={8}
-					style={({ pressed }) => [styles.retry, pressed && styles.retryPressed]}
-				>
-					<RefreshCw size={16} color={AppColors.primary.brand} />
-				</Pressable>
+				{!checking && !online ? (
+					<PressableScale
+						onPress={() => void check()}
+						scaleTo={0.9}
+						style={styles.retry}
+						accessibilityRole="button"
+						accessibilityLabel="Retry service connection"
+					>
+						<RefreshCw size={16} color={Colors.brand.base} />
+					</PressableScale>
+				) : null}
 			</View>
 			{!checking && detail ? <Text style={styles.detail}>{detail}</Text> : null}
 		</View>
@@ -86,72 +100,67 @@ export function ApiStatusCard() {
 
 const styles = StyleSheet.create({
 	card: {
-		borderRadius: 14,
-		borderWidth: 1,
-		padding: 12,
-		gap: 8,
-		...AppShadows.sm,
+		borderRadius: Tokens.radius.md,
+		borderWidth: StyleSheet.hairlineWidth,
+		padding: Tokens.space["3"],
+		gap: Tokens.space["2"],
 	},
 	cardOnline: {
-		borderColor: "rgba(22, 163, 74, 0.4)",
-		backgroundColor: "rgba(22, 163, 74, 0.08)",
+		borderColor: Colors.status.present.border,
+		backgroundColor: Colors.status.present.bg,
 	},
 	cardChecking: {
-		borderColor: AppColors.card.border,
-		backgroundColor: AppColors.surface,
+		borderColor: Colors.border.subtle,
+		backgroundColor: Colors.sunken,
 	},
 	cardOffline: {
-		borderColor: "rgba(220, 38, 38, 0.4)",
-		backgroundColor: "rgba(220, 38, 38, 0.08)",
+		borderColor: Colors.status.absent.border,
+		backgroundColor: Colors.status.absent.bg,
 	},
 	topRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 10,
+		gap: Tokens.space["2.5"],
 	},
 	icon: {
-		width: 34,
-		height: 34,
-		borderRadius: 10,
+		width: 36,
+		height: 36,
+		borderRadius: Tokens.radius.sm,
 		alignItems: "center",
 		justifyContent: "center",
 	},
 	iconOnline: {
-		backgroundColor: AppColors.status.presentBg,
+		backgroundColor: Colors.surfaceBright,
 	},
 	iconChecking: {
-		backgroundColor: AppColors.card.subtle,
+		backgroundColor: Colors.surface,
 	},
 	iconOffline: {
-		backgroundColor: AppColors.status.absentBg,
+		backgroundColor: Colors.surfaceBright,
 	},
 	copy: {
 		flex: 1,
-		gap: 2,
+		gap: Tokens.space["0.5"],
 	},
 	title: {
-		color: AppColors.text.primary,
-		fontSize: 13,
-		fontWeight: "700",
+		...Type.meta,
+		color: Colors.text.primary,
+		fontWeight: Tokens.fontWeight.bold,
 	},
-	url: {
-		color: AppColors.text.secondary,
-		fontSize: 12,
+	subtitle: {
+		...Type.caption,
+		color: Colors.text.secondary,
 	},
 	detail: {
-		color: AppColors.text.secondary,
-		fontSize: 12,
-		lineHeight: 17,
+		...Type.caption,
+		color: Colors.text.secondary,
 	},
 	retry: {
-		width: 32,
-		height: 32,
-		borderRadius: 16,
+		width: Tokens.touchTarget,
+		height: Tokens.touchTarget,
+		borderRadius: Tokens.radius.full,
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: AppColors.primary.subtle,
-	},
-	retryPressed: {
-		opacity: 0.7,
+		backgroundColor: Colors.surfaceBright,
 	},
 });

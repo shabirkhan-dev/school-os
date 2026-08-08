@@ -1,7 +1,8 @@
 import { Link, router } from "expo-router";
+import { Fingerprint, Mail } from "lucide-react-native";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { NeonColors } from "@/constants/design-system";
+import { Colors, Tokens, Type } from "@/constants/design-system";
 import { useAuth } from "@/modules/auth/context/auth-context";
 import {
 	useLoginMutation,
@@ -48,7 +49,9 @@ export function LoginForm() {
 		<AuthScreen
 			title={challenge ? "Two-factor verification" : "Welcome back"}
 			description={
-				challenge ? "Complete the second step to continue" : "Choose a secure sign-in method"
+				challenge
+					? "Enter your verification code to finish signing in."
+					: "Sign in to manage your school day with confidence."
 			}
 		>
 			<ApiStatusCard />
@@ -104,10 +107,16 @@ export function LoginForm() {
 						}}
 					/>
 					<View style={styles.divider}>
+						<View style={styles.methodHeader}>
+							<View style={styles.methodLine} />
+							<Text style={styles.methodLabel}>Other secure options</Text>
+							<View style={styles.methodLine} />
+						</View>
 						<AuthButton
-							label="Sign in with fingerprint / passkey"
+							label="Use fingerprint or passkey"
 							variant="outline"
 							pending={passkey.isPending}
+							icon={Fingerprint}
 							onPress={() => {
 								clearError();
 								setLocalError(null);
@@ -121,6 +130,7 @@ export function LoginForm() {
 							variant="outline"
 							pending={magicLink.isPending}
 							disabled={!email.trim()}
+							icon={Mail}
 							onPress={() => {
 								clearError();
 								setLocalError(null);
@@ -152,19 +162,32 @@ export function LoginForm() {
 
 const styles = StyleSheet.create({
 	divider: {
-		borderTopWidth: 1,
-		borderTopColor: NeonColors.card.border,
-		paddingTop: 16,
-		marginTop: 4,
-		gap: 10,
+		paddingTop: Tokens.space["1"],
+		gap: Tokens.space["2.5"],
+	},
+	methodHeader: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: Tokens.space["3"],
+		paddingVertical: Tokens.space["1"],
+	},
+	methodLine: {
+		flex: 1,
+		height: StyleSheet.hairlineWidth,
+		backgroundColor: Colors.border.base,
+	},
+	methodLabel: {
+		...Type.caption,
+		color: Colors.text.tertiary,
 	},
 	footerText: {
-		color: NeonColors.text.secondary,
+		...Type.meta,
+		color: Colors.text.secondary,
 		textAlign: "center",
-		fontSize: 14,
+		marginTop: Tokens.space["1"],
 	},
 	link: {
-		color: NeonColors.accent.green,
-		textDecorationLine: "underline",
+		color: Colors.brand.base,
+		fontWeight: Tokens.fontWeight.bold,
 	},
 });

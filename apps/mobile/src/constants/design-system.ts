@@ -1,4 +1,4 @@
-import type { TextStyle } from "react-native";
+import type { TextStyle, ViewStyle } from "react-native";
 import { Tokens } from "./tokens";
 
 /**
@@ -16,11 +16,19 @@ export const Colors = {
 	/** Page background — never white, so raised surfaces have something to sit on. */
 	canvas: "#F4F2EF",
 
-	/** Raised surface: cards, sheets, the tab bar. */
-	surface: "#FFFFFF",
+	/**
+	 * Raised surface. A hair off pure white on purpose: the inset top-edge
+	 * highlight in `Elevation` needs somewhere brighter to go, and #FFF leaves
+	 * it nowhere. The difference is invisible on its own and does real work
+	 * once the surface is lit.
+	 */
+	surface: "#FCFBFA",
 
-	/** Recessed surface: input wells, track backgrounds, inactive segments. */
-	sunken: "#EDEAE5",
+	/** Surface for content that should read brighter than its container. */
+	surfaceBright: "#FFFFFF",
+
+	/** Recessed surface. Pair with `Elevation.well`, never as a flat fill alone. */
+	sunken: "#EAE7E1",
 
 	/**
 	 * Near-invisible by design. If a border is doing visible work, the element
@@ -80,58 +88,136 @@ export const Colors = {
 } as const;
 
 /**
- * Shadows.
+ * Elevation.
  *
- * Large radius, low opacity, warm-tinted. A wide soft shadow reads as depth;
- * a tight dark one reads as a drop shadow sticker. Offset stays under half the
- * radius so the light source feels high and diffuse.
+ * Every level is a *stack* of shadows, because a single shadow reads as a
+ * sticker rather than an object. Real depth needs at least two layers:
+ *
+ *   contact — tight, slightly darker, sits right under the edge. Tells the eye
+ *             where the object actually meets the surface below it.
+ *   ambient — wide, very light, negative spread. The soft falloff a diffuse
+ *             room light produces.
+ *
+ * Raised levels also carry an inset white line along the top edge. That is the
+ * light catching the top bevel, and it is the single detail that separates a
+ * surface that looks *printed on* the page from one that looks *placed on* it.
+ *
+ * Levels are deliberately far apart. If two elevations are hard to tell apart
+ * they should be the same level.
+ */
+
+/** Warm shadow tint. Pure black against warm neutrals reads as dirty grey. */
+const UMBRA = "46, 42, 36";
+const shade = (alpha: number) => `rgba(${UMBRA}, ${alpha})`;
+/** Top-edge catch light. Slightly transparent so it warms rather than blows out. */
+const SHEEN = "rgba(255, 255, 255, 0.75)";
+
+export const Elevation = {
+	/** Flat on the canvas. No shadow — use when a border or fill does the work. */
+	flush: {},
+
+	/** Default resting card. Present but quiet. */
+	raised: {
+		boxShadow: [
+			{ offsetX: 0, offsetY: 1, blurRadius: 0, color: SHEEN, inset: true },
+			{ offsetX: 0, offsetY: 1, blurRadius: 2, color: shade(0.06) },
+			{ offsetX: 0, offsetY: 3, blurRadius: 8, spreadDistance: -1, color: shade(0.05) },
+		],
+	},
+
+	/** Interactive rows and grouped panels. Clearly above `raised`. */
+	lifted: {
+		boxShadow: [
+			{ offsetX: 0, offsetY: 1, blurRadius: 0, color: SHEEN, inset: true },
+			{ offsetX: 0, offsetY: 2, blurRadius: 4, color: shade(0.07) },
+			{ offsetX: 0, offsetY: 6, blurRadius: 16, spreadDistance: -2, color: shade(0.07) },
+		],
+	},
+
+	/** The one hero card on a screen. */
+	floating: {
+		boxShadow: [
+			{ offsetX: 0, offsetY: 1, blurRadius: 0, color: SHEEN, inset: true },
+			{ offsetX: 0, offsetY: 3, blurRadius: 6, color: shade(0.08) },
+			{ offsetX: 0, offsetY: 12, blurRadius: 28, spreadDistance: -6, color: shade(0.12) },
+		],
+	},
+
+	/** Chrome that floats over scrolling content: tab bar, FAB. */
+	overlay: {
+		boxShadow: [
+			{ offsetX: 0, offsetY: 1, blurRadius: 0, color: SHEEN, inset: true },
+			{ offsetX: 0, offsetY: 4, blurRadius: 10, color: shade(0.07) },
+			{ offsetX: 0, offsetY: 16, blurRadius: 40, spreadDistance: -10, color: shade(0.16) },
+		],
+	},
+
+	/** Modals and action sheets. */
+	modal: {
+		boxShadow: [
+			{ offsetX: 0, offsetY: 2, blurRadius: 0, color: SHEEN, inset: true },
+			{ offsetX: 0, offsetY: 8, blurRadius: 16, color: shade(0.1) },
+			{ offsetX: 0, offsetY: 24, blurRadius: 56, spreadDistance: -12, color: shade(0.2) },
+		],
+	},
+
+	/**
+	 * Recessed — the surface sits *below* the page. Pair with `Colors.sunken`.
+	 * For progress tracks, segmented backgrounds, input wells, chart areas.
+	 */
+	well: {
+		boxShadow: [
+			{ offsetX: 0, offsetY: 1, blurRadius: 2, color: shade(0.09), inset: true },
+			{
+				offsetX: 0,
+				offsetY: 2,
+				blurRadius: 5,
+				spreadDistance: -1,
+				color: shade(0.06),
+				inset: true,
+			},
+		],
+	},
+
+	/** Deeper recess for larger wells where a shallow inset would vanish. */
+	wellDeep: {
+		boxShadow: [
+			{ offsetX: 0, offsetY: 2, blurRadius: 4, color: shade(0.12), inset: true },
+			{
+				offsetX: 0,
+				offsetY: 4,
+				blurRadius: 10,
+				spreadDistance: -2,
+				color: shade(0.08),
+				inset: true,
+			},
+		],
+	},
+
+	/**
+	 * For dark surfaces. The standard sheen is invisible on charcoal, so the
+	 * highlight is brighter and the cast shadow is deeper to hold separation.
+	 */
+	raisedDark: {
+		boxShadow: [
+			{ offsetX: 0, offsetY: 1, blurRadius: 0, color: "rgba(255,255,255,0.14)", inset: true },
+			{ offsetX: 0, offsetY: 4, blurRadius: 10, color: shade(0.18) },
+			{ offsetX: 0, offsetY: 14, blurRadius: 32, spreadDistance: -6, color: shade(0.22) },
+		],
+	},
+} satisfies Record<string, ViewStyle>;
+
+/**
+ * Legacy names. Kept so unmigrated screens keep compiling; they now resolve to
+ * the layered stacks above rather than the old single flat shadow.
  */
 export const Shadows = {
-	/** Resting cards. Barely perceptible on its own; matters in aggregate. */
-	xs: {
-		shadowColor: "#2E2A24",
-		shadowOffset: { width: 0, height: 1 },
-		shadowOpacity: 0.04,
-		shadowRadius: 3,
-		elevation: 1,
-	},
-
-	/** Grouped content, list rows. */
-	sm: {
-		shadowColor: "#2E2A24",
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.05,
-		shadowRadius: 8,
-		elevation: 2,
-	},
-
-	/** Primary/hero cards that should sit above their neighbours. */
-	md: {
-		shadowColor: "#2E2A24",
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.07,
-		shadowRadius: 16,
-		elevation: 4,
-	},
-
-	/** Floating chrome: tab bar, FAB. */
-	lg: {
-		shadowColor: "#2E2A24",
-		shadowOffset: { width: 0, height: 8 },
-		shadowOpacity: 0.09,
-		shadowRadius: 24,
-		elevation: 8,
-	},
-
-	/** Modals and sheets. */
-	xl: {
-		shadowColor: "#2E2A24",
-		shadowOffset: { width: 0, height: 12 },
-		shadowOpacity: 0.12,
-		shadowRadius: 32,
-		elevation: 12,
-	},
-} as const;
+	xs: Elevation.raised,
+	sm: Elevation.lifted,
+	md: Elevation.floating,
+	lg: Elevation.overlay,
+	xl: Elevation.modal,
+} satisfies Record<string, ViewStyle>;
 
 /**
  * Text presets. Compose size, weight, tracking and leading together so the

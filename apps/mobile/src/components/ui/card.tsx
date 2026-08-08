@@ -1,29 +1,42 @@
 import type * as React from "react";
 import { StyleSheet, Text, View, type ViewProps } from "react-native";
-import { Colors, Shadows, Tokens, Type } from "@/constants/design-system";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 import { PressableScale } from "./pressable-scale";
+
+type CardDepth = "flat" | "raised" | "lifted" | "floating";
 
 interface CardProps extends ViewProps {
 	title?: string;
 	description?: string;
 	children?: React.ReactNode;
 	onPress?: () => void;
-	/** Raise above neighbouring cards. Use for the one card that matters most. */
-	elevated?: boolean;
+	/**
+	 * How far off the page the card sits. Keep at most one `floating` card per
+	 * screen — competing hero elevations flatten each other out.
+	 */
+	depth?: CardDepth;
 	/** Opt back into an outline where two same-elevation surfaces meet. */
 	bordered?: boolean;
 }
 
+const DEPTH = {
+	flat: Elevation.flush,
+	raised: Elevation.raised,
+	lifted: Elevation.lifted,
+	floating: Elevation.floating,
+} as const;
+
 /**
- * Default content surface. Separation comes from shadow rather than an outline,
- * so a column of these reads as stacked paper instead of a wireframe.
+ * Default content surface. Depth comes from a layered shadow plus a top-edge
+ * catch light, so a column of these reads as stacked physical cards rather than
+ * outlined boxes. Pressable cards drop to a shallower elevation while held.
  */
 export function Card({
 	title,
 	description,
 	children,
 	onPress,
-	elevated = false,
+	depth = "raised",
 	bordered = false,
 	style,
 	...props
@@ -36,23 +49,25 @@ export function Card({
 		</>
 	);
 
-	const composed = [
-		styles.card,
-		elevated ? styles.elevated : styles.resting,
-		bordered && styles.bordered,
-		style,
-	];
+	const base = [styles.card, bordered && styles.bordered, style];
 
 	if (onPress) {
 		return (
-			<PressableScale style={composed} onPress={onPress} scaleTo={0.985} {...props}>
+			<PressableScale
+				style={base}
+				onPress={onPress}
+				scaleTo={0.985}
+				elevation={DEPTH[depth]}
+				pressedElevation={depth === "flat" ? undefined : Elevation.raised}
+				{...props}
+			>
 				{content}
 			</PressableScale>
 		);
 	}
 
 	return (
-		<View style={composed} {...props}>
+		<View style={[...base, DEPTH[depth]]} {...props}>
 			{content}
 		</View>
 	);
@@ -64,8 +79,6 @@ const styles = StyleSheet.create({
 		borderRadius: Tokens.radius.xl,
 		padding: Tokens.space["5"],
 	},
-	resting: Shadows.xs,
-	elevated: Shadows.sm,
 	bordered: {
 		borderWidth: StyleSheet.hairlineWidth,
 		borderColor: Colors.border.base,

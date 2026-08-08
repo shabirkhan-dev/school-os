@@ -1,6 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
+import { Tokens } from "@/constants/design-system";
 import { AuthAlert } from "@/modules/auth/components/auth-alert";
 import { AuthButton } from "@/modules/auth/components/auth-button";
 import { AuthField } from "@/modules/auth/components/auth-field";
@@ -150,7 +151,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 			</View>
 
 			<AuthButton
-				label={update.isPending ? "Saving…" : "Save profile"}
+				label={update.isPending ? "Saving..." : "Save profile"}
 				pending={update.isPending}
 				disabled={uploadAvatar.isPending}
 				onPress={() => {
@@ -193,11 +194,11 @@ function emptyToNull(value: string | null | undefined): string | null | undefine
 
 const styles = StyleSheet.create({
 	form: {
-		gap: 16,
+		gap: Tokens.space["5"],
 	},
 	row: {
 		flexDirection: "row",
-		gap: 12,
+		gap: Tokens.space["3"],
 	},
 	half: {
 		flex: 1,

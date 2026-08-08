@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
 		backgroundColor: Colors.sunken,
 		borderRadius: Tokens.radius.md,
 		padding: PADDING,
+		...Elevation.well,
 	},
 	thumb: {
 		position: "absolute",
@@ -87,8 +88,8 @@ const styles = StyleSheet.create({
 		top: PADDING,
 		bottom: PADDING,
 		borderRadius: Tokens.radius.sm,
-		backgroundColor: Colors.surface,
-		...Shadows.xs,
+		backgroundColor: Colors.surfaceBright,
+		...Elevation.raised,
 	},
 	segment: {
 		flex: 1,

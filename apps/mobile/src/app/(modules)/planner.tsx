@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
 		color: AppColors.text.primary,
 		fontSize: 15,
 		fontWeight: "800",
-		letterSpacing: -0.2,
+		letterSpacing: 0,
 	},
 	weekCount: { color: AppColors.text.muted, fontSize: 12, fontWeight: "600" },
 	weekCard: {

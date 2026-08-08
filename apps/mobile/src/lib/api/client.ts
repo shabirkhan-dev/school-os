@@ -111,13 +111,13 @@ async function request<T>(
 		if (caught instanceof ApiError) throw caught;
 		if (isAbortError(caught)) {
 			throw new ApiError(
-				`Request timed out reaching ${apiOrigin}. Is Nest running and EXPO_PUBLIC_NEST_API_URL correct for this device?`,
+				`Request timed out reaching ${apiOrigin}. Is Nest running on the Expo/Metro host?`,
 				408,
 				"API_TIMEOUT",
 			);
 		}
 		throw new ApiError(
-			`Cannot reach API at ${apiOrigin}. Use your computer LAN IP on a physical phone (not localhost).`,
+			`Cannot reach API at ${apiOrigin}. Check that the phone and Expo/Metro host share a network.`,
 			0,
 			"API_UNREACHABLE",
 		);

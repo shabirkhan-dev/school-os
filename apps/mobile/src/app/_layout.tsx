@@ -1,9 +1,10 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useColorScheme } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import { AppProviders } from "@/components/providers";
+import { Colors } from "@/constants/design-system";
 import { useAuth } from "@/modules/auth";
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -12,12 +13,23 @@ export const unstable_settings = {
 	initialRouteName: "(modules)",
 };
 
-export default function RootLayout() {
-	const colorScheme = useColorScheme();
+const SchoolTheme = {
+	...DefaultTheme,
+	colors: {
+		...DefaultTheme.colors,
+		background: Colors.canvas,
+		card: Colors.surface,
+		text: Colors.text.primary,
+		border: Colors.border.base,
+		primary: Colors.brand.base,
+	},
+};
 
+export default function RootLayout() {
 	return (
 		<AppProviders>
-			<ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+			<ThemeProvider value={SchoolTheme}>
+				<StatusBar style="dark" />
 				<AnimatedSplashOverlay />
 				<SplashScreenController />
 				<RootNavigator />

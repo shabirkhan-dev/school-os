@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Bell } from "lucide-react-native";
+import { Settings2 } from "lucide-react-native";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { Colors, Tokens, Type } from "@/constants/design-system";
 import { formatRoleLabel } from "@/lib/format-role";
@@ -9,7 +9,7 @@ import { PressableScale } from "./pressable-scale";
 
 /**
  * Identity bar. Deliberately slim — the screen owns the greeting and page title,
- * so this carries only identity and the notification tap target.
+ * so this carries only identity and a direct account-security shortcut.
  */
 export function OSHeader() {
 	const { user, tenantContext } = useAuth();
@@ -50,11 +50,11 @@ export function OSHeader() {
 			<PressableScale
 				style={styles.iconButton}
 				scaleTo={0.92}
-				onPress={() => router.replace("/(modules)/(profile)")}
+				onPress={() => router.push("/(modules)/(profile)/security")}
 				accessibilityRole="button"
-				accessibilityLabel="Notifications"
+				accessibilityLabel="Open security settings"
 			>
-				<Bell size={18} color={Colors.text.secondary} strokeWidth={1.9} />
+				<Settings2 size={19} color={Colors.text.secondary} strokeWidth={1.9} />
 			</PressableScale>
 		</View>
 	);
@@ -79,8 +79,8 @@ const styles = StyleSheet.create({
 	},
 	avatarWrap: { position: "relative" },
 	avatar: {
-		width: 36,
-		height: 36,
+		width: 40,
+		height: 40,
 		borderRadius: Tokens.radius.full,
 		backgroundColor: Colors.sunken,
 	},
@@ -105,8 +105,8 @@ const styles = StyleSheet.create({
 		marginTop: 1,
 	},
 	iconButton: {
-		width: 36,
-		height: 36,
+		width: Tokens.touchTarget,
+		height: Tokens.touchTarget,
 		borderRadius: Tokens.radius.full,
 		backgroundColor: Colors.surface,
 		borderWidth: StyleSheet.hairlineWidth,

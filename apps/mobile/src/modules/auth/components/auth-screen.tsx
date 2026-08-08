@@ -1,3 +1,4 @@
+import { GraduationCap } from "lucide-react-native";
 import type { ReactNode } from "react";
 import {
 	ActivityIndicator,
@@ -10,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NeonCard } from "@/components/ui/neon-card";
-import { NeonColors } from "@/constants/design-system";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 
 interface AuthScreenProps {
 	brand?: string;
@@ -33,7 +34,10 @@ export function AuthScreen({
 		return (
 			<SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
 				<View style={styles.loading}>
-					<ActivityIndicator color={NeonColors.accent.green} size="large" />
+					<View style={styles.loadingMark}>
+						<GraduationCap color={Colors.ink.foreground} size={26} strokeWidth={2.2} />
+					</View>
+					<ActivityIndicator color={Colors.brand.base} size="small" />
 				</View>
 			</SafeAreaView>
 		);
@@ -51,9 +55,19 @@ export function AuthScreen({
 					showsVerticalScrollIndicator={false}
 				>
 					<NeonCard style={styles.card}>
-						<Text style={styles.brand}>{brand}</Text>
-						<Text style={styles.title}>{title}</Text>
-						<Text style={styles.description}>{description}</Text>
+						<View style={styles.brandRow}>
+							<View style={styles.brandMark}>
+								<GraduationCap color={Colors.ink.foreground} size={24} strokeWidth={2.2} />
+							</View>
+							<View style={styles.brandCopy}>
+								<Text style={styles.brand}>{brand}</Text>
+								<Text style={styles.brandDetail}>Secure school workspace</Text>
+							</View>
+						</View>
+						<View style={styles.heading}>
+							<Text style={styles.title}>{title}</Text>
+							<Text style={styles.description}>{description}</Text>
+						</View>
 						<View style={styles.content}>{children}</View>
 					</NeonCard>
 					{footer ? <View style={styles.footer}>{footer}</View> : null}
@@ -66,7 +80,7 @@ export function AuthScreen({
 const styles = StyleSheet.create({
 	safe: {
 		flex: 1,
-		backgroundColor: NeonColors.background,
+		backgroundColor: Colors.canvas,
 	},
 	flex: {
 		flex: 1,
@@ -74,45 +88,71 @@ const styles = StyleSheet.create({
 	scroll: {
 		flexGrow: 1,
 		justifyContent: "center",
-		paddingHorizontal: 20,
-		paddingVertical: 32,
+		paddingHorizontal: Tokens.space["5"],
+		paddingVertical: Tokens.space["8"],
 	},
 	card: {
 		width: "100%",
-		maxWidth: 420,
+		maxWidth: 440,
 		alignSelf: "center",
+		padding: Tokens.space["6"],
+		...Elevation.floating,
+	},
+	brandRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: Tokens.space["3"],
+		marginBottom: Tokens.space["7"],
+	},
+	brandMark: {
+		width: 48,
+		height: 48,
+		borderRadius: Tokens.radius.md,
+		alignItems: "center",
+		justifyContent: "center",
+		backgroundColor: Colors.ink.base,
+		...Elevation.raisedDark,
+	},
+	brandCopy: {
+		flex: 1,
+		gap: Tokens.space["0.5"],
 	},
 	brand: {
-		color: NeonColors.text.secondary,
-		fontSize: 13,
-		fontWeight: "600",
-		textAlign: "center",
-		marginBottom: 8,
+		...Type.subheading,
+	},
+	brandDetail: {
+		...Type.caption,
+	},
+	heading: {
+		gap: Tokens.space["2"],
+		marginBottom: Tokens.space["6"],
 	},
 	title: {
-		color: NeonColors.text.primary,
-		fontSize: 28,
-		fontWeight: "700",
-		textAlign: "center",
-		marginBottom: 8,
+		...Type.title,
 	},
 	description: {
-		color: NeonColors.text.secondary,
-		fontSize: 15,
-		textAlign: "center",
-		marginBottom: 24,
-		lineHeight: 22,
+		...Type.body,
 	},
 	content: {
-		gap: 16,
+		gap: Tokens.space["4"],
 	},
 	footer: {
-		marginTop: 20,
+		marginTop: Tokens.space["5"],
 		alignItems: "center",
 	},
 	loading: {
 		flex: 1,
 		alignItems: "center",
 		justifyContent: "center",
+		gap: Tokens.space["4"],
+	},
+	loadingMark: {
+		width: 56,
+		height: 56,
+		borderRadius: Tokens.radius.lg,
+		alignItems: "center",
+		justifyContent: "center",
+		backgroundColor: Colors.ink.base,
+		...Elevation.floating,
 	},
 });

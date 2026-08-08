@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
 		color: AppColors.text.primary,
 		fontSize: 19,
 		fontWeight: "800",
-		letterSpacing: -0.3,
+		letterSpacing: 0,
 	},
 	heroMeta: { color: AppColors.text.secondary, fontSize: 13 },
 	heroFooter: {
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
 		color: AppColors.text.primary,
 		fontSize: 16,
 		fontWeight: "800",
-		letterSpacing: -0.2,
+		letterSpacing: 0,
 	},
 	addLink: { paddingVertical: 4, paddingHorizontal: 8 },
 	addLinkText: { color: AppColors.primary.brand, fontSize: 13, fontWeight: "700" },

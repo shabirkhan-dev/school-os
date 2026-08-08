@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Colors, Shadows, Tokens } from "@/constants/design-system";
+import { Colors, Elevation, Tokens } from "@/constants/design-system";
 import { PressableScale } from "./pressable-scale";
 
 /**
@@ -23,6 +23,7 @@ export interface TabBarProps {
 		string,
 		{
 			options: {
+				href?: string | null;
 				title?: string;
 				tabBarLabel?: unknown;
 				tabBarIcon?: (props: { focused: boolean; color: string; size: number }) => ReactNode;
@@ -59,15 +60,23 @@ export function TabBar({ state, descriptors, navigation }: TabBarProps) {
 	const insets = useSafeAreaInsets();
 	const { width } = useWindowDimensions();
 
-	const count = state.routes.length;
+	const visibleRoutes = state.routes.filter(
+		(route) => descriptors[route.key]?.options.href !== null,
+	);
+	const focusedRouteKey = state.routes[state.index]?.key;
+	const activeIndex = Math.max(
+		0,
+		visibleRoutes.findIndex((route) => route.key === focusedRouteKey),
+	);
+	const count = visibleRoutes.length;
 	const trackWidth = width - SIDE_INSET * 2 - TRACK_PADDING * 2;
 	const slotWidth = trackWidth / count;
 
-	const offset = useSharedValue(state.index * slotWidth);
+	const offset = useSharedValue(activeIndex * slotWidth);
 
 	useEffect(() => {
-		offset.value = withSpring(state.index * slotWidth, Tokens.spring.snappy);
-	}, [state.index, slotWidth, offset]);
+		offset.value = withSpring(activeIndex * slotWidth, Tokens.spring.snappy);
+	}, [activeIndex, slotWidth, offset]);
 
 	const pillStyle = useAnimatedStyle(() => ({
 		transform: [{ translateX: offset.value }],
@@ -81,11 +90,11 @@ export function TabBar({ state, descriptors, navigation }: TabBarProps) {
 			<View style={[styles.bar, { marginHorizontal: SIDE_INSET, padding: TRACK_PADDING }]}>
 				<Animated.View style={[styles.pill, { width: slotWidth }, pillStyle]} />
 
-				{state.routes.map((route, index) => {
+				{visibleRoutes.map((route, index) => {
 					const { options } = descriptors[route.key];
 					const rawLabel = options.tabBarLabel ?? options.title ?? route.name;
 					const label = typeof rawLabel === "string" ? rawLabel : route.name;
-					const focused = state.index === index;
+					const focused = activeIndex === index;
 
 					return (
 						<TabItem
@@ -163,8 +172,8 @@ const styles = StyleSheet.create({
 		position: "relative",
 		height: PILL_HEIGHT,
 		borderRadius: Tokens.radius["2xl"],
-		backgroundColor: Colors.surface,
-		...Shadows.lg,
+		backgroundColor: Colors.surfaceBright,
+		...Elevation.overlay,
 	},
 	pill: {
 		position: "absolute",
@@ -173,6 +182,7 @@ const styles = StyleSheet.create({
 		bottom: TRACK_PADDING,
 		borderRadius: Tokens.radius.lg,
 		backgroundColor: Colors.sunken,
+		...Elevation.well,
 	},
 	item: {
 		zIndex: 1,

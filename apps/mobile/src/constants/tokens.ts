@@ -84,15 +84,15 @@ export const Tokens = {
 		relaxed: 1.6,
 	},
 
-	/** Large text needs negative tracking; small caps labels need positive. */
+	/** Keep product typography neutral and legible across native font renderers. */
 	tracking: {
-		tighter: -0.8,
-		tight: -0.4,
-		snug: -0.2,
+		tighter: 0,
+		tight: 0,
+		snug: 0,
 		normal: 0,
-		wide: 0.4,
-		wider: 0.8,
-		widest: 1.2,
+		wide: 0,
+		wider: 0,
+		widest: 0,
 	},
 
 	/**

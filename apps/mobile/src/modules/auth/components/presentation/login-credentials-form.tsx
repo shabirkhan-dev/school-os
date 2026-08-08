@@ -1,3 +1,4 @@
+import { LockKeyhole, LogIn, Mail } from "lucide-react-native";
 import { AuthButton } from "../auth-button";
 import { AuthField } from "../auth-field";
 
@@ -24,6 +25,7 @@ export function LoginCredentialsForm(props: LoginCredentialsFormProps) {
 				keyboardType="email-address"
 				autoComplete="email"
 				editable={!props.pending}
+				icon={Mail}
 			/>
 			<AuthField
 				label="Password"
@@ -35,11 +37,15 @@ export function LoginCredentialsForm(props: LoginCredentialsFormProps) {
 				autoComplete="password"
 				editable={!props.pending}
 				rightLink={{ label: "Forgot password?", onPress: props.onForgotPassword }}
+				icon={LockKeyhole}
+				returnKeyType="done"
+				onSubmitEditing={props.onSubmit}
 			/>
 			<AuthButton
 				label={props.pending ? "Signing in..." : "Sign in"}
 				onPress={props.onSubmit}
 				pending={props.pending}
+				icon={LogIn}
 			/>
 		</>
 	);

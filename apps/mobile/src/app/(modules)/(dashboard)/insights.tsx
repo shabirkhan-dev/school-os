@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
 	container: { flex: 1, backgroundColor: AppColors.background },
 	safeArea: { flex: 1 },
 	content: { padding: 20, paddingBottom: 48 },
-	eyebrow: { color: AppColors.primary.brand, fontSize: 11, fontWeight: "800", letterSpacing: 1.2 },
+	eyebrow: { color: AppColors.primary.brand, fontSize: 11, fontWeight: "800", letterSpacing: 0 },
 	title: { color: AppColors.text.primary, fontSize: 30, fontWeight: "800", marginTop: 4 },
 	subtitle: { color: AppColors.text.secondary, fontSize: 13, lineHeight: 19, marginTop: 6 },
 	note: {

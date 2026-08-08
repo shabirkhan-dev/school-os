@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
-import { Colors, Tokens } from "@/constants/design-system";
+import { Colors, Elevation, Tokens } from "@/constants/design-system";
 
 interface ProgressBarProps {
 	/** 0–100. Values outside the range are clamped. */
@@ -36,7 +36,13 @@ export function ProgressBar({
 	}));
 
 	return (
-		<View style={[styles.track, { backgroundColor: trackColor, height, borderRadius: height / 2 }]}>
+		<View
+			style={[
+				styles.track,
+				{ backgroundColor: trackColor, height, borderRadius: height / 2 },
+				Elevation.well,
+			]}
+		>
 			<Animated.View
 				style={[styles.fill, { backgroundColor: color, borderRadius: height / 2 }, fillStyle]}
 			/>

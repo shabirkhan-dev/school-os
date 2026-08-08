@@ -1,0 +1,4 @@
+- Prefers audit/analysis findings to be written to a numbered issue file (e.g., `issue_01.md`) at the project root for deferred action, rather than only presented inline in the conversation. Confidence: 0.7
+- Prefers hands-on debugging: when reporting an error, wants the assistant to actually run the code, reproduce the error, diagnose the root cause, and fix it directly — not just theorize or suggest what to check. Confidence: 0.7
+- When the assistant doesn't know the answer to an external-tool or account question (e.g. OpenCode, Gemini Pro), prefers the assistant to search the web and research it rather than just decline or speculate. Confidence: 0.6
+- When comparing tools/agents, prefers the assistant to do multi-source, evidence-based research with benchmarks and what people/ reviews say — not just opinion — and explicitly wants an unbiased, source-backed evaluation. Confidence: 0.6

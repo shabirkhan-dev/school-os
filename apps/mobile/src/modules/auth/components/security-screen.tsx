@@ -9,20 +9,12 @@ import {
 	Smartphone,
 } from "lucide-react-native";
 import { useState } from "react";
-import {
-	ActivityIndicator,
-	Alert,
-	Image,
-	Pressable,
-	ScrollView,
-	StyleSheet,
-	Text,
-	View,
-} from "react-native";
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { NeonCard } from "@/components/ui/neon-card";
+import { Card } from "@/components/ui/card";
 import { OSHeader } from "@/components/ui/os-header";
-import { NeonColors } from "@/constants/design-system";
+import { PressableScale } from "@/components/ui/pressable-scale";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 import { useAuth } from "@/modules/auth";
 import { AccountTabs } from "@/modules/auth/components/account-tabs";
 import { AuthAlert } from "@/modules/auth/components/auth-alert";
@@ -142,10 +134,9 @@ export function SecurityScreen() {
 				>
 					<View style={styles.viewContainer}>
 						<View style={styles.viewHeader}>
-							<Text style={styles.eyebrow}>ACCOUNT</Text>
 							<Text style={styles.viewTitle}>Security</Text>
 							<Text style={styles.viewSubtitle}>
-								Manage sign-in methods, recovery options, and devices with access.
+								Protect your School OS account, recovery options, and trusted devices.
 							</Text>
 						</View>
 
@@ -158,6 +149,32 @@ export function SecurityScreen() {
 								message={error.message}
 							/>
 						) : null}
+
+						<View style={styles.protectionCard}>
+							<View style={styles.protectionTop}>
+								<View style={styles.protectionCopy}>
+									<Text style={styles.protectionEyebrow}>Security posture</Text>
+									<Text style={styles.protectionScore}>{protectionCount} of 4 active</Text>
+								</View>
+								<View style={styles.protectionIcon}>
+									<Shield size={24} color={Colors.ink.foreground} strokeWidth={2} />
+								</View>
+							</View>
+							<View style={styles.protectionTrack}>
+								<View
+									style={[
+										styles.protectionFill,
+										{ width: `${protectionCount * 25}%` as `${number}%` },
+									]}
+								/>
+							</View>
+							<Text style={styles.protectionHint}>
+								{protectionCount === 4
+									? "Every recommended account protection is active."
+									: `${4 - protectionCount} recommended protection${4 - protectionCount === 1 ? "" : "s"} remaining.`}
+								{googleLinked ? " Google sign-in is linked." : ""}
+							</Text>
+						</View>
 
 						<View style={styles.overviewGrid}>
 							<OverviewChip
@@ -182,24 +199,19 @@ export function SecurityScreen() {
 							/>
 						</View>
 
-						<Text style={styles.protectionHint}>
-							{protectionCount} of 4 protections active
-							{googleLinked ? " · Google linked" : ""}
-						</Text>
-
 						<View style={styles.section}>
 							<Text style={styles.sectionLabel}>TWO-FACTOR AUTHENTICATION</Text>
-							<NeonCard>
+							<Card depth="raised">
 								<View style={styles.sectionBody}>
 									<Text style={styles.sectionHelp}>
 										Require an authenticator code after password sign-in.
 									</Text>
 									{security.isLoading ? (
-										<ActivityIndicator color={NeonColors.accent.green} />
+										<ActivityIndicator color={Colors.brand.base} />
 									) : totpEnabled ? (
 										<>
 											<View style={styles.statusRow}>
-												<CheckCircle2 size={16} color={NeonColors.accent.green} strokeWidth={2} />
+												<CheckCircle2 size={16} color={Colors.status.present.fg} strokeWidth={2} />
 												<Text style={styles.statusText}>
 													Authenticator active · {security.data?.mfa.recoveryCodesRemaining ?? 0}{" "}
 													recovery codes left
@@ -276,12 +288,12 @@ export function SecurityScreen() {
 										</View>
 									) : null}
 								</View>
-							</NeonCard>
+							</Card>
 						</View>
 
 						<View style={styles.section}>
 							<Text style={styles.sectionLabel}>PASSKEYS</Text>
-							<NeonCard>
+							<Card depth="raised">
 								<View style={styles.sectionBody}>
 									<Text style={styles.sectionHelp}>
 										Use biometrics, a device PIN, or a physical security key. Requires a development
@@ -293,7 +305,7 @@ export function SecurityScreen() {
 										passkeys.map((passkey) => (
 											<View key={passkey.id} style={styles.listRow}>
 												<View style={styles.listIcon}>
-													<KeyRound size={16} color={NeonColors.text.secondary} strokeWidth={1.8} />
+													<KeyRound size={16} color={Colors.text.secondary} strokeWidth={1.8} />
 												</View>
 												<View style={styles.listCopy}>
 													<Text style={styles.listTitle}>{passkey.name}</Text>
@@ -302,12 +314,15 @@ export function SecurityScreen() {
 														{passkey.backedUp ? " · synced" : ""}
 													</Text>
 												</View>
-												<Pressable
+												<PressableScale
 													onPress={() => confirmDeletePasskey(passkey.id, passkey.name)}
 													hitSlop={8}
+													scaleTo={0.94}
+													accessibilityRole="button"
+													accessibilityLabel={`Remove ${passkey.name}`}
 												>
 													<Text style={styles.dangerLink}>Remove</Text>
-												</Pressable>
+												</PressableScale>
 											</View>
 										))
 									)}
@@ -325,13 +340,13 @@ export function SecurityScreen() {
 										onPress={() => registerPasskey.mutate(passkeyName.trim())}
 									/>
 								</View>
-							</NeonCard>
+							</Card>
 						</View>
 
 						{user.hasPassword ? (
 							<View style={styles.section}>
 								<Text style={styles.sectionLabel}>CHANGE PASSWORD</Text>
-								<NeonCard>
+								<Card depth="raised">
 									<View style={styles.sectionBody}>
 										<Text style={styles.sectionHelp}>
 											Changing it signs out every other active session.
@@ -379,21 +394,21 @@ export function SecurityScreen() {
 											}}
 										/>
 									</View>
-								</NeonCard>
+								</Card>
 							</View>
 						) : null}
 
 						<View style={styles.section}>
 							<Text style={styles.sectionLabel}>ACTIVE SESSIONS</Text>
-							<NeonCard>
+							<Card depth="raised">
 								<View style={styles.sectionBody}>
 									{sessions.isLoading ? (
-										<ActivityIndicator color={NeonColors.accent.green} />
+										<ActivityIndicator color={Colors.brand.base} />
 									) : sessions.data?.length ? (
 										sessions.data.map((session) => (
 											<View key={session.id} style={styles.listRow}>
 												<View style={styles.listIcon}>
-													<Monitor size={16} color={NeonColors.text.secondary} strokeWidth={1.8} />
+													<Monitor size={16} color={Colors.text.secondary} strokeWidth={1.8} />
 												</View>
 												<View style={styles.listCopy}>
 													<Text style={styles.listTitle} numberOfLines={2}>
@@ -405,27 +420,37 @@ export function SecurityScreen() {
 														{session.isCurrent ? " · Current" : ""}
 													</Text>
 												</View>
-												<Pressable
+												<PressableScale
 													onPress={() => confirmRevoke(session.id, session.isCurrent)}
 													hitSlop={8}
+													scaleTo={0.94}
+													accessibilityRole="button"
+													accessibilityLabel={`Revoke ${session.isCurrent ? "current device" : "session"}`}
 												>
 													<Text style={styles.dangerLink}>Revoke</Text>
-												</Pressable>
+												</PressableScale>
 											</View>
 										))
 									) : (
 										<Text style={styles.empty}>No active sessions found.</Text>
 									)}
-									<Pressable style={styles.logoutAll} onPress={confirmLogoutAll}>
-										<ShieldOff size={16} color={NeonColors.accent.red} strokeWidth={1.8} />
+									<PressableScale
+										style={styles.logoutAll}
+										onPress={confirmLogoutAll}
+										scaleTo={0.975}
+										dim={false}
+										accessibilityRole="button"
+										accessibilityLabel="Sign out everywhere"
+									>
+										<ShieldOff size={16} color={Colors.status.absent.fg} strokeWidth={1.8} />
 										<Text style={styles.logoutAllText}>Sign out everywhere</Text>
-									</Pressable>
+									</PressableScale>
 								</View>
-							</NeonCard>
+							</Card>
 						</View>
 
 						<View style={styles.footerHint}>
-							<Smartphone size={14} color={NeonColors.text.muted} strokeWidth={1.8} />
+							<Smartphone size={14} color={Colors.text.tertiary} strokeWidth={1.8} />
 							<Text style={styles.footerHintText}>
 								Google account linking is available on the web account settings for now.
 							</Text>
@@ -442,11 +467,11 @@ function OverviewChip({ label, value, active }: { label: string; value: string; 
 		<View style={styles.chip}>
 			<View style={styles.chipIcon}>
 				{label === "Two-factor" ? (
-					<Shield size={14} color={NeonColors.text.secondary} strokeWidth={1.8} />
+					<Shield size={14} color={Colors.text.secondary} strokeWidth={1.8} />
 				) : label === "Passkeys" ? (
-					<Fingerprint size={14} color={NeonColors.text.secondary} strokeWidth={1.8} />
+					<Fingerprint size={14} color={Colors.text.secondary} strokeWidth={1.8} />
 				) : (
-					<Lock size={14} color={NeonColors.text.secondary} strokeWidth={1.8} />
+					<Lock size={14} color={Colors.text.secondary} strokeWidth={1.8} />
 				)}
 			</View>
 			<Text style={styles.chipLabel}>{label}</Text>
@@ -461,226 +486,231 @@ function OverviewChip({ label, value, active }: { label: string; value: string; 
 }
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		backgroundColor: NeonColors.background,
-	},
-	safeArea: {
-		flex: 1,
-	},
-	scrollContent: {
-		paddingBottom: 48,
-	},
+	container: { flex: 1, backgroundColor: Colors.canvas },
+	safeArea: { flex: 1 },
+	scrollContent: { paddingBottom: Tokens.space["12"] },
 	viewContainer: {
-		paddingHorizontal: 16,
-		paddingTop: 8,
-		gap: 24,
+		paddingHorizontal: Tokens.space["5"],
+		paddingTop: Tokens.space["5"],
+		gap: Tokens.space["6"],
 	},
-	viewHeader: {
-		gap: 4,
+	viewHeader: { gap: Tokens.space["1"] },
+	viewTitle: Type.display,
+	viewSubtitle: { ...Type.meta, color: Colors.text.tertiary, maxWidth: 350 },
+
+	protectionCard: {
+		borderRadius: Tokens.radius["2xl"],
+		backgroundColor: Colors.ink.base,
+		padding: Tokens.space["5"],
+		gap: Tokens.space["4"],
+		...Elevation.floating,
 	},
-	eyebrow: {
-		color: NeonColors.text.secondary,
-		fontSize: 12,
-		fontWeight: "700",
-		letterSpacing: 1.5,
+	protectionTop: { flexDirection: "row", alignItems: "center", gap: Tokens.space["4"] },
+	protectionCopy: { flex: 1, gap: Tokens.space["1"] },
+	protectionEyebrow: {
+		fontSize: Tokens.fontSize.xs,
+		fontWeight: Tokens.fontWeight.bold,
+		textTransform: "uppercase",
+		color: "rgba(255,255,255,0.54)",
 	},
-	viewTitle: {
-		color: NeonColors.text.primary,
-		fontSize: 32,
-		fontWeight: "300",
+	protectionScore: {
+		fontSize: Tokens.fontSize["4xl"],
+		fontWeight: Tokens.fontWeight.bold,
+		color: Colors.text.inverse,
 	},
-	viewSubtitle: {
-		color: NeonColors.text.secondary,
-		fontSize: 14,
-		marginTop: 4,
-		lineHeight: 20,
+	protectionIcon: {
+		width: 52,
+		height: 52,
+		borderRadius: Tokens.radius.lg,
+		alignItems: "center",
+		justifyContent: "center",
+		backgroundColor: "rgba(255,255,255,0.1)",
 	},
+	protectionTrack: {
+		height: 7,
+		borderRadius: Tokens.radius.full,
+		backgroundColor: "rgba(255,255,255,0.12)",
+		overflow: "hidden",
+	},
+	protectionFill: {
+		height: "100%",
+		borderRadius: Tokens.radius.full,
+		backgroundColor: Colors.status.present.solid,
+	},
+	protectionHint: {
+		fontSize: Tokens.fontSize.sm,
+		lineHeight: Tokens.fontSize.sm * Tokens.leading.normal,
+		color: "rgba(255,255,255,0.64)",
+	},
+
 	overviewGrid: {
 		flexDirection: "row",
 		flexWrap: "wrap",
-		gap: 8,
+		gap: Tokens.space["2.5"],
 	},
 	chip: {
 		width: "48%",
 		flexGrow: 1,
-		gap: 6,
-		padding: 12,
-		borderRadius: 14,
-		borderWidth: 1,
-		borderColor: NeonColors.card.border,
-		backgroundColor: "rgba(255,255,255,0.03)",
+		gap: Tokens.space["2"],
+		padding: Tokens.space["3.5"],
+		borderRadius: Tokens.radius.xl,
+		backgroundColor: Colors.surface,
+		...Elevation.raised,
 	},
 	chipIcon: {
-		width: 28,
-		height: 28,
-		borderRadius: 8,
+		width: 32,
+		height: 32,
+		borderRadius: Tokens.radius.sm,
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: "rgba(255,255,255,0.04)",
+		backgroundColor: Colors.sunken,
 	},
 	chipLabel: {
-		color: NeonColors.text.muted,
-		fontSize: 11,
-		fontWeight: "600",
+		color: Colors.text.tertiary,
+		fontSize: Tokens.fontSize.xs,
+		fontWeight: Tokens.fontWeight.semibold,
 		textTransform: "uppercase",
-		letterSpacing: 0.4,
 	},
 	chipValueRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 6,
+		gap: Tokens.space["1.5"],
 	},
 	dot: {
 		width: 6,
 		height: 6,
-		borderRadius: 3,
+		borderRadius: Tokens.radius.full,
 	},
-	dotActive: {
-		backgroundColor: NeonColors.accent.green,
-	},
-	dotInactive: {
-		backgroundColor: NeonColors.text.muted,
-	},
+	dotActive: { backgroundColor: Colors.status.present.solid },
+	dotInactive: { backgroundColor: Colors.text.muted },
 	chipValue: {
 		flex: 1,
-		color: NeonColors.text.primary,
-		fontSize: 13,
-		fontWeight: "600",
+		color: Colors.text.primary,
+		fontSize: Tokens.fontSize.base,
+		fontWeight: Tokens.fontWeight.semibold,
 	},
-	protectionHint: {
-		color: NeonColors.text.muted,
-		fontSize: 12,
-		marginTop: -12,
-		paddingHorizontal: 4,
-	},
-	section: {
-		gap: 12,
-	},
+
+	section: { gap: Tokens.space["3"] },
 	sectionLabel: {
-		color: NeonColors.text.secondary,
-		fontSize: 12,
-		fontWeight: "700",
-		letterSpacing: 1.5,
-		paddingHorizontal: 4,
+		...Type.overline,
+		color: Colors.text.tertiary,
+		paddingHorizontal: Tokens.space["1"],
 	},
-	sectionBody: {
-		gap: 14,
-	},
+	sectionBody: { gap: Tokens.space["3.5"] },
 	sectionHelp: {
-		color: NeonColors.text.secondary,
-		fontSize: 13,
-		lineHeight: 18,
+		...Type.meta,
+		color: Colors.text.secondary,
 	},
 	statusRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 8,
+		gap: Tokens.space["2"],
+		padding: Tokens.space["3"],
+		borderRadius: Tokens.radius.md,
+		backgroundColor: Colors.status.present.bg,
 	},
 	statusText: {
 		flex: 1,
-		color: NeonColors.text.primary,
-		fontSize: 13,
-		fontWeight: "500",
+		color: Colors.status.present.fg,
+		fontSize: Tokens.fontSize.base,
+		fontWeight: Tokens.fontWeight.semibold,
 	},
 	qr: {
 		width: 160,
 		height: 160,
 		alignSelf: "center",
-		borderRadius: 12,
-		backgroundColor: "#fff",
+		borderRadius: Tokens.radius.md,
+		backgroundColor: Colors.surfaceBright,
+		...Elevation.lifted,
 	},
 	secret: {
-		color: NeonColors.text.secondary,
-		fontSize: 11,
+		color: Colors.text.secondary,
+		fontSize: Tokens.fontSize.xs,
 		fontFamily: "monospace",
+		padding: Tokens.space["3"],
+		borderRadius: Tokens.radius.sm,
+		backgroundColor: Colors.sunken,
 	},
 	recoveryBox: {
-		gap: 6,
-		padding: 12,
-		borderRadius: 12,
-		borderWidth: 1,
-		borderColor: "rgba(0, 230, 118, 0.35)",
-		backgroundColor: "rgba(0, 230, 118, 0.08)",
+		gap: Tokens.space["1.5"],
+		padding: Tokens.space["3"],
+		borderRadius: Tokens.radius.md,
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.status.present.border,
+		backgroundColor: Colors.status.present.bg,
 	},
 	recoveryTitle: {
-		color: NeonColors.accent.green,
-		fontSize: 13,
-		fontWeight: "700",
-		marginBottom: 4,
+		color: Colors.status.present.fg,
+		fontSize: Tokens.fontSize.base,
+		fontWeight: Tokens.fontWeight.bold,
+		marginBottom: Tokens.space["1"],
 	},
 	recoveryCode: {
-		color: NeonColors.text.primary,
-		fontSize: 12,
+		color: Colors.text.primary,
+		fontSize: Tokens.fontSize.sm,
 		fontFamily: "monospace",
 	},
 	empty: {
-		color: NeonColors.text.muted,
-		fontSize: 13,
+		...Type.caption,
 		textAlign: "center",
-		paddingVertical: 8,
+		paddingVertical: Tokens.space["2"],
 	},
 	listRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 10,
-		paddingVertical: 10,
+		gap: Tokens.space["2.5"],
+		paddingVertical: Tokens.space["3"],
 		borderBottomWidth: StyleSheet.hairlineWidth,
-		borderBottomColor: "rgba(255,255,255,0.06)",
+		borderBottomColor: Colors.border.subtle,
 	},
 	listIcon: {
 		width: 32,
 		height: 32,
-		borderRadius: 10,
+		borderRadius: Tokens.radius.sm,
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: "rgba(255,255,255,0.04)",
+		backgroundColor: Colors.sunken,
 	},
-	listCopy: {
-		flex: 1,
-		gap: 2,
-	},
+	listCopy: { flex: 1, gap: Tokens.space["0.5"] },
 	listTitle: {
-		color: NeonColors.text.primary,
-		fontSize: 13,
-		fontWeight: "600",
+		color: Colors.text.primary,
+		fontSize: Tokens.fontSize.base,
+		fontWeight: Tokens.fontWeight.semibold,
 	},
-	listMeta: {
-		color: NeonColors.text.muted,
-		fontSize: 11,
-	},
+	listMeta: { ...Type.caption, color: Colors.text.tertiary },
 	dangerLink: {
-		color: NeonColors.accent.red,
-		fontSize: 13,
-		fontWeight: "600",
+		color: Colors.status.absent.fg,
+		fontSize: Tokens.fontSize.base,
+		fontWeight: Tokens.fontWeight.semibold,
+		paddingVertical: Tokens.space["2"],
+		paddingHorizontal: Tokens.space["1"],
 	},
 	logoutAll: {
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "center",
-		gap: 8,
-		minHeight: 48,
-		borderRadius: 14,
-		borderWidth: 1,
-		borderColor: "rgba(255, 23, 68, 0.35)",
-		backgroundColor: "rgba(255, 23, 68, 0.08)",
-		marginTop: 4,
+		gap: Tokens.space["2"],
+		minHeight: 52,
+		borderRadius: Tokens.radius.md,
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.status.absent.border,
+		backgroundColor: Colors.status.absent.bg,
+		marginTop: Tokens.space["1"],
 	},
 	logoutAllText: {
-		color: NeonColors.accent.red,
-		fontSize: 15,
-		fontWeight: "700",
+		color: Colors.status.absent.fg,
+		fontSize: Tokens.fontSize.lg,
+		fontWeight: Tokens.fontWeight.bold,
 	},
 	footerHint: {
 		flexDirection: "row",
 		alignItems: "flex-start",
-		gap: 8,
-		paddingHorizontal: 4,
+		gap: Tokens.space["2"],
+		paddingHorizontal: Tokens.space["1"],
 	},
 	footerHintText: {
 		flex: 1,
-		color: NeonColors.text.muted,
-		fontSize: 12,
-		lineHeight: 16,
+		...Type.caption,
+		color: Colors.text.tertiary,
 	},
 });
