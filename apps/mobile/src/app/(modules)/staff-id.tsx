@@ -1,6 +1,6 @@
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AppColors, AppShadows } from "@/constants/design-system";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 import { useAuth } from "@/modules/auth";
 import { useTeacherProfileQuery } from "@/modules/teacher";
 import { ScreenHeader } from "@/modules/teacher/components/screen-header";
@@ -29,13 +29,13 @@ export default function StaffIdScreen() {
 				<ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 					{profile.isLoading ? (
 						<View style={styles.loading}>
-							<ActivityIndicator color={AppColors.primary.brand} size="large" />
+							<ActivityIndicator color={Colors.brand.base} size="large" />
 						</View>
 					) : (
 						<View style={styles.card}>
 							<View style={styles.cardHeader}>
 								<View style={styles.cardHeaderCopy}>
-									<Text style={styles.cardEyebrow}>STAFF ID</Text>
+									<Text style={styles.cardEyebrow}>OFFICIAL IDENTITY</Text>
 									<Text style={styles.schoolName}>School OS</Text>
 								</View>
 								<View style={styles.monogram}>
@@ -133,25 +133,25 @@ function formatRole(role?: string): string {
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: AppColors.background },
+	container: { flex: 1, backgroundColor: Colors.canvas },
 	safeArea: { flex: 1 },
-	content: { padding: 20, paddingBottom: 48 },
+	content: { padding: Tokens.space["5"], paddingBottom: Tokens.space["12"] },
 	loading: { alignItems: "center", justifyContent: "center", paddingVertical: 80 },
 	card: {
-		backgroundColor: AppColors.surface,
-		borderRadius: 22,
-		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		backgroundColor: Colors.surface,
+		borderRadius: Tokens.radius["2xl"],
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.border.base,
 		overflow: "hidden",
-		...AppShadows.md,
+		...Elevation.floating,
 	},
 	cardHeader: {
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "space-between",
-		backgroundColor: AppColors.primary.main,
-		paddingHorizontal: 18,
-		paddingVertical: 14,
+		backgroundColor: Colors.ink.base,
+		paddingHorizontal: Tokens.space["5"],
+		paddingVertical: Tokens.space["4"],
 	},
 	cardHeaderCopy: { gap: 1 },
 	monogram: {
@@ -172,78 +172,90 @@ const styles = StyleSheet.create({
 		letterSpacing: 0,
 	},
 	schoolName: { color: "#FFFFFF", fontSize: 16, fontWeight: "800", letterSpacing: 0 },
-	cardBody: { padding: 18 },
+	cardBody: { padding: Tokens.space["5"] },
 	identityRow: { flexDirection: "row", alignItems: "center", gap: 14 },
-	avatar: { width: 64, height: 64, borderRadius: 32, backgroundColor: AppColors.card.subtle },
+	avatar: {
+		width: 72,
+		height: 72,
+		borderRadius: Tokens.radius.full,
+		backgroundColor: Colors.sunken,
+	},
 	identityCopy: { flex: 1, gap: 2 },
-	name: { color: AppColors.text.primary, fontSize: 19, fontWeight: "800", letterSpacing: 0 },
-	email: { color: AppColors.text.secondary, fontSize: 13 },
+	name: { ...Type.title, fontSize: Tokens.fontSize["3xl"] },
+	email: Type.caption,
 	employeeCode: {
-		color: AppColors.text.muted,
-		fontSize: 12,
+		color: Colors.text.tertiary,
+		fontSize: Tokens.fontSize.sm,
 		fontFamily: "monospace",
 		marginTop: 2,
 	},
 	badges: { flexDirection: "row", gap: 8, marginTop: 14 },
 	roleBadge: {
-		backgroundColor: AppColors.primary.subtle,
-		paddingHorizontal: 12,
-		paddingVertical: 5,
+		backgroundColor: Colors.brand.tint,
+		paddingHorizontal: Tokens.space["3"],
+		paddingVertical: Tokens.space["1.5"],
 		borderRadius: 999,
 		borderWidth: 1,
-		borderColor: "#DBEAFE",
+		borderColor: Colors.brand.border,
 	},
 	roleBadgeText: {
-		color: AppColors.primary.brand,
-		fontSize: 12,
-		fontWeight: "700",
+		color: Colors.brand.base,
+		fontSize: Tokens.fontSize.sm,
+		fontWeight: Tokens.fontWeight.bold,
 		textTransform: "capitalize",
 	},
 	statusBadge: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: 6,
-		backgroundColor: AppColors.status.presentBg,
-		paddingHorizontal: 12,
-		paddingVertical: 5,
+		backgroundColor: Colors.status.present.bg,
+		paddingHorizontal: Tokens.space["3"],
+		paddingVertical: Tokens.space["1.5"],
 		borderRadius: 999,
 	},
-	statusDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: AppColors.status.present },
-	statusDotInactive: { backgroundColor: AppColors.status.pending },
+	statusDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: Colors.status.present.solid },
+	statusDotInactive: { backgroundColor: Colors.status.pending.solid },
 	statusBadgeText: {
-		color: AppColors.status.present,
-		fontSize: 12,
-		fontWeight: "700",
+		color: Colors.status.present.fg,
+		fontSize: Tokens.fontSize.sm,
+		fontWeight: Tokens.fontWeight.bold,
 		textTransform: "capitalize",
 	},
-	statusBadgeInactive: { backgroundColor: AppColors.status.pendingBg },
-	statusBadgeTextInactive: { color: AppColors.status.pending },
-	detailText: { color: AppColors.text.secondary, fontSize: 13, lineHeight: 20, marginTop: 12 },
-	detailLabel: { color: AppColors.text.primary, fontWeight: "700" },
+	statusBadgeInactive: { backgroundColor: Colors.status.pending.bg },
+	statusBadgeTextInactive: { color: Colors.status.pending.fg },
+	detailText: { ...Type.body, marginTop: Tokens.space["3"] },
+	detailLabel: { color: Colors.text.primary, fontWeight: Tokens.fontWeight.bold },
 	footer: {
 		flexDirection: "row",
 		alignItems: "center",
-		marginTop: 18,
-		paddingTop: 14,
+		marginTop: Tokens.space["5"],
+		paddingTop: Tokens.space["4"],
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.subtle,
 	},
 	footerStat: { flex: 1, alignItems: "center", gap: 2 },
-	footerValue: { color: AppColors.text.primary, fontSize: 14, fontWeight: "800" },
+	footerValue: {
+		color: Colors.text.primary,
+		fontSize: Tokens.fontSize.lg,
+		fontWeight: Tokens.fontWeight.bold,
+	},
 	footerLabel: {
-		color: AppColors.text.muted,
-		fontSize: 10,
-		fontWeight: "700",
+		color: Colors.text.tertiary,
+		fontSize: Tokens.fontSize["2xs"],
+		fontWeight: Tokens.fontWeight.bold,
 		textTransform: "uppercase",
 		letterSpacing: 0,
 	},
-	footerDivider: { width: 1, height: 28, backgroundColor: AppColors.card.border },
+	footerDivider: {
+		width: StyleSheet.hairlineWidth,
+		height: 32,
+		backgroundColor: Colors.border.base,
+	},
 	note: {
-		color: AppColors.text.muted,
-		fontSize: 12,
-		lineHeight: 18,
+		...Type.caption,
+		lineHeight: Tokens.fontSize.sm * Tokens.leading.relaxed,
 		textAlign: "center",
-		marginTop: 18,
-		paddingHorizontal: 24,
+		marginTop: Tokens.space["5"],
+		paddingHorizontal: Tokens.space["6"],
 	},
 });

@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { AppColors, AppShadows } from "@/constants/design-system";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 import { useAuth } from "@/modules/auth";
 import type { HomeworkSubmissionStatus } from "@/modules/teacher";
 import {
@@ -85,18 +85,13 @@ export default function HomeworkDetailScreen() {
 				>
 					{detail.isLoading ? (
 						<View style={styles.loading}>
-							<ActivityIndicator color={AppColors.primary.brand} size="large" />
+							<ActivityIndicator color={Colors.brand.base} size="large" />
 						</View>
 					) : assignment ? (
 						<>
 							<View style={styles.hero}>
 								<View style={styles.heroRow}>
-									<IconTile
-										icon={BookOpen}
-										color={AppColors.primary.brand}
-										size={46}
-										iconSize={22}
-									/>
+									<IconTile icon={BookOpen} color={Colors.brand.base} size={46} iconSize={22} />
 									<View style={styles.heroCopy}>
 										<Text style={styles.heroTitle}>{assignment.title}</Text>
 										<Text style={styles.heroMeta}>
@@ -182,7 +177,7 @@ export default function HomeworkDetailScreen() {
 							<Text style={styles.sectionLabel}>SUBMISSIONS</Text>
 							{submissions.isLoading ? (
 								<View style={styles.loading}>
-									<ActivityIndicator color={AppColors.primary.brand} />
+									<ActivityIndicator color={Colors.brand.base} />
 								</View>
 							) : submissions.data?.submissions.length ? (
 								<>
@@ -191,22 +186,22 @@ export default function HomeworkDetailScreen() {
 											<SummaryPill
 												label="Submitted"
 												value={summary.submitted}
-												color={AppColors.primary.brand}
+												color={Colors.brand.base}
 											/>
 											<SummaryPill
 												label="Late"
 												value={summary.late}
-												color={AppColors.status.late}
+												color={Colors.status.late.solid}
 											/>
 											<SummaryPill
 												label="Graded"
 												value={summary.graded}
-												color={AppColors.status.present}
+												color={Colors.status.present.solid}
 											/>
 											<SummaryPill
 												label="Pending"
 												value={summary.pending}
-												color={AppColors.status.pending}
+												color={Colors.status.pending.solid}
 											/>
 										</View>
 									) : null}
@@ -321,7 +316,7 @@ function MetaItem({
 }) {
 	return (
 		<View style={styles.metaItem}>
-			<Icon size={15} color={AppColors.text.muted} strokeWidth={2} />
+			<Icon size={15} color={Colors.text.muted} strokeWidth={2} />
 			<Text style={styles.metaLabel}>{label}</Text>
 			<Text style={styles.metaValue}>{value}</Text>
 		</View>
@@ -338,29 +333,24 @@ function SummaryPill({ label, value, color }: { label: string; value: number; co
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: AppColors.background },
+	container: { flex: 1, backgroundColor: Colors.canvas },
 	safeArea: { flex: 1 },
 	content: { paddingBottom: 110 },
 	loading: { alignItems: "center", justifyContent: "center", paddingVertical: 60 },
 	hero: {
 		marginHorizontal: 16,
 		marginTop: 8,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 18,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		padding: 16,
-		...AppShadows.sm,
+		...Elevation.raised,
 	},
 	heroRow: { flexDirection: "row", alignItems: "center", gap: 12 },
 	heroCopy: { flex: 1, gap: 2 },
-	heroTitle: {
-		color: AppColors.text.primary,
-		fontSize: 18,
-		fontWeight: "800",
-		letterSpacing: 0,
-	},
-	heroMeta: { color: AppColors.text.secondary, fontSize: 13 },
+	heroTitle: { ...Type.title, fontSize: Tokens.fontSize["3xl"] },
+	heroMeta: Type.caption,
 	metaGrid: {
 		flexDirection: "row",
 		flexWrap: "wrap",
@@ -368,7 +358,7 @@ const styles = StyleSheet.create({
 		marginTop: 14,
 		paddingTop: 12,
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	metaItem: {
 		flexDirection: "row",
@@ -377,17 +367,22 @@ const styles = StyleSheet.create({
 		width: "47%",
 		flexGrow: 1,
 	},
-	metaLabel: { color: AppColors.text.muted, fontSize: 11, fontWeight: "600" },
-	metaValue: { color: AppColors.text.primary, fontSize: 12, fontWeight: "700", flex: 1 },
+	metaLabel: Type.caption,
+	metaValue: {
+		...Type.meta,
+		color: Colors.text.primary,
+		fontWeight: Tokens.fontWeight.semibold,
+		flex: 1,
+	},
 	descriptionBlock: { marginTop: 14 },
 	blockLabel: {
-		color: AppColors.text.muted,
+		color: Colors.text.muted,
 		fontSize: 11,
 		fontWeight: "800",
 		letterSpacing: 0,
 		marginBottom: 6,
 	},
-	descriptionText: { color: AppColors.text.secondary, fontSize: 14, lineHeight: 21 },
+	descriptionText: Type.body,
 	statusChanger: { marginTop: 14 },
 	statusRow: { flexDirection: "row", gap: 8 },
 	statusOption: {
@@ -396,26 +391,23 @@ const styles = StyleSheet.create({
 		paddingVertical: 8,
 		borderRadius: 10,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
-		backgroundColor: AppColors.background,
+		borderColor: Colors.border.base,
+		backgroundColor: Colors.canvas,
 	},
 	statusOptionActive: {
-		backgroundColor: AppColors.primary.main,
-		borderColor: AppColors.primary.main,
+		backgroundColor: Colors.ink.base,
+		borderColor: Colors.ink.base,
 	},
 	statusOptionText: {
-		color: AppColors.text.secondary,
+		color: Colors.text.secondary,
 		fontSize: 12,
 		fontWeight: "600",
 		textTransform: "capitalize",
 	},
-	statusOptionTextActive: { color: AppColors.text.inverse, fontWeight: "700" },
+	statusOptionTextActive: { color: Colors.text.inverse, fontWeight: "700" },
 	pressedRow: { opacity: 0.7 },
 	sectionLabel: {
-		color: AppColors.text.muted,
-		fontSize: 11,
-		fontWeight: "800",
-		letterSpacing: 0,
+		...Type.overline,
 		marginHorizontal: 16,
 		marginTop: 22,
 		marginBottom: 10,
@@ -424,20 +416,20 @@ const styles = StyleSheet.create({
 	summaryPill: {
 		flex: 1,
 		alignItems: "center",
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 12,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		paddingVertical: 10,
 	},
 	summaryPillValue: { fontSize: 18, fontWeight: "800" },
-	summaryPillLabel: { color: AppColors.text.muted, fontSize: 10, fontWeight: "600", marginTop: 1 },
+	summaryPillLabel: { color: Colors.text.muted, fontSize: 10, fontWeight: "600", marginTop: 1 },
 	roster: {
 		marginHorizontal: 16,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 16,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		overflow: "hidden",
 	},
 	submissionRow: {
@@ -449,13 +441,13 @@ const styles = StyleSheet.create({
 	},
 	rowDivider: {
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	submissionCopy: { flex: 1, gap: 2 },
-	studentName: { color: AppColors.text.primary, fontSize: 14, fontWeight: "600" },
-	studentMeta: { color: AppColors.text.secondary, fontSize: 11 },
+	studentName: { ...Type.meta, color: Colors.text.primary, fontWeight: Tokens.fontWeight.semibold },
+	studentMeta: Type.caption,
 	marksText: {
-		color: AppColors.text.primary,
+		color: Colors.text.primary,
 		fontSize: 14,
 		fontWeight: "800",
 		fontVariant: ["tabular-nums"],
@@ -472,20 +464,20 @@ const styles = StyleSheet.create({
 		paddingVertical: 6,
 		borderRadius: 999,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
-		backgroundColor: AppColors.background,
+		borderColor: Colors.border.base,
+		backgroundColor: Colors.canvas,
 	},
 	optionChipActive: {
-		backgroundColor: AppColors.primary.main,
-		borderColor: AppColors.primary.main,
+		backgroundColor: Colors.ink.base,
+		borderColor: Colors.ink.base,
 	},
 	optionText: {
-		color: AppColors.text.secondary,
+		color: Colors.text.secondary,
 		fontSize: 12,
 		fontWeight: "600",
 		textTransform: "capitalize",
 	},
-	optionTextActive: { color: AppColors.text.inverse, fontWeight: "700" },
+	optionTextActive: { color: Colors.text.inverse, fontWeight: "700" },
 	saveBar: {
 		position: "absolute",
 		left: 0,
@@ -494,9 +486,9 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingTop: 10,
 		paddingBottom: 14,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderTopWidth: 1,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	saveButton: { width: "100%" },
 });

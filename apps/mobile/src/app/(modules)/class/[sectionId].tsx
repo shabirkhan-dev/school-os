@@ -23,7 +23,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { AppColors, AppShadows } from "@/constants/design-system";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 import { resolveMediaUrl } from "@/lib/media-url";
 import { useAuth } from "@/modules/auth";
 import type { Assessment } from "@/modules/teacher";
@@ -93,7 +93,7 @@ export default function ClassDetailScreen() {
 				<SafeAreaView edges={["top"]} style={styles.safeArea}>
 					<ScreenHeader title="Class" />
 					<View style={styles.loading}>
-						<ActivityIndicator color={AppColors.primary.brand} size="large" />
+						<ActivityIndicator color={Colors.brand.base} size="large" />
 						<Text style={styles.loadingText}>Loading class…</Text>
 					</View>
 				</SafeAreaView>
@@ -123,7 +123,7 @@ export default function ClassDetailScreen() {
 					<View style={styles.hero}>
 						<View style={styles.heroRow}>
 							<View style={styles.heroIcon}>
-								<GraduationCap size={26} color={AppColors.primary.brand} strokeWidth={2} />
+								<GraduationCap size={26} color={Colors.brand.base} strokeWidth={2} />
 							</View>
 							<View style={styles.heroCopy}>
 								<Text style={styles.heroTitle}>{section?.name}</Text>
@@ -140,13 +140,13 @@ export default function ClassDetailScreen() {
 						</View>
 						<View style={styles.heroFooter}>
 							<View style={styles.heroStat}>
-								<Users size={15} color={AppColors.text.secondary} />
+								<Users size={15} color={Colors.text.secondary} />
 								<Text style={styles.heroStatText}>
 									{students.data?.students.length ?? "—"} students
 								</Text>
 							</View>
 							<View style={styles.heroStat}>
-								<BookOpen size={15} color={AppColors.text.secondary} />
+								<BookOpen size={15} color={Colors.text.secondary} />
 								<Text style={styles.heroStatText}>
 									{homework.data?.assignments.length ?? 0} homework ·{" "}
 									{assessments.data?.assessments.length ?? 0} tests
@@ -159,29 +159,29 @@ export default function ClassDetailScreen() {
 						<QuickAction
 							icon={ClipboardCheck}
 							label="Attendance"
-							color={AppColors.status.present}
-							background={AppColors.status.presentBg}
+							color={Colors.status.present.solid}
+							background={Colors.status.present.bg}
 							onPress={() => router.push(`/attendance/${sectionId}`)}
 						/>
 						<QuickAction
 							icon={NotebookPen}
 							label="Assign homework"
-							color={AppColors.primary.brand}
-							background={AppColors.primary.subtle}
+							color={Colors.brand.base}
+							background={Colors.brand.tint}
 							onPress={hasSubject ? () => setHomeworkSheet(true) : undefined}
 						/>
 						<QuickAction
 							icon={CalendarPlus}
 							label="Schedule test"
-							color={AppColors.accent.purple}
+							color={Colors.accent.purple.fg}
 							background="#F3E8FF"
 							onPress={hasSubject ? () => setAssessmentSheet(true) : undefined}
 						/>
 						<QuickAction
 							icon={FileText}
 							label="Gradebook"
-							color={AppColors.status.late}
-							background={AppColors.status.lateBg}
+							color={Colors.status.late.solid}
+							background={Colors.status.late.bg}
 							onPress={hasSubject ? () => router.push(`/gradebook/${sectionId}`) : undefined}
 						/>
 					</View>
@@ -205,11 +205,11 @@ export default function ClassDetailScreen() {
 					{segment === "students" ? (
 						<View style={styles.section}>
 							<View style={styles.searchBar}>
-								<Search size={16} color={AppColors.text.muted} strokeWidth={2} />
+								<Search size={16} color={Colors.text.muted} strokeWidth={2} />
 								<TextInput
 									style={styles.searchInput}
 									placeholder="Search students by name or code"
-									placeholderTextColor={AppColors.text.muted}
+									placeholderTextColor={Colors.text.muted}
 									value={search}
 									onChangeText={setSearch}
 								/>
@@ -222,7 +222,7 @@ export default function ClassDetailScreen() {
 
 							{students.isLoading ? (
 								<View style={styles.inlineLoading}>
-									<ActivityIndicator color={AppColors.primary.brand} />
+									<ActivityIndicator color={Colors.brand.base} />
 								</View>
 							) : filteredStudents.length === 0 ? (
 								<EmptyState
@@ -267,7 +267,7 @@ export default function ClassDetailScreen() {
 							</View>
 							{homework.isLoading ? (
 								<View style={styles.inlineLoading}>
-									<ActivityIndicator color={AppColors.primary.brand} />
+									<ActivityIndicator color={Colors.brand.base} />
 								</View>
 							) : homework.data?.assignments.length ? (
 								<View style={styles.groupCard}>
@@ -275,8 +275,8 @@ export default function ClassDetailScreen() {
 										<ListRow
 											key={item.id}
 											icon={BookOpen}
-											iconColor={AppColors.primary.brand}
-											iconBackground={AppColors.primary.subtle}
+											iconColor={Colors.brand.base}
+											iconBackground={Colors.brand.tint}
 											title={item.title}
 											subtitle={
 												item.dueAt
@@ -309,7 +309,7 @@ export default function ClassDetailScreen() {
 							</View>
 							{assessments.isLoading ? (
 								<View style={styles.inlineLoading}>
-									<ActivityIndicator color={AppColors.primary.brand} />
+									<ActivityIndicator color={Colors.brand.base} />
 								</View>
 							) : assessments.data?.assessments.length ? (
 								<View style={styles.groupCard}>
@@ -426,7 +426,7 @@ function AssessmentRow({ item, last }: { item: Assessment; last: boolean }) {
 	return (
 		<ListRow
 			icon={CalendarPlus}
-			iconColor={AppColors.accent.purple}
+			iconColor={Colors.accent.purple.fg}
 			iconBackground="#F3E8FF"
 			title={item.title}
 			subtitle={`${formatDate(item.assessedOn)} · max ${item.maxScore} · ${item.recipientCount} students`}
@@ -438,20 +438,20 @@ function AssessmentRow({ item, last }: { item: Assessment; last: boolean }) {
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: AppColors.background },
+	container: { flex: 1, backgroundColor: Colors.canvas },
 	safeArea: { flex: 1 },
 	content: { paddingBottom: 48 },
 	loading: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, marginTop: 120 },
-	loadingText: { color: AppColors.text.secondary, fontSize: 14 },
+	loadingText: Type.body,
 	hero: {
 		marginHorizontal: 16,
 		marginTop: 8,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 18,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		padding: 16,
-		...AppShadows.sm,
+		...Elevation.raised,
 	},
 	heroRow: { flexDirection: "row", alignItems: "center", gap: 12 },
 	heroIcon: {
@@ -460,16 +460,11 @@ const styles = StyleSheet.create({
 		borderRadius: 16,
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: AppColors.primary.subtle,
+		backgroundColor: Colors.brand.tint,
 	},
 	heroCopy: { flex: 1, gap: 2 },
-	heroTitle: {
-		color: AppColors.text.primary,
-		fontSize: 19,
-		fontWeight: "800",
-		letterSpacing: 0,
-	},
-	heroMeta: { color: AppColors.text.secondary, fontSize: 13 },
+	heroTitle: { ...Type.title, fontSize: Tokens.fontSize["3xl"] },
+	heroMeta: Type.caption,
 	heroFooter: {
 		flexDirection: "row",
 		alignItems: "center",
@@ -477,10 +472,10 @@ const styles = StyleSheet.create({
 		marginTop: 14,
 		paddingTop: 12,
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	heroStat: { flexDirection: "row", alignItems: "center", gap: 6 },
-	heroStatText: { color: AppColors.text.secondary, fontSize: 12, fontWeight: "600" },
+	heroStatText: { color: Colors.text.secondary, fontSize: 12, fontWeight: "600" },
 	quickActions: {
 		flexDirection: "row",
 		flexWrap: "wrap",
@@ -492,13 +487,13 @@ const styles = StyleSheet.create({
 		width: "48%",
 		flexGrow: 1,
 		alignItems: "center",
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		borderRadius: 16,
 		paddingVertical: 14,
 		gap: 8,
-		...AppShadows.sm,
+		...Elevation.raised,
 	},
 	quickIcon: {
 		width: 46,
@@ -508,7 +503,7 @@ const styles = StyleSheet.create({
 		justifyContent: "center",
 	},
 	quickLabel: {
-		color: AppColors.text.primary,
+		color: Colors.text.primary,
 		fontSize: 12,
 		fontWeight: "700",
 		textAlign: "center",
@@ -521,21 +516,21 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		gap: 8,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		borderRadius: 12,
 		paddingHorizontal: 12,
 		height: 44,
 	},
-	searchInput: { flex: 1, color: AppColors.text.primary, fontSize: 14 },
-	clearText: { color: AppColors.primary.brand, fontSize: 13, fontWeight: "600" },
+	searchInput: { flex: 1, color: Colors.text.primary, fontSize: 14 },
+	clearText: { color: Colors.brand.base, fontSize: 13, fontWeight: "600" },
 	roster: {
 		marginTop: 12,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 16,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		overflow: "hidden",
 	},
 	studentRow: {
@@ -547,13 +542,18 @@ const styles = StyleSheet.create({
 	},
 	studentDivider: {
 		borderBottomWidth: StyleSheet.hairlineWidth,
-		borderBottomColor: AppColors.card.border,
+		borderBottomColor: Colors.border.base,
 	},
 	pressedRow: { opacity: 0.7 },
-	avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: AppColors.card.subtle },
+	avatar: {
+		width: 40,
+		height: 40,
+		borderRadius: Tokens.radius.full,
+		backgroundColor: Colors.sunken,
+	},
 	studentCopy: { flex: 1, gap: 2 },
-	studentName: { color: AppColors.text.primary, fontSize: 15, fontWeight: "600" },
-	studentMeta: { color: AppColors.text.secondary, fontSize: 12 },
+	studentName: { color: Colors.text.primary, fontSize: 15, fontWeight: "600" },
+	studentMeta: { color: Colors.text.secondary, fontSize: 12 },
 	inlineLoading: { paddingVertical: 40, alignItems: "center" },
 	sectionTitleRow: {
 		flexDirection: "row",
@@ -562,18 +562,18 @@ const styles = StyleSheet.create({
 		marginBottom: 10,
 	},
 	sectionTitle: {
-		color: AppColors.text.primary,
+		color: Colors.text.primary,
 		fontSize: 16,
 		fontWeight: "800",
 		letterSpacing: 0,
 	},
 	addLink: { paddingVertical: 4, paddingHorizontal: 8 },
-	addLinkText: { color: AppColors.primary.brand, fontSize: 13, fontWeight: "700" },
+	addLinkText: { color: Colors.brand.base, fontSize: 13, fontWeight: "700" },
 	groupCard: {
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 16,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		overflow: "hidden",
 	},
 });

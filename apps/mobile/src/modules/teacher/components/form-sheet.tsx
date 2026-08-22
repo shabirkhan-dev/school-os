@@ -3,7 +3,7 @@ import type * as React from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
-import { AppColors, AppShadows } from "@/constants/design-system";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 
 interface FormSheetProps {
 	visible: boolean;
@@ -38,7 +38,7 @@ export function FormSheet({
 							{subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
 						</View>
 						<Pressable style={styles.closeButton} onPress={onClose} hitSlop={8}>
-							<X size={18} color={AppColors.text.secondary} strokeWidth={2.2} />
+							<X size={18} color={Colors.text.secondary} strokeWidth={2.2} />
 						</Pressable>
 					</View>
 					<ScrollView
@@ -77,18 +77,18 @@ const styles = StyleSheet.create({
 		bottom: 0,
 	},
 	sheet: {
-		backgroundColor: AppColors.background,
-		borderTopLeftRadius: 24,
-		borderTopRightRadius: 24,
+		backgroundColor: Colors.canvas,
+		borderTopLeftRadius: Tokens.radius["2xl"],
+		borderTopRightRadius: Tokens.radius["2xl"],
 		maxHeight: "88%",
-		...AppShadows.md,
+		...Elevation.modal,
 	},
 	grabber: {
 		alignSelf: "center",
 		width: 40,
 		height: 4,
 		borderRadius: 2,
-		backgroundColor: AppColors.card.border,
+		backgroundColor: Colors.border.strong,
 		marginTop: 10,
 	},
 	header: {
@@ -105,35 +105,32 @@ const styles = StyleSheet.create({
 		gap: 2,
 	},
 	title: {
-		color: AppColors.text.primary,
-		fontSize: 19,
-		fontWeight: "800",
-		letterSpacing: 0,
+		...Type.heading,
 	},
 	subtitle: {
-		color: AppColors.text.muted,
-		fontSize: 12,
-		lineHeight: 17,
+		...Type.caption,
 	},
 	closeButton: {
 		width: 32,
 		height: 32,
 		borderRadius: 10,
-		backgroundColor: AppColors.card.subtle,
+		backgroundColor: Colors.surface,
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.border.base,
 		alignItems: "center",
 		justifyContent: "center",
 	},
 	body: {
 		paddingHorizontal: 20,
 		paddingBottom: 12,
-		gap: 14,
+		gap: Tokens.space["4"],
 	},
 	footer: {
 		paddingHorizontal: 20,
 		paddingTop: 8,
 		paddingBottom: 10,
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	submit: {
 		width: "100%",

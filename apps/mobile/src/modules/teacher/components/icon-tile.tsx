@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
-import { AppColors } from "@/constants/design-system";
+import { Colors, Elevation, Tokens } from "@/constants/design-system";
 
 interface IconTileProps {
 	icon: LucideIcon;
@@ -12,8 +12,8 @@ interface IconTileProps {
 
 export function IconTile({
 	icon: Icon,
-	color = AppColors.primary.brand,
-	background = AppColors.primary.subtle,
+	color = Colors.brand.base,
+	background = Colors.brand.tint,
 	size = 44,
 	iconSize = 22,
 }: IconTileProps) {
@@ -21,7 +21,13 @@ export function IconTile({
 		<View
 			style={[
 				styles.tile,
-				{ width: size, height: size, borderRadius: size / 3, backgroundColor: background },
+				{
+					width: size,
+					height: size,
+					borderRadius: Math.max(Tokens.radius.sm, size / 3),
+					backgroundColor: background,
+				},
+				Elevation.well,
 			]}
 		>
 			<Icon size={iconSize} color={color} strokeWidth={2} />

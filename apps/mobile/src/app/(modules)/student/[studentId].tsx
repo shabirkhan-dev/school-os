@@ -4,7 +4,7 @@ import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from "re
 import { SafeAreaView } from "react-native-safe-area-context";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { AppColors, AppShadows } from "@/constants/design-system";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 import { useAuth } from "@/modules/auth";
 import type { AttendanceMarkStatus } from "@/modules/teacher";
 import { useStudentAttendanceHistoryQuery, useStudentReportQuery } from "@/modules/teacher";
@@ -63,7 +63,7 @@ export default function StudentProfileScreen() {
 					<Text style={styles.sectionLabel}>ATTENDANCE · LAST {history.length}</Text>
 					{attendance.isLoading ? (
 						<View style={styles.loading}>
-							<ActivityIndicator color={AppColors.primary.brand} />
+							<ActivityIndicator color={Colors.brand.base} />
 						</View>
 					) : history.length > 0 ? (
 						<View style={styles.historySummary}>
@@ -116,7 +116,7 @@ export default function StudentProfileScreen() {
 					<Text style={styles.sectionLabel}>GRADES</Text>
 					{report.isLoading ? (
 						<View style={styles.loading}>
-							<ActivityIndicator color={AppColors.primary.brand} />
+							<ActivityIndicator color={Colors.brand.base} />
 						</View>
 					) : entries.length > 0 ? (
 						<View style={styles.gradesCard}>
@@ -124,8 +124,8 @@ export default function StudentProfileScreen() {
 								<ListRow
 									key={`${entry.subjectId}-${entry.term}`}
 									icon={GraduationCap}
-									iconColor={AppColors.primary.brand}
-									iconBackground={AppColors.primary.subtle}
+									iconColor={Colors.brand.base}
+									iconBackground={Colors.brand.tint}
 									title={entry.subjectName}
 									subtitle={`${entry.sectionName} · ${entry.term}`}
 									value={`${Math.round(entry.percentage)}%`}
@@ -136,7 +136,7 @@ export default function StudentProfileScreen() {
 							{report.data?.averageGradePoint != null ? (
 								<View style={styles.gpaRow}>
 									<View style={styles.gpaIcon}>
-										<Trophy size={16} color={AppColors.status.late} />
+										<Trophy size={16} color={Colors.status.late.solid} />
 									</View>
 									<Text style={styles.gpaLabel}>Average grade point</Text>
 									<Text style={styles.gpaValue}>{report.data.averageGradePoint.toFixed(2)}</Text>
@@ -164,7 +164,7 @@ function gradeVariant(percentage: number): "present" | "brand" | "late" | "absen
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: AppColors.background },
+	container: { flex: 1, backgroundColor: Colors.canvas },
 	safeArea: { flex: 1 },
 	content: { paddingBottom: 48 },
 	profileCard: {
@@ -173,24 +173,24 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		gap: 14,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 18,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		padding: 16,
-		...AppShadows.sm,
+		...Elevation.raised,
 	},
-	avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: AppColors.card.subtle },
+	avatar: {
+		width: 60,
+		height: 60,
+		borderRadius: Tokens.radius.full,
+		backgroundColor: Colors.sunken,
+	},
 	profileCopy: { flex: 1, gap: 2 },
-	profileName: {
-		color: AppColors.text.primary,
-		fontSize: 19,
-		fontWeight: "800",
-		letterSpacing: 0,
-	},
-	profileMeta: { color: AppColors.text.secondary, fontSize: 13 },
+	profileName: { ...Type.title, fontSize: Tokens.fontSize["3xl"] },
+	profileMeta: Type.caption,
 	sectionLabel: {
-		color: AppColors.text.muted,
+		color: Colors.text.muted,
 		fontSize: 11,
 		fontWeight: "800",
 		letterSpacing: 0,
@@ -208,35 +208,39 @@ const styles = StyleSheet.create({
 	historyStat: {
 		flex: 1,
 		alignItems: "center",
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 12,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		paddingVertical: 10,
 		gap: 3,
 	},
 	historyDot: { width: 8, height: 8, borderRadius: 4 },
 	historyStatLabel: {
-		color: AppColors.text.muted,
+		color: Colors.text.muted,
 		fontSize: 10,
 		fontWeight: "600",
 		textTransform: "capitalize",
 	},
-	historyStatValue: { color: AppColors.text.primary, fontSize: 17, fontWeight: "800" },
+	historyStatValue: {
+		color: Colors.text.primary,
+		fontSize: Tokens.fontSize["2xl"],
+		fontWeight: Tokens.fontWeight.bold,
+	},
 	historyCard: {
 		marginHorizontal: 16,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 16,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		overflow: "hidden",
 	},
 	gradesCard: {
 		marginHorizontal: 16,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 16,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		overflow: "hidden",
 	},
 	gpaRow: {
@@ -246,7 +250,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingVertical: 12,
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	gpaIcon: {
 		width: 34,
@@ -254,8 +258,8 @@ const styles = StyleSheet.create({
 		borderRadius: 10,
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: AppColors.status.lateBg,
+		backgroundColor: Colors.status.late.bg,
 	},
-	gpaLabel: { flex: 1, color: AppColors.text.secondary, fontSize: 13, fontWeight: "600" },
-	gpaValue: { color: AppColors.text.primary, fontSize: 16, fontWeight: "800" },
+	gpaLabel: { flex: 1, color: Colors.text.secondary, fontSize: 13, fontWeight: "600" },
+	gpaValue: { color: Colors.text.primary, fontSize: 16, fontWeight: "800" },
 });

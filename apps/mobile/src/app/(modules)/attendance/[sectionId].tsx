@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
-import { AppColors, AppShadows } from "@/constants/design-system";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 import { resolveMediaUrl } from "@/lib/media-url";
 import { useAuth } from "@/modules/auth";
 import type { AttendanceMarkStatus } from "@/modules/teacher";
@@ -140,7 +140,7 @@ export default function AttendanceScreen() {
 					subtitle={section?.name ?? "Class"}
 					right={
 						<View style={styles.datePill}>
-							<CalendarDays size={14} color={AppColors.primary.brand} />
+							<CalendarDays size={14} color={Colors.brand.base} />
 							<Text style={styles.dateText}>{formatShort(sessionDate)}</Text>
 						</View>
 					}
@@ -162,7 +162,7 @@ export default function AttendanceScreen() {
 						</View>
 						<ProgressBar
 							value={progress}
-							color={progress === 100 ? AppColors.status.present : AppColors.primary.brand}
+							color={progress === 100 ? Colors.status.present.solid : Colors.brand.base}
 						/>
 						<View style={styles.legend}>
 							{STATUS_OPTIONS.map((status) => (
@@ -189,7 +189,7 @@ export default function AttendanceScreen() {
 
 					{sessionError ? (
 						<View style={styles.errorRow}>
-							<RefreshCw size={15} color={AppColors.status.absent} />
+							<RefreshCw size={15} color={Colors.status.absent.solid} />
 							<Text style={styles.errorText}>
 								{getOrCreate.isError
 									? "Could not open today’s session. Pull to retry."
@@ -202,7 +202,7 @@ export default function AttendanceScreen() {
 
 					{!loaded ? (
 						<View style={styles.loading}>
-							<ActivityIndicator color={AppColors.primary.brand} />
+							<ActivityIndicator color={Colors.brand.base} />
 							<Text style={styles.loadingText}>Opening today’s attendance…</Text>
 						</View>
 					) : (
@@ -309,28 +309,28 @@ function formatShort(value: string): string {
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: AppColors.background },
+	container: { flex: 1, backgroundColor: Colors.canvas },
 	safeArea: { flex: 1 },
 	content: { paddingBottom: 110 },
 	datePill: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: 5,
-		backgroundColor: AppColors.primary.subtle,
+		backgroundColor: Colors.brand.tint,
 		borderRadius: 999,
 		paddingHorizontal: 10,
 		paddingVertical: 6,
 	},
-	dateText: { color: AppColors.primary.brand, fontSize: 12, fontWeight: "700" },
+	dateText: { color: Colors.brand.base, fontSize: 12, fontWeight: "700" },
 	summaryCard: {
 		marginHorizontal: 16,
 		marginTop: 8,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 18,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		padding: 16,
-		...AppShadows.sm,
+		...Elevation.raised,
 	},
 	summaryHeader: {
 		flexDirection: "row",
@@ -339,9 +339,9 @@ const styles = StyleSheet.create({
 		marginBottom: 10,
 	},
 	summaryCopy: { gap: 2 },
-	summaryTitle: { color: AppColors.text.primary, fontSize: 17, fontWeight: "800" },
-	summaryMeta: { color: AppColors.text.secondary, fontSize: 12 },
-	progressText: { color: AppColors.text.primary, fontSize: 20, fontWeight: "800" },
+	summaryTitle: { ...Type.heading, fontSize: Tokens.fontSize.xl },
+	summaryMeta: Type.caption,
+	progressText: { ...Type.metricSm, fontSize: Tokens.fontSize["3xl"] },
 	legend: {
 		flexDirection: "row",
 		flexWrap: "wrap",
@@ -349,12 +349,12 @@ const styles = StyleSheet.create({
 		marginTop: 14,
 		paddingTop: 12,
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	legendItem: { flexDirection: "row", alignItems: "center", gap: 5 },
 	legendDot: { width: 8, height: 8, borderRadius: 4 },
-	legendLabel: { color: AppColors.text.secondary, fontSize: 12, textTransform: "capitalize" },
-	legendValue: { color: AppColors.text.primary, fontSize: 12, fontWeight: "700" },
+	legendLabel: { color: Colors.text.secondary, fontSize: 12, textTransform: "capitalize" },
+	legendValue: { color: Colors.text.primary, fontSize: 12, fontWeight: "700" },
 	allPresent: { marginHorizontal: 16, marginTop: 12 },
 	errorRow: {
 		flexDirection: "row",
@@ -363,9 +363,9 @@ const styles = StyleSheet.create({
 		marginHorizontal: 16,
 		marginTop: 10,
 	},
-	errorText: { color: AppColors.status.absent, fontSize: 12, flex: 1 },
+	errorText: { color: Colors.status.absent.solid, fontSize: 12, flex: 1 },
 	sectionLabel: {
-		color: AppColors.text.muted,
+		color: Colors.text.muted,
 		fontSize: 11,
 		fontWeight: "800",
 		letterSpacing: 0,
@@ -374,13 +374,13 @@ const styles = StyleSheet.create({
 		marginBottom: 8,
 	},
 	loading: { alignItems: "center", gap: 10, paddingVertical: 40 },
-	loadingText: { color: AppColors.text.secondary, fontSize: 13 },
+	loadingText: Type.caption,
 	roster: {
 		marginHorizontal: 16,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 16,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		overflow: "hidden",
 	},
 	studentRow: {
@@ -392,13 +392,18 @@ const styles = StyleSheet.create({
 	},
 	studentDivider: {
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	pressedRow: { opacity: 0.7 },
-	avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: AppColors.card.subtle },
+	avatar: {
+		width: 40,
+		height: 40,
+		borderRadius: Tokens.radius.full,
+		backgroundColor: Colors.sunken,
+	},
 	studentCopy: { flex: 1, gap: 2 },
-	studentName: { color: AppColors.text.primary, fontSize: 15, fontWeight: "600" },
-	studentMeta: { color: AppColors.text.secondary, fontSize: 12 },
+	studentName: { color: Colors.text.primary, fontSize: 15, fontWeight: "600" },
+	studentMeta: { color: Colors.text.secondary, fontSize: 12 },
 	statusChip: {
 		flexDirection: "row",
 		alignItems: "center",
@@ -418,7 +423,7 @@ const styles = StyleSheet.create({
 	},
 	statusOptionsDivider: {
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	optionChip: {
 		flex: 1,
@@ -426,16 +431,16 @@ const styles = StyleSheet.create({
 		paddingVertical: 8,
 		borderRadius: 10,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
-		backgroundColor: AppColors.background,
+		borderColor: Colors.border.base,
+		backgroundColor: Colors.canvas,
 	},
 	optionText: {
-		color: AppColors.text.secondary,
+		color: Colors.text.secondary,
 		fontSize: 12,
 		fontWeight: "600",
 		textTransform: "capitalize",
 	},
-	optionTextSelected: { color: AppColors.text.inverse, fontWeight: "700" },
+	optionTextSelected: { color: Colors.text.inverse, fontWeight: "700" },
 	saveBar: {
 		position: "absolute",
 		left: 0,
@@ -444,9 +449,9 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingTop: 10,
 		paddingBottom: 14,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderTopWidth: 1,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	saveButton: { width: "100%" },
 });

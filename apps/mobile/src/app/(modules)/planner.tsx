@@ -1,11 +1,12 @@
 import { router } from "expo-router";
 import { CalendarRange, RefreshCw } from "lucide-react-native";
 import { useMemo } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PressableScale } from "@/components/ui/pressable-scale";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { AppColors, AppShadows } from "@/constants/design-system";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 import { useAuth } from "@/modules/auth";
 import type { Assessment } from "@/modules/teacher";
 import { useAssessmentPlannerQuery } from "@/modules/teacher";
@@ -47,21 +48,27 @@ export default function PlannerScreen() {
 				<ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 					{planner.isLoading ? (
 						<View style={styles.loading}>
-							<ActivityIndicator color={AppColors.primary.brand} size="large" />
+							<ActivityIndicator color={Colors.brand.base} size="large" />
 							<Text style={styles.loadingText}>Loading your calendar…</Text>
 						</View>
 					) : planner.isError ? (
 						<View style={styles.errorCard}>
 							<View style={styles.errorIcon}>
-								<RefreshCw size={17} color={AppColors.status.absent} />
+								<RefreshCw size={17} color={Colors.status.absent.fg} />
 							</View>
 							<View style={styles.errorCopy}>
 								<Text style={styles.errorTitle}>Planner unavailable</Text>
 								<Text style={styles.errorMeta}>We could not load upcoming tests.</Text>
 							</View>
-							<Pressable onPress={() => void planner.refetch()} style={styles.retryButton}>
-								<RefreshCw size={15} color={AppColors.primary.brand} />
-							</Pressable>
+							<PressableScale
+								onPress={() => void planner.refetch()}
+								style={styles.retryButton}
+								scaleTo={0.9}
+								accessibilityRole="button"
+								accessibilityLabel="Retry planner"
+							>
+								<RefreshCw size={15} color={Colors.brand.base} />
+							</PressableScale>
 						</View>
 					) : (planner.data?.assessments.length ?? 0) === 0 ? (
 						<EmptyState
@@ -83,7 +90,7 @@ export default function PlannerScreen() {
 									</View>
 									<View style={styles.weekCard}>
 										{items.map((item, index) => (
-											<Pressable
+											<PressableScale
 												key={item.id}
 												style={({ pressed }) => [
 													styles.assessmentRow,
@@ -91,6 +98,10 @@ export default function PlannerScreen() {
 													pressed && styles.pressedRow,
 												]}
 												onPress={() => router.push(`/assessment/${item.id}`)}
+												scaleTo={0.985}
+												dim={false}
+												accessibilityRole="button"
+												accessibilityLabel={`Open ${item.title}`}
 											>
 												<View style={styles.datePill}>
 													<Text style={styles.dateDay}>
@@ -114,7 +125,7 @@ export default function PlannerScreen() {
 													status={assessmentStatusVariant[item.status]}
 													size="sm"
 												/>
-											</Pressable>
+											</PressableScale>
 										))}
 									</View>
 								</View>
@@ -164,11 +175,11 @@ function formatShort(date: Date): string {
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: AppColors.background },
+	container: { flex: 1, backgroundColor: Colors.canvas },
 	safeArea: { flex: 1 },
-	content: { paddingBottom: 48 },
+	content: { paddingBottom: Tokens.space["12"] },
 	loading: { alignItems: "center", gap: 10, paddingVertical: 70 },
-	loadingText: { color: AppColors.text.secondary, fontSize: 13 },
+	loadingText: Type.caption,
 	errorCard: {
 		flexDirection: "row",
 		alignItems: "center",
@@ -177,9 +188,10 @@ const styles = StyleSheet.create({
 		marginTop: 20,
 		padding: 14,
 		borderRadius: 16,
-		backgroundColor: AppColors.surface,
-		borderWidth: 1,
-		borderColor: AppColors.status.absentBg,
+		backgroundColor: Colors.surface,
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.status.absent.border,
+		...Elevation.raised,
 	},
 	errorIcon: {
 		width: 36,
@@ -187,71 +199,76 @@ const styles = StyleSheet.create({
 		borderRadius: 10,
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: AppColors.status.absentBg,
+		backgroundColor: Colors.status.absent.bg,
 	},
 	errorCopy: { flex: 1, gap: 2 },
-	errorTitle: { color: AppColors.text.primary, fontWeight: "700", fontSize: 14 },
-	errorMeta: { color: AppColors.text.secondary, fontSize: 12 },
+	errorTitle: { ...Type.meta, color: Colors.text.primary, fontWeight: Tokens.fontWeight.bold },
+	errorMeta: Type.caption,
 	retryButton: {
 		width: 34,
 		height: 34,
 		borderRadius: 17,
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: AppColors.primary.subtle,
+		backgroundColor: Colors.brand.tint,
 	},
-	weekSection: { marginTop: 20 },
+	weekSection: { marginTop: Tokens.space["6"] },
 	weekHeader: {
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "space-between",
-		paddingHorizontal: 16,
-		marginBottom: 8,
+		paddingHorizontal: Tokens.space["5"],
+		marginBottom: Tokens.space["3"],
 	},
 	weekLabel: {
-		color: AppColors.text.primary,
-		fontSize: 15,
-		fontWeight: "800",
-		letterSpacing: 0,
+		...Type.heading,
 	},
-	weekCount: { color: AppColors.text.muted, fontSize: 12, fontWeight: "600" },
+	weekCount: { ...Type.caption, color: Colors.text.tertiary },
 	weekCard: {
-		marginHorizontal: 16,
-		backgroundColor: AppColors.surface,
-		borderRadius: 16,
-		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		marginHorizontal: Tokens.space["5"],
+		backgroundColor: Colors.surface,
+		borderRadius: Tokens.radius.xl,
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.border.base,
 		overflow: "hidden",
-		...AppShadows.sm,
+		...Elevation.raised,
 	},
 	assessmentRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 12,
-		paddingHorizontal: 14,
-		paddingVertical: 12,
+		gap: Tokens.space["3"],
+		paddingHorizontal: Tokens.space["4"],
+		paddingVertical: Tokens.space["3.5"],
 	},
 	rowDivider: {
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.subtle,
 	},
-	pressedRow: { opacity: 0.7 },
+	pressedRow: { opacity: 0.82 },
 	datePill: {
-		width: 44,
-		height: 46,
-		borderRadius: 12,
+		width: 48,
+		height: 52,
+		borderRadius: Tokens.radius.md,
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: AppColors.primary.subtle,
+		backgroundColor: Colors.brand.tint,
 	},
-	dateDay: { color: AppColors.primary.brand, fontSize: 17, fontWeight: "800" },
+	dateDay: {
+		color: Colors.brand.strong,
+		fontSize: Tokens.fontSize["2xl"],
+		fontWeight: Tokens.fontWeight.bold,
+	},
 	dateMonth: {
-		color: AppColors.primary.brand,
-		fontSize: 10,
-		fontWeight: "700",
+		color: Colors.brand.base,
+		fontSize: Tokens.fontSize["2xs"],
+		fontWeight: Tokens.fontWeight.bold,
 		textTransform: "uppercase",
 	},
 	assessmentCopy: { flex: 1, gap: 2 },
-	assessmentTitle: { color: AppColors.text.primary, fontSize: 14, fontWeight: "700" },
-	assessmentMeta: { color: AppColors.text.secondary, fontSize: 12 },
+	assessmentTitle: {
+		...Type.meta,
+		color: Colors.text.primary,
+		fontWeight: Tokens.fontWeight.semibold,
+	},
+	assessmentMeta: Type.caption,
 });

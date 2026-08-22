@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TextInput, type TextInputProps, View } from "react-native";
-import { AppColors } from "@/constants/design-system";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 
 interface TextFieldProps extends TextInputProps {
 	label: string;
@@ -25,25 +25,27 @@ const styles = StyleSheet.create({
 		gap: 6,
 	},
 	label: {
-		color: AppColors.text.secondary,
-		fontSize: 13,
-		fontWeight: "600",
+		...Type.meta,
+		color: Colors.text.primary,
+		fontWeight: Tokens.fontWeight.semibold,
 	},
 	input: {
-		backgroundColor: AppColors.surface,
-		borderWidth: 1,
-		borderColor: AppColors.card.border,
-		borderRadius: 12,
-		paddingHorizontal: 14,
-		paddingVertical: 12,
-		color: AppColors.text.primary,
-		fontSize: 15,
+		backgroundColor: Colors.sunken,
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.border.base,
+		borderRadius: Tokens.radius.md,
+		paddingHorizontal: Tokens.space["3"],
+		paddingVertical: Tokens.space["3"],
+		color: Colors.text.primary,
+		fontSize: Tokens.fontSize.lg,
+		minHeight: Tokens.touchTarget,
+		...Elevation.well,
 	},
 	inputError: {
-		borderColor: AppColors.status.absent,
+		borderColor: Colors.status.absent.border,
 	},
 	error: {
-		color: AppColors.status.absent,
-		fontSize: 12,
+		color: Colors.status.absent.fg,
+		fontSize: Tokens.fontSize.sm,
 	},
 });

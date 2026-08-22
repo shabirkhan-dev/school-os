@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { IconTile } from "@/components/ui/icon-tile";
-import { Colors, Shadows, Tokens, Type } from "@/constants/design-system";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 
 interface MetricCardProps {
 	label: string;
@@ -50,12 +50,12 @@ const styles = StyleSheet.create({
 		borderRadius: Tokens.radius.xl,
 		padding: Tokens.space["4"],
 		gap: Tokens.space["2"],
-		...Shadows.xs,
+		...Elevation.raised,
 	},
 	cardAlert: {
 		borderWidth: StyleSheet.hairlineWidth,
-		borderColor: "#FCD34D",
-		backgroundColor: "#FFFBEB",
+		borderColor: Colors.status.late.border,
+		backgroundColor: Colors.status.late.bg,
 	},
 	topRow: {
 		flexDirection: "row",

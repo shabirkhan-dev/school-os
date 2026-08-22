@@ -1,6 +1,6 @@
 import { StyleSheet, Text } from "react-native";
 import { PressableScale } from "@/components/ui/pressable-scale";
-import { Colors, Tokens } from "@/constants/design-system";
+import { Colors, Elevation, Tokens } from "@/constants/design-system";
 
 interface ChipProps {
 	label: string;
@@ -37,6 +37,9 @@ const styles = StyleSheet.create({
 	},
 	chipIdle: {
 		backgroundColor: Colors.surface,
+		borderWidth: StyleSheet.hairlineWidth,
+		borderColor: Colors.border.base,
+		...Elevation.raised,
 	},
 	label: {
 		fontSize: Tokens.fontSize.base,

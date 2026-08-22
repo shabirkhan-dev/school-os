@@ -63,12 +63,12 @@ const styles = StyleSheet.create({
 		paddingVertical: Tokens.space["3"],
 	},
 	backButton: {
-		width: 38,
-		height: 38,
+		width: Tokens.touchTarget,
+		height: Tokens.touchTarget,
 		borderRadius: Tokens.radius.full,
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: Colors.surface,
+		backgroundColor: Colors.surfaceBright,
 		borderWidth: StyleSheet.hairlineWidth,
 		borderColor: Colors.border.base,
 	},
@@ -93,6 +93,6 @@ const styles = StyleSheet.create({
 		gap: Tokens.space["2"],
 	},
 	spacer: {
-		width: 38,
+		width: Tokens.touchTarget,
 	},
 });

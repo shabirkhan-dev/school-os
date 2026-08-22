@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { AppColors, AppShadows } from "@/constants/design-system";
+import { Colors, Elevation, Tokens, Type } from "@/constants/design-system";
 import { useAuth } from "@/modules/auth";
 import type { AssessmentResultStatus } from "@/modules/teacher";
 import { useAssessmentDetailQuery, useUpsertAssessmentResultsMutation } from "@/modules/teacher";
@@ -98,7 +98,7 @@ export default function AssessmentDetailScreen() {
 				>
 					{detail.isLoading ? (
 						<View style={styles.loading}>
-							<ActivityIndicator color={AppColors.primary.brand} size="large" />
+							<ActivityIndicator color={Colors.brand.base} size="large" />
 						</View>
 					) : assessment ? (
 						<>
@@ -106,7 +106,7 @@ export default function AssessmentDetailScreen() {
 								<View style={styles.heroRow}>
 									<IconTile
 										icon={Trophy}
-										color={AppColors.accent.purple}
+										color={Colors.accent.purple.fg}
 										background="#F3E8FF"
 										size={46}
 										iconSize={22}
@@ -151,17 +151,17 @@ export default function AssessmentDetailScreen() {
 										<SummaryPill
 											label="Graded"
 											value={assessment.summary.graded}
-											color={AppColors.status.present}
+											color={Colors.status.present.solid}
 										/>
 										<SummaryPill
 											label="Pending"
 											value={assessment.summary.pending}
-											color={AppColors.status.pending}
+											color={Colors.status.pending.solid}
 										/>
 										<SummaryPill
 											label="Absent"
 											value={assessment.summary.absent}
-											color={AppColors.status.absent}
+											color={Colors.status.absent.solid}
 										/>
 										<SummaryPill
 											label="Average"
@@ -170,7 +170,7 @@ export default function AssessmentDetailScreen() {
 													? `${assessment.summary.averageScore}`
 													: "—"
 											}
-											color={AppColors.primary.brand}
+											color={Colors.brand.base}
 										/>
 									</View>
 								) : null}
@@ -234,7 +234,7 @@ export default function AssessmentDetailScreen() {
 													onChangeText={(value) => setScore(result.studentId, value)}
 													keyboardType="decimal-pad"
 													placeholder={`/${assessment.maxScore}`}
-													placeholderTextColor={AppColors.text.muted}
+													placeholderTextColor={Colors.text.muted}
 												/>
 											</View>
 										</View>
@@ -281,7 +281,7 @@ function MetaItem({
 }) {
 	return (
 		<View style={styles.metaItem}>
-			<Icon size={15} color={AppColors.text.muted} strokeWidth={2} />
+			<Icon size={15} color={Colors.text.muted} strokeWidth={2} />
 			<Text style={styles.metaLabel}>{label}</Text>
 			<Text style={styles.metaValue}>{value}</Text>
 		</View>
@@ -306,29 +306,24 @@ function SummaryPill({
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: AppColors.background },
+	container: { flex: 1, backgroundColor: Colors.canvas },
 	safeArea: { flex: 1 },
 	content: { paddingBottom: 110 },
 	loading: { alignItems: "center", justifyContent: "center", paddingVertical: 60 },
 	hero: {
 		marginHorizontal: 16,
 		marginTop: 8,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 18,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		padding: 16,
-		...AppShadows.sm,
+		...Elevation.raised,
 	},
 	heroRow: { flexDirection: "row", alignItems: "center", gap: 12 },
 	heroCopy: { flex: 1, gap: 2 },
-	heroTitle: {
-		color: AppColors.text.primary,
-		fontSize: 18,
-		fontWeight: "800",
-		letterSpacing: 0,
-	},
-	heroMeta: { color: AppColors.text.secondary, fontSize: 13 },
+	heroTitle: { ...Type.title, fontSize: Tokens.fontSize["3xl"] },
+	heroMeta: Type.caption,
 	metaGrid: {
 		flexDirection: "row",
 		flexWrap: "wrap",
@@ -336,7 +331,7 @@ const styles = StyleSheet.create({
 		marginTop: 14,
 		paddingTop: 12,
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	metaItem: {
 		flexDirection: "row",
@@ -345,44 +340,46 @@ const styles = StyleSheet.create({
 		width: "47%",
 		flexGrow: 1,
 	},
-	metaLabel: { color: AppColors.text.muted, fontSize: 11, fontWeight: "600" },
-	metaValue: { color: AppColors.text.primary, fontSize: 12, fontWeight: "700", flex: 1 },
+	metaLabel: Type.caption,
+	metaValue: {
+		...Type.meta,
+		color: Colors.text.primary,
+		fontWeight: Tokens.fontWeight.semibold,
+		flex: 1,
+	},
 	instructionsBlock: { marginTop: 14 },
 	blockLabel: {
-		color: AppColors.text.muted,
+		color: Colors.text.muted,
 		fontSize: 11,
 		fontWeight: "800",
 		letterSpacing: 0,
 		marginBottom: 6,
 	},
-	instructionsText: { color: AppColors.text.secondary, fontSize: 14, lineHeight: 21 },
+	instructionsText: Type.body,
 	summaryRow: { flexDirection: "row", gap: 8, marginTop: 14 },
 	summaryPill: {
 		flex: 1,
 		alignItems: "center",
-		backgroundColor: AppColors.background,
+		backgroundColor: Colors.canvas,
 		borderRadius: 12,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		paddingVertical: 10,
 	},
 	summaryPillValue: { fontSize: 17, fontWeight: "800" },
-	summaryPillLabel: { color: AppColors.text.muted, fontSize: 10, fontWeight: "600", marginTop: 1 },
+	summaryPillLabel: { color: Colors.text.muted, fontSize: 10, fontWeight: "600", marginTop: 1 },
 	sectionLabel: {
-		color: AppColors.text.muted,
-		fontSize: 11,
-		fontWeight: "800",
-		letterSpacing: 0,
+		...Type.overline,
 		marginHorizontal: 16,
 		marginTop: 22,
 		marginBottom: 10,
 	},
 	roster: {
 		marginHorizontal: 16,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 16,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		overflow: "hidden",
 	},
 	resultRow: {
@@ -394,40 +391,40 @@ const styles = StyleSheet.create({
 	},
 	rowDivider: {
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	resultCopy: { flex: 1, gap: 2 },
-	studentName: { color: AppColors.text.primary, fontSize: 14, fontWeight: "600" },
-	studentMeta: { color: AppColors.text.secondary, fontSize: 11 },
+	studentName: { ...Type.meta, color: Colors.text.primary, fontWeight: Tokens.fontWeight.semibold },
+	studentMeta: Type.caption,
 	statusOptions: { flexDirection: "row", gap: 6 },
 	statusChip: {
 		paddingHorizontal: 10,
 		paddingVertical: 6,
 		borderRadius: 999,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
-		backgroundColor: AppColors.background,
+		borderColor: Colors.border.base,
+		backgroundColor: Colors.canvas,
 	},
-	statusChipGraded: { backgroundColor: AppColors.status.presentBg, borderColor: "#BBF7D0" },
-	statusChipAbsent: { backgroundColor: AppColors.status.absentBg, borderColor: "#FECACA" },
-	statusChipText: { color: AppColors.text.secondary, fontSize: 11, fontWeight: "600" },
-	statusChipTextGraded: { color: AppColors.status.present, fontWeight: "700" },
-	statusChipTextAbsent: { color: AppColors.status.absent, fontWeight: "700" },
+	statusChipGraded: { backgroundColor: Colors.status.present.bg, borderColor: "#BBF7D0" },
+	statusChipAbsent: { backgroundColor: Colors.status.absent.bg, borderColor: "#FECACA" },
+	statusChipText: { color: Colors.text.secondary, fontSize: 11, fontWeight: "600" },
+	statusChipTextGraded: { color: Colors.status.present.solid, fontWeight: "700" },
+	statusChipTextAbsent: { color: Colors.status.absent.solid, fontWeight: "700" },
 	scoreField: { width: 72 },
 	scoreInput: {
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		borderRadius: 10,
-		backgroundColor: AppColors.background,
+		backgroundColor: Colors.canvas,
 		paddingHorizontal: 10,
 		paddingVertical: 8,
-		color: AppColors.text.primary,
+		color: Colors.text.primary,
 		fontSize: 14,
 		fontWeight: "700",
 		textAlign: "center",
 	},
 	savedText: {
-		color: AppColors.status.present,
+		color: Colors.status.present.solid,
 		fontSize: 13,
 		fontWeight: "600",
 		textAlign: "center",
@@ -441,9 +438,9 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingTop: 10,
 		paddingBottom: 14,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderTopWidth: 1,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	saveButton: { width: "100%" },
 });

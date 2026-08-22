@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { EmptyState } from "@/components/ui/empty-state";
-import { AppColors, AppShadows } from "@/constants/design-system";
+import { Colors, Elevation } from "@/constants/design-system";
 import { useAuth } from "@/modules/auth";
 import type { GradebookCell, GradebookTerm } from "@/modules/teacher";
 import { useGradebookQuery, useTeacherProfileQuery } from "@/modules/teacher";
@@ -37,7 +37,7 @@ export default function GradebookScreen() {
 					subtitle={section?.name ?? "Class"}
 					right={
 						<View style={styles.termPill}>
-							<BarChart3 size={14} color={AppColors.primary.brand} />
+							<BarChart3 size={14} color={Colors.brand.base} />
 							<Text style={styles.termPillText}>{term.toUpperCase()}</Text>
 						</View>
 					}
@@ -56,7 +56,7 @@ export default function GradebookScreen() {
 
 					{grid.isLoading ? (
 						<View style={styles.loading}>
-							<ActivityIndicator color={AppColors.primary.brand} size="large" />
+							<ActivityIndicator color={Colors.brand.base} size="large" />
 							<Text style={styles.loadingText}>Loading gradebook…</Text>
 						</View>
 					) : grid.data ? (
@@ -73,8 +73,8 @@ export default function GradebookScreen() {
 									value={subjectAssignment?.subjectCode ?? "—"}
 									hint={subjectAssignment?.subjectName ?? "No subject"}
 									icon={BookOpen}
-									color={AppColors.status.late}
-									background={AppColors.status.lateBg}
+									color={Colors.status.late.solid}
+									background={Colors.status.late.bg}
 								/>
 							</View>
 
@@ -147,7 +147,7 @@ export default function GradebookScreen() {
 																styles.overallValue,
 																{
 																	color:
-																		overall == null ? AppColors.text.muted : averageColor(overall),
+																		overall == null ? Colors.text.muted : averageColor(overall),
 																},
 															]}
 														>
@@ -199,37 +199,37 @@ export default function GradebookScreen() {
 }
 
 function averageColor(value: number): string {
-	if (value >= 80) return AppColors.status.present;
-	if (value >= 60) return AppColors.primary.brand;
-	if (value >= 40) return AppColors.status.late;
-	return AppColors.status.absent;
+	if (value >= 80) return Colors.status.present.solid;
+	if (value >= 60) return Colors.brand.base;
+	if (value >= 40) return Colors.status.late.solid;
+	return Colors.status.absent.solid;
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: AppColors.background },
+	container: { flex: 1, backgroundColor: Colors.canvas },
 	safeArea: { flex: 1 },
 	content: { paddingBottom: 48 },
 	termPill: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: 5,
-		backgroundColor: AppColors.primary.subtle,
+		backgroundColor: Colors.brand.tint,
 		borderRadius: 999,
 		paddingHorizontal: 10,
 		paddingVertical: 6,
 	},
 	termPillText: {
-		color: AppColors.primary.brand,
+		color: Colors.brand.base,
 		fontSize: 11,
 		fontWeight: "800",
 		letterSpacing: 0,
 	},
 	termRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 16, marginTop: 10 },
 	loading: { alignItems: "center", gap: 10, paddingVertical: 60 },
-	loadingText: { color: AppColors.text.secondary, fontSize: 13 },
+	loadingText: { color: Colors.text.secondary, fontSize: 13 },
 	metrics: { flexDirection: "row", gap: 10, paddingHorizontal: 16, marginTop: 14 },
 	sectionLabel: {
-		color: AppColors.text.muted,
+		color: Colors.text.muted,
 		fontSize: 11,
 		fontWeight: "800",
 		letterSpacing: 0,
@@ -239,12 +239,12 @@ const styles = StyleSheet.create({
 	},
 	subjectCard: {
 		marginHorizontal: 16,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 16,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		overflow: "hidden",
-		...AppShadows.sm,
+		...Elevation.raised,
 	},
 	subjectRow: {
 		flexDirection: "row",
@@ -255,15 +255,15 @@ const styles = StyleSheet.create({
 	},
 	rowDivider: {
 		borderTopWidth: StyleSheet.hairlineWidth,
-		borderTopColor: AppColors.card.border,
+		borderTopColor: Colors.border.base,
 	},
 	subjectCopy: { flex: 1, gap: 1 },
-	subjectName: { color: AppColors.text.primary, fontSize: 14, fontWeight: "600" },
-	subjectCode: { color: AppColors.text.muted, fontSize: 11 },
+	subjectName: { color: Colors.text.primary, fontSize: 14, fontWeight: "600" },
+	subjectCode: { color: Colors.text.muted, fontSize: 11 },
 	subjectRight: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1, maxWidth: "55%" },
 	subjectBar: { flex: 1 },
 	subjectAverage: {
-		color: AppColors.text.primary,
+		color: Colors.text.primary,
 		fontSize: 14,
 		fontWeight: "800",
 		width: 44,
@@ -271,20 +271,20 @@ const styles = StyleSheet.create({
 	},
 	studentCard: {
 		marginHorizontal: 16,
-		backgroundColor: AppColors.surface,
+		backgroundColor: Colors.surface,
 		borderRadius: 16,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		overflow: "hidden",
 	},
 	studentRow: { paddingHorizontal: 14, paddingVertical: 12 },
 	studentHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
 	studentCopy: { flex: 1, gap: 1 },
-	studentName: { color: AppColors.text.primary, fontSize: 14, fontWeight: "600" },
-	studentCode: { color: AppColors.text.muted, fontSize: 11 },
+	studentName: { color: Colors.text.primary, fontSize: 14, fontWeight: "600" },
+	studentCode: { color: Colors.text.muted, fontSize: 11 },
 	overall: { alignItems: "flex-end" },
 	overallValue: { fontSize: 18, fontWeight: "800" },
-	overallLabel: { color: AppColors.text.muted, fontSize: 10, fontWeight: "600" },
+	overallLabel: { color: Colors.text.muted, fontSize: 10, fontWeight: "600" },
 	cellsWrap: {
 		flexDirection: "row",
 		flexWrap: "wrap",
@@ -293,19 +293,19 @@ const styles = StyleSheet.create({
 	},
 	cell: {
 		alignItems: "center",
-		backgroundColor: AppColors.background,
+		backgroundColor: Colors.canvas,
 		borderWidth: 1,
-		borderColor: AppColors.card.border,
+		borderColor: Colors.border.base,
 		borderRadius: 10,
 		paddingHorizontal: 10,
 		paddingVertical: 6,
 		minWidth: 58,
 	},
-	cellSubject: { color: AppColors.text.muted, fontSize: 10, fontWeight: "700" },
+	cellSubject: { color: Colors.text.muted, fontSize: 10, fontWeight: "700" },
 	cellValue: { fontSize: 14, fontWeight: "800", marginTop: 1 },
-	cellGrade: { color: AppColors.text.muted, fontSize: 10, fontWeight: "600" },
+	cellGrade: { color: Colors.text.muted, fontSize: 10, fontWeight: "600" },
 	emptyText: {
-		color: AppColors.text.muted,
+		color: Colors.text.muted,
 		fontSize: 13,
 		paddingVertical: 12,
 		textAlign: "center",
